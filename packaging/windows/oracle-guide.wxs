@@ -28,7 +28,7 @@
     <Property Id="ARPPRODUCTICON" Value="OracleGuideIcon.ico" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/Marvingxx/oracle-guide" />
     <Property Id="ARPURLUPDATEINFO" Value="https://github.com/Marvingxx/oracle-guide" />
-    <Property Id="ARPHELPLINK" Value="https://discord.gg/artcraft" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/Marvingxx/oracle-guide" />
 
     <!-- Shared native setup UI, including install/uninstall completion. -->
 
