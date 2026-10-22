@@ -1,4 +1,4 @@
-# Where DesignCraft falls short of InDesign
+# Where Oracle Brand Guide falls short of InDesign
 
 > **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-17 · **Change:** minor (gap 6 shrunk: Type › Reload Fonts reads fonts installed, edited or removed while running (#328); gap 3: Package links are relative, #340; gap 27 closed: the loaded text cursor threads into a frame inside a group (#1075); .indd and .indt open through indd-utils; gap 0 shrunk: text threads by hand; threading gaps added; Optical kerning from outlines (#181); gap 6: macOS lists fonts that font services and managers activate; shared print spooler; image clipping paths from IDML; Tabs panel listed as present (#343); book chapter update safety; gap 16: Based on Parent leftovers; bounded control click/drag input; swatches on placed greyscale and bitmap images) · **Target:** Adobe InDesign 2026 (21.6)
 
@@ -42,11 +42,11 @@ Kind: **F** feature · **U** UI/UX · **T** typography · **FF** file format · 
 ### 2. INDD opening isn't measured on real files (FF)
 - **Missing:** a real-file corpus test of opening `.indd` and `.indt`. They open through
   [storytold/indd-utils](https://github.com/storytold/indd-utils), which converts them to IDML in
-  memory for the IDML importer, but DesignCraft's own tests use synthetic bytes only. INDB and
+  memory for the IDML importer, but Oracle Brand Guide's own tests use synthetic bytes only. INDB and
   INDL are still not read.
 - **Evidence:** #21, #114 (PR #98 proposed another converter). indd-utils reports 96.9% of
   InDesign's IDML values reproduced on ~650 INDD/IDML pairs and 0 failures on ~4,300 files; what
-  DesignCraft draws from those files is unmeasured, and it inherits the IDML importer's open bugs
+  Oracle Brand Guide draws from those files is unmeasured, and it inherits the IDML importer's open bugs
   (gap 3).
 - **Impact:** a client's `.indd` opens, but nobody knows how close it comes to the original.
 - **Estimate:** 10–30 h (corpus pinned in a sibling of `storytold/photocraft-corpus`, metric,
@@ -67,7 +67,7 @@ Kind: **F** feature · **U** UI/UX · **T** typography · **FF** file format · 
 
 ### 4. Composition isn't compared with InDesign (T)
 - **Missing:** an oracle harness: the same synthetic stories set by InDesign 2026 (observed
-  black-box, results kept under `plan/`) and by DesignCraft, comparing line breaks, overset and
+  black-box, results kept under `plan/`) and by Oracle Brand Guide, comparing line breaks, overset and
   frame fit. Known differences: optical kerning is an outline-based approximation, not Adobe's
   algorithm (#181); a frame goes overset when descenders don't fit, InDesign needs only the baseline
   (#180); setting the text language was missing (#130; Language is now in Properties, #145, the issue is still open); "hyphenation doesn't work"

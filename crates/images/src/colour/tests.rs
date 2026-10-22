@@ -1,4 +1,4 @@
-use designcraft_color::cms::{self, Cms, ColorSettings};
+use oracle_guide_color::cms::{self, Cms, ColorSettings};
 use image::{ImageEncoder, Rgba};
 
 use super::*;

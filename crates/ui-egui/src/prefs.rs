@@ -41,7 +41,7 @@ mod tests {
     use serde_json::json;
 
     fn populated() -> UiState {
-        let mut app = DesignApp::new(designcraft_engine::Session::new(), Default::default());
+        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Default::default());
         app.run("window.panel.move", json!({"panel":"swatches", "anchor":"layers", "zone":"top"})).unwrap();
         app.run("window.panel.close", json!({"panel":"properties"})).unwrap();
         app.ui.ui_scale = 1.5;

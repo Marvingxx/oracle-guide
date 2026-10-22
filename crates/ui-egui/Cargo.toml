@@ -1,24 +1,24 @@
 [package]
-name = "designcraft-ui-egui"
+name = "oracle-guide-ui-egui"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "DesignCraft egui frontend (InDesign-style UI); swappable — nothing below depends on it"
+description = "Oracle Brand Guide egui frontend (InDesign-style UI); swappable — nothing below depends on it"
 
 [lints]
 workspace = true
 
 [dependencies]
 craft-ui = { workspace = true }
-designcraft-geom = { workspace = true }
-designcraft-color = { workspace = true }
-designcraft-doc = { workspace = true }
-designcraft-fonts = { workspace = true }
-designcraft-compose = { workspace = true }
-designcraft-render = { workspace = true }
-designcraft-tools = { workspace = true }
-designcraft-engine = { workspace = true }
+oracle-guide-geom = { workspace = true }
+oracle-guide-color = { workspace = true }
+oracle-guide-doc = { workspace = true }
+oracle-guide-fonts = { workspace = true }
+oracle-guide-compose = { workspace = true }
+oracle-guide-render = { workspace = true }
+oracle-guide-tools = { workspace = true }
+oracle-guide-engine = { workspace = true }
 unicode-bidi = { workspace = true }
 unicode-bidi-mirroring = { workspace = true }
 unicode-segmentation = { workspace = true }
@@ -29,11 +29,11 @@ log = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
-designcraft-idml = { workspace = true }
+oracle-guide-idml = { workspace = true }
 zip = { workspace = true }
 # Headless (offscreen wgpu) rendering of the whole window for UI screenshots: `examples/ui_shot.rs`.
 egui_kittest = { workspace = true, features = ["wgpu", "snapshot"] }
-designcraft-fonts = { workspace = true, features = ["testing"] }
+oracle-guide-fonts = { workspace = true, features = ["testing"] }
 
 [build-dependencies]
 serde_json = { workspace = true }

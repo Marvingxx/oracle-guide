@@ -2,10 +2,10 @@
 
 use std::sync::Arc;
 
-use designcraft_compose::Cache;
-use designcraft_doc::{Document, ParaFormat, SpreadRef};
-use designcraft_geom::Rect;
-use designcraft_render::{RenderOptions, Renderer};
+use oracle_guide_compose::Cache;
+use oracle_guide_doc::{Document, ParaFormat, SpreadRef};
+use oracle_guide_geom::Rect;
+use oracle_guide_render::{RenderOptions, Renderer};
 
 fn serial_renderer() -> Renderer {
     let mut renderer = Renderer::new();
@@ -13,7 +13,7 @@ fn serial_renderer() -> Renderer {
     renderer
 }
 
-fn document() -> (Document, designcraft_doc::StoryId) {
+fn document() -> (Document, oracle_guide_doc::StoryId) {
     let mut doc = Document::new(&Default::default());
     let layer = doc.default_layer();
     let (_, story) = doc

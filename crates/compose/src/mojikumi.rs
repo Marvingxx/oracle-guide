@@ -1,6 +1,6 @@
 //! Mojikumi boundary widths. The same values feed line selection and placement.
 use crate::shape::Glyph;
-use designcraft_doc::{
+use oracle_guide_doc::{
     Styles,
     mojikumi::{self as rules, Aki, Rules},
 };

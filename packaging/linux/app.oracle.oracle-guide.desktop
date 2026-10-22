@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Oracle Brand Guide
+GenericName=Page Layout
+Comment=Lay out magazines, books and print documents
+Exec=oracle-guide %F
+TryExec=oracle-guide
+Icon=app.oracle.oracle-guide
+Terminal=false
+StartupNotify=true
+StartupWMClass=app.oracle.oracle-guide
+Categories=Graphics;Publishing;
+MimeType=application/x-oracle-guide;application/vnd.adobe.indesign-idml-package;
+Keywords=layout;page;desktop publishing;dtp;magazine;book;indesign;idml;typesetting;

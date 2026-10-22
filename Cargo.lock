@@ -941,346 +941,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "designcraft"
-version = "0.11.0"
-dependencies = [
- "arboard",
- "designcraft-engine",
- "designcraft-ui-egui",
- "eframe",
- "egui",
- "fmv-macos-events",
- "log",
- "muda",
- "objc2 0.6.4",
- "objc2-app-kit 0.3.2",
- "rfd",
- "serde",
- "serde_json",
- "winit",
- "winresource",
- "winsafe",
-]
-
-[[package]]
-name = "designcraft-cli"
-version = "0.11.0"
-dependencies = [
- "designcraft-color",
- "designcraft-compose",
- "designcraft-doc",
- "designcraft-engine",
- "designcraft-format",
- "designcraft-geom",
- "designcraft-mcp",
- "designcraft-pdf",
- "designcraft-render",
- "serde_json",
-]
-
-[[package]]
-name = "designcraft-color"
-version = "0.11.0"
-dependencies = [
- "craft-cms",
- "kurbo",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "designcraft-compose"
-version = "0.11.0"
-dependencies = [
- "designcraft-color",
- "designcraft-doc",
- "designcraft-fonts",
- "designcraft-geom",
- "fancy-regex",
- "hypher",
- "log",
- "miniz_oxide 0.8.9",
- "proptest",
- "regex",
- "unicode-bidi",
- "unicode-bidi-mirroring",
- "unicode-script",
- "unicode-segmentation",
-]
-
-[[package]]
-name = "designcraft-doc"
-version = "0.11.0"
-dependencies = [
- "chrono",
- "designcraft-color",
- "designcraft-geom",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "designcraft-engine"
-version = "0.11.0"
-dependencies = [
- "caseless",
- "craft-atomic",
- "craft-docpath",
- "craft-print",
- "designcraft-color",
- "designcraft-compose",
- "designcraft-doc",
- "designcraft-epub",
- "designcraft-fonts",
- "designcraft-format",
- "designcraft-geom",
- "designcraft-idml",
- "designcraft-images",
- "designcraft-pdf",
- "designcraft-pptx",
- "designcraft-render",
- "designcraft-textimport",
- "designcraft-tools",
- "hayro-cmap",
- "hayro-interpret",
- "hayro-syntax",
- "indd",
- "kurbo",
- "log",
- "quick-xml",
- "same-file",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.21",
- "unicode-segmentation",
- "wasm-bindgen-test",
- "zip",
-]
-
-[[package]]
-name = "designcraft-epub"
-version = "0.11.0"
-dependencies = [
- "chrono",
- "designcraft-color",
- "designcraft-doc",
- "zip",
-]
-
-[[package]]
-name = "designcraft-fonts"
-version = "0.11.0"
-dependencies = [
- "core-text",
- "harfrust 0.13.3",
- "kurbo",
- "log",
- "skrifa 0.47.0",
- "unicode-bidi",
- "unicode-script",
-]
-
-[[package]]
-name = "designcraft-format"
-version = "0.11.0"
-dependencies = [
- "designcraft-doc",
- "designcraft-images",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "zip",
-]
-
-[[package]]
-name = "designcraft-geom"
-version = "0.11.0"
-dependencies = [
- "flo_curves",
- "kurbo",
- "proptest",
- "qrcodegen",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "designcraft-idml"
-version = "0.11.0"
-dependencies = [
- "designcraft-color",
- "designcraft-compose",
- "designcraft-doc",
- "designcraft-geom",
- "designcraft-images",
- "log",
- "quick-xml",
- "thiserror 2.0.21",
- "zip",
-]
-
-[[package]]
-name = "designcraft-images"
-version = "0.11.0"
-dependencies = [
- "craft-cms",
- "designcraft-color",
- "designcraft-fonts",
- "image",
- "log",
- "resvg",
- "tiff",
- "zune-core",
- "zune-jpeg",
-]
-
-[[package]]
-name = "designcraft-mcp"
-version = "0.11.0"
-dependencies = [
- "designcraft-engine",
- "designcraft-geom",
- "designcraft-render",
- "designcraft-tools",
- "image",
- "log",
- "serde_json",
-]
-
-[[package]]
-name = "designcraft-pdf"
-version = "0.11.0"
-dependencies = [
- "chrono",
- "craft-pdf",
- "designcraft-color",
- "designcraft-compose",
- "designcraft-doc",
- "designcraft-fonts",
- "designcraft-geom",
- "designcraft-images",
- "hayro-cmap",
- "hayro-interpret",
- "hayro-syntax",
- "image",
- "krilla-svg",
- "kurbo",
- "log",
- "thiserror 2.0.21",
- "tiff",
-]
-
-[[package]]
-name = "designcraft-pptx"
-version = "0.11.0"
-dependencies = [
- "chrono",
- "designcraft-color",
- "designcraft-compose",
- "designcraft-doc",
- "designcraft-fonts",
- "designcraft-geom",
- "designcraft-images",
- "image",
- "quick-xml",
- "skrifa 0.47.0",
- "thiserror 2.0.21",
- "zip",
-]
-
-[[package]]
-name = "designcraft-render"
-version = "0.11.0"
-dependencies = [
- "craft-pdf",
- "designcraft-color",
- "designcraft-compose",
- "designcraft-doc",
- "designcraft-fonts",
- "designcraft-geom",
- "designcraft-images",
- "image",
- "log",
- "serde",
- "thiserror 2.0.21",
- "vello_common 0.2.0",
- "vello_cpu 0.2.0",
-]
-
-[[package]]
-name = "designcraft-textimport"
-version = "0.11.0"
-dependencies = [
- "designcraft-doc",
- "quick-xml",
- "zip",
-]
-
-[[package]]
-name = "designcraft-tools"
-version = "0.11.0"
-dependencies = [
- "designcraft-color",
- "designcraft-compose",
- "designcraft-doc",
- "designcraft-geom",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "designcraft-ui-egui"
-version = "0.11.0"
-dependencies = [
- "craft-ui",
- "designcraft-color",
- "designcraft-compose",
- "designcraft-doc",
- "designcraft-engine",
- "designcraft-fonts",
- "designcraft-geom",
- "designcraft-idml",
- "designcraft-render",
- "designcraft-tools",
- "egui",
- "egui_kittest",
- "log",
- "serde",
- "serde_json",
- "tempfile",
- "toml",
- "unicode-bidi",
- "unicode-bidi-mirroring",
- "unicode-segmentation",
- "zip",
-]
-
-[[package]]
-name = "designcraft-web"
-version = "0.11.0"
-dependencies = [
- "designcraft-engine",
- "designcraft-format",
- "designcraft-ui-egui",
- "eframe",
- "egui",
- "form_urlencoded",
- "js-sys",
- "log",
- "rfd",
- "serde_json",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
 name = "dify"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3227,6 +2887,346 @@ checksum = "aa576c76302b7b808eecc68061e67336c47833ef9d22caa74dda10fa9675eebc"
 dependencies = [
  "is-wsl",
  "libc",
+]
+
+[[package]]
+name = "oracle-guide"
+version = "0.11.0"
+dependencies = [
+ "arboard",
+ "eframe",
+ "egui",
+ "fmv-macos-events",
+ "log",
+ "muda",
+ "objc2 0.6.4",
+ "objc2-app-kit 0.3.2",
+ "oracle-guide-engine",
+ "oracle-guide-ui-egui",
+ "rfd",
+ "serde",
+ "serde_json",
+ "winit",
+ "winresource",
+ "winsafe",
+]
+
+[[package]]
+name = "oracle-guide-cli"
+version = "0.11.0"
+dependencies = [
+ "oracle-guide-color",
+ "oracle-guide-compose",
+ "oracle-guide-doc",
+ "oracle-guide-engine",
+ "oracle-guide-format",
+ "oracle-guide-geom",
+ "oracle-guide-mcp",
+ "oracle-guide-pdf",
+ "oracle-guide-render",
+ "serde_json",
+]
+
+[[package]]
+name = "oracle-guide-color"
+version = "0.11.0"
+dependencies = [
+ "craft-cms",
+ "kurbo",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "oracle-guide-compose"
+version = "0.11.0"
+dependencies = [
+ "fancy-regex",
+ "hypher",
+ "log",
+ "miniz_oxide 0.8.9",
+ "oracle-guide-color",
+ "oracle-guide-doc",
+ "oracle-guide-fonts",
+ "oracle-guide-geom",
+ "proptest",
+ "regex",
+ "unicode-bidi",
+ "unicode-bidi-mirroring",
+ "unicode-script",
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "oracle-guide-doc"
+version = "0.11.0"
+dependencies = [
+ "chrono",
+ "oracle-guide-color",
+ "oracle-guide-geom",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "oracle-guide-engine"
+version = "0.11.0"
+dependencies = [
+ "caseless",
+ "craft-atomic",
+ "craft-docpath",
+ "craft-print",
+ "hayro-cmap",
+ "hayro-interpret",
+ "hayro-syntax",
+ "indd",
+ "kurbo",
+ "log",
+ "oracle-guide-color",
+ "oracle-guide-compose",
+ "oracle-guide-doc",
+ "oracle-guide-epub",
+ "oracle-guide-fonts",
+ "oracle-guide-format",
+ "oracle-guide-geom",
+ "oracle-guide-idml",
+ "oracle-guide-images",
+ "oracle-guide-pdf",
+ "oracle-guide-pptx",
+ "oracle-guide-render",
+ "oracle-guide-textimport",
+ "oracle-guide-tools",
+ "quick-xml",
+ "same-file",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "unicode-segmentation",
+ "wasm-bindgen-test",
+ "zip",
+]
+
+[[package]]
+name = "oracle-guide-epub"
+version = "0.11.0"
+dependencies = [
+ "chrono",
+ "oracle-guide-color",
+ "oracle-guide-doc",
+ "zip",
+]
+
+[[package]]
+name = "oracle-guide-fonts"
+version = "0.11.0"
+dependencies = [
+ "core-text",
+ "harfrust 0.13.3",
+ "kurbo",
+ "log",
+ "skrifa 0.47.0",
+ "unicode-bidi",
+ "unicode-script",
+]
+
+[[package]]
+name = "oracle-guide-format"
+version = "0.11.0"
+dependencies = [
+ "oracle-guide-doc",
+ "oracle-guide-images",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "zip",
+]
+
+[[package]]
+name = "oracle-guide-geom"
+version = "0.11.0"
+dependencies = [
+ "flo_curves",
+ "kurbo",
+ "proptest",
+ "qrcodegen",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "oracle-guide-idml"
+version = "0.11.0"
+dependencies = [
+ "log",
+ "oracle-guide-color",
+ "oracle-guide-compose",
+ "oracle-guide-doc",
+ "oracle-guide-geom",
+ "oracle-guide-images",
+ "quick-xml",
+ "thiserror 2.0.21",
+ "zip",
+]
+
+[[package]]
+name = "oracle-guide-images"
+version = "0.11.0"
+dependencies = [
+ "craft-cms",
+ "image",
+ "log",
+ "oracle-guide-color",
+ "oracle-guide-fonts",
+ "resvg",
+ "tiff",
+ "zune-core",
+ "zune-jpeg",
+]
+
+[[package]]
+name = "oracle-guide-mcp"
+version = "0.11.0"
+dependencies = [
+ "image",
+ "log",
+ "oracle-guide-engine",
+ "oracle-guide-geom",
+ "oracle-guide-render",
+ "oracle-guide-tools",
+ "serde_json",
+]
+
+[[package]]
+name = "oracle-guide-pdf"
+version = "0.11.0"
+dependencies = [
+ "chrono",
+ "craft-pdf",
+ "hayro-cmap",
+ "hayro-interpret",
+ "hayro-syntax",
+ "image",
+ "krilla-svg",
+ "kurbo",
+ "log",
+ "oracle-guide-color",
+ "oracle-guide-compose",
+ "oracle-guide-doc",
+ "oracle-guide-fonts",
+ "oracle-guide-geom",
+ "oracle-guide-images",
+ "thiserror 2.0.21",
+ "tiff",
+]
+
+[[package]]
+name = "oracle-guide-pptx"
+version = "0.11.0"
+dependencies = [
+ "chrono",
+ "image",
+ "oracle-guide-color",
+ "oracle-guide-compose",
+ "oracle-guide-doc",
+ "oracle-guide-fonts",
+ "oracle-guide-geom",
+ "oracle-guide-images",
+ "quick-xml",
+ "skrifa 0.47.0",
+ "thiserror 2.0.21",
+ "zip",
+]
+
+[[package]]
+name = "oracle-guide-render"
+version = "0.11.0"
+dependencies = [
+ "craft-pdf",
+ "image",
+ "log",
+ "oracle-guide-color",
+ "oracle-guide-compose",
+ "oracle-guide-doc",
+ "oracle-guide-fonts",
+ "oracle-guide-geom",
+ "oracle-guide-images",
+ "serde",
+ "thiserror 2.0.21",
+ "vello_common 0.2.0",
+ "vello_cpu 0.2.0",
+]
+
+[[package]]
+name = "oracle-guide-textimport"
+version = "0.11.0"
+dependencies = [
+ "oracle-guide-doc",
+ "quick-xml",
+ "zip",
+]
+
+[[package]]
+name = "oracle-guide-tools"
+version = "0.11.0"
+dependencies = [
+ "oracle-guide-color",
+ "oracle-guide-compose",
+ "oracle-guide-doc",
+ "oracle-guide-geom",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "oracle-guide-ui-egui"
+version = "0.11.0"
+dependencies = [
+ "craft-ui",
+ "egui",
+ "egui_kittest",
+ "log",
+ "oracle-guide-color",
+ "oracle-guide-compose",
+ "oracle-guide-doc",
+ "oracle-guide-engine",
+ "oracle-guide-fonts",
+ "oracle-guide-geom",
+ "oracle-guide-idml",
+ "oracle-guide-render",
+ "oracle-guide-tools",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "toml",
+ "unicode-bidi",
+ "unicode-bidi-mirroring",
+ "unicode-segmentation",
+ "zip",
+]
+
+[[package]]
+name = "oracle-guide-web"
+version = "0.11.0"
+dependencies = [
+ "eframe",
+ "egui",
+ "form_urlencoded",
+ "js-sys",
+ "log",
+ "oracle-guide-engine",
+ "oracle-guide-format",
+ "oracle-guide-ui-egui",
+ "rfd",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]

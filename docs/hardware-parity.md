@@ -2,7 +2,7 @@
 
 > **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-12 · **Change:** minor (font managers on macOS; shared print spooler; Windows CI passes; Windows mixed-DPI drag and windows wider than 8192 px don't crash) · **Target:** Adobe InDesign 2026 (21.6)
 
-What InDesign does with hardware, per platform, against DesignCraft. Layout is not a
+What InDesign does with hardware, per platform, against Oracle Brand Guide. Layout is not a
 GPU-hungry workload, so this dimension carries little weight, but a start that fails on a
 graphics driver loses the user entirely. Overall numbers: [target-app-parity.md](target-app-parity.md).
 
@@ -10,7 +10,7 @@ graphics driver loses the user entirely. Overall numbers: [target-app-parity.md]
 
 ## Hardware features
 
-| Feature | InDesign 2026 | DesignCraft macOS | Windows | Linux | Web |
+| Feature | InDesign 2026 | Oracle Brand Guide macOS | Windows | Linux | Web |
 |---|---|---|---|---|---|
 | GPU display (canvas) | GPU Performance: GPU preview, animated zoom (Metal on macOS; Windows with supported GPUs) | canvas rasterized on the CPU (vello_cpu, SIMD, multithreaded), presented by wgpu (Metal) | wgpu DirectX 12 (since #297), Vulkan/OpenGL fallback | Vulkan, OpenGL fallback | WebGPU, WebGL2 fallback |
 | Start-up on any GPU | robust | Metal device lost on Intel Macs (#334) | AMD OpenGL crash (#167), launch failures (#273) | some reports (#192, #220) | |
@@ -27,7 +27,7 @@ graphics driver loses the user entirely. Overall numbers: [target-app-parity.md]
 
 ## Platforms
 
-| Platform | InDesign 2026 | DesignCraft | Evidence |
+| Platform | InDesign 2026 | Oracle Brand Guide | Evidence |
 |---|---|---|---|
 | macOS (Apple silicon, Intel) | ✓ | ✓ primary development platform | Intel GPU start failure (#334); window controls misaligned (#333) |
 | Windows x64 | ✓ | ~ builds and installers ship | copy/paste and context menus (#351, #312), installer confusion (#64), launch failures (#273, #167) |
@@ -36,7 +36,7 @@ graphics driver loses the user entirely. Overall numbers: [target-app-parity.md]
 | FreeBSD | ✗ | ~ build | |
 | Web (WASM) | ✗ (InDesign on the web is not shipped) | ~ same UI, file picker, downloads; no control channel | |
 
-DesignCraft runs on more platforms than InDesign; what's missing is runtime testing on the ones
+Oracle Brand Guide runs on more platforms than InDesign; what's missing is runtime testing on the ones
 the developers don't use daily.
 
 ## Remaining effort

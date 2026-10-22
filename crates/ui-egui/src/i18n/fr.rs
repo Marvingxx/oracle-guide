@@ -1,6 +1,7 @@
 //! French translations of the strings the shared table in `i18n.rs` has no row for,
 //! written from the English source using ordinary French desktop-publishing vocabulary.
 pub(super) const TABLE: &[(&str, &str)] = &[
+    ("Brand", "Marque"),
     ("90° CCW", "90° sens antihoraire"),
     ("90° CW", "90° sens horaire"),
     ("Alignment", "Alignement"),
@@ -32,8 +33,8 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Define Lists", "Définir des listes"),
     ("Define Text Variable", "Définir une variable de texte"),
     ("Delete Type from Path", "Supprimer le texte curviligne"),
-    ("DesignCraft Website", "Site web de DesignCraft"),
-    ("DesignCraft on GitHub", "DesignCraft sur GitHub"),
+    ("Oracle Brand Guide Website", "Site web de Oracle Brand Guide"),
+    ("Oracle Brand Guide on GitHub", "Oracle Brand Guide sur GitHub"),
     ("Detect Edges", "Détecter les contours"),
     ("Discretionary Hyphen", "Trait d'union conditionnel"),
     ("Document CMYK", "CMJN du document"),

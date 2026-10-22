@@ -1,24 +1,24 @@
 [package]
-name = "designcraft-render"
+name = "oracle-guide-render"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DesignCraft renderer: spreads, pages, frames, composed text and images to pixels (vello_cpu)"
+description = "Oracle Brand Guide renderer: spreads, pages, frames, composed text and images to pixels (vello_cpu)"
 
 [lints]
 workspace = true
 
 [dependencies]
-designcraft-geom = { workspace = true }
-designcraft-color = { workspace = true }
-designcraft-doc = { workspace = true }
-designcraft-fonts = { workspace = true }
-designcraft-compose = { workspace = true }
+oracle-guide-geom = { workspace = true }
+oracle-guide-color = { workspace = true }
+oracle-guide-doc = { workspace = true }
+oracle-guide-fonts = { workspace = true }
+oracle-guide-compose = { workspace = true }
 vello_cpu = { workspace = true }
 vello_common = { workspace = true }
 image = { workspace = true }
 craft-pdf = { workspace = true, features = ["raster"] }
-designcraft-images = { workspace = true }
+oracle-guide-images = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }

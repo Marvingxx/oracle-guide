@@ -1,13 +1,13 @@
 # User docs: rules for agents and contributors
 
 Everything in this folder (except this file, CLAUDE.md and README.md) is published at
-https://getartcraft.com/docs/designcraft. The file path is the URL:
-`troubleshooting/app-closes-at-start.md` → `/docs/designcraft/troubleshooting/app-closes-at-start`.
+https://getartcraft.com/docs/oracle-guide. The file path is the URL:
+`troubleshooting/app-closes-at-start.md` → `/docs/oracle-guide/troubleshooting/app-closes-at-start`.
 Renaming a file breaks links, so add the old path to `redirect_from` when you rename.
 
 ## Who reads this
 
-Artists and designers using DesignCraft, Discord mods answering them, and AI assistants looking things up for
+Artists and designers using Oracle Brand Guide, Discord mods answering them, and AI assistants looking things up for
 either. Write for an artist, not a developer.
 
 ## Page rules
@@ -16,9 +16,9 @@ either. Write for an artist, not a developer.
 - Plain words, short sentences, numbered steps for anything the reader does.
 - Start the body at `##`. The page title comes from frontmatter.
 - Link to other pages instead of repeating them. Use relative links to the `.md` file:
-  `[Install DesignCraft](../getting-started/install.md)`.
+  `[Install Oracle Brand Guide](../getting-started/install.md)`.
 - No marketing copy, no "simply", no claims you have not checked in the code or a release.
-- Call the product "DesignCraft", as the app, its downloads and getartcraft.com do.
+- Call the product "Oracle Brand Guide", as the app, its downloads and getartcraft.com do.
 - Name UI labels exactly as the app shows them, in **bold**.
 - Document Windows 11 only. Do not name older Windows versions.
 - Troubleshooting pages: `## Symptoms`, `## Fix`, `## Why this happens` (optional),
@@ -31,7 +31,7 @@ either. Write for an artist, not a developer.
     description: One sentence for search results, link previews and AI summaries.
     order: 10                 # optional, sorts within the folder (lower first)
     verified: 0.6.0           # optional, app version you last checked this page against
-    redirect_from: [old/path] # optional, old URLs (relative to /docs/designcraft)
+    redirect_from: [old/path] # optional, old URLs (relative to /docs/oracle-guide)
     ---
 
 Only `key: value` and `key: [a, b]` lines work. Quote values that start with a quote or contain ` #`.
@@ -59,4 +59,4 @@ The checker lives in storytold/artcraft-services. A CI check will be added once 
 
 Pages written to answer a user question come in as PRs titled `docs(support): <page title>`.
 Review them like code: check every claim against the source. Questions and bugs go to
-https://github.com/storytold/designcraft/issues.
+https://github.com/Marvingxx/oracle-guide/issues.

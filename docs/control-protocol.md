@@ -1,13 +1,13 @@
 # Control protocol
 
-Start the app with `--control <port>` (or `DESIGNCRAFT_CONTROL_PORT`). The server listens on
+Start the app with `--control <port>` (or `ORACLE_GUIDE_CONTROL_PORT`). The server listens on
 `127.0.0.1` only and speaks JSON lines: one request object per line, one reply per line.
 
-For an isolated native test profile, set `DESIGNCRAFT_CONFIG_DIR` to a dedicated directory before
+For an isolated native test profile, set `ORACLE_GUIDE_CONFIG_DIR` to a dedicated directory before
 launch. UI/engine preferences and the `Recovery` directory then live under that root. An unset
-override preserves the usual platform paths (or `DesignCraftData` next to the executable when a
+override preserves the usual platform paths (or `Oracle Brand GuideData` next to the executable when a
 `portable.txt` sits there); an explicitly empty override disables those paths.
-`DESIGNCRAFT_NO_PREFS` still disables preference reads/writes independently of recovery.
+`ORACLE_GUIDE_NO_PREFS` still disables preference reads/writes independently of recovery.
 
 Control pointer and key input is queued across native frames. After a drag, wait for both the
 expected document state and `document.inspect.canUndo` before testing undo; an object can appear
@@ -23,7 +23,7 @@ an object without `method`, invalid UTF-8, and a line longer than 4 MiB. An HTTP
 web page's cross-origin `fetch` to `127.0.0.1:<port>`) therefore can't smuggle a command in its body:
 its request line is rejected first. At most 16 connections are served at once; further ones get an error
 line and are closed. Clients that get an error reply should reconnect. The port has no authentication,
-so only enable it while you use it. Transport: `apps/designcraft/src/control_server.rs`.
+so only enable it while you use it. Transport: `apps/oracle-guide/src/control_server.rs`.
 
 ```json
 {"id": 1, "method": "engine.execute", "params": {"command": "frame.create", "params": {"rect": [36, 36, 300, 200], "content": "text"}}}
@@ -56,9 +56,9 @@ Data merge runs through `engine.execute` like any command: `data.source.select`,
 `.remove`, `data.options`, `data.preview` / `data.preview.stop`, `data.merge`. `data.merge` creates and activates a new
 merged document; the template stays as it was ([agents.md](agents.md#data-merge)).
 
-Headless window screenshots (locked screen, hidden window): `cargo run -p designcraft-ui-egui --example ui_shot -- script.jsonl`, where each line is one of the requests above, `{"shot": "/abs/out.png"}` or `{"steps": n}` (renders the whole UI offscreen with wgpu).
+Headless window screenshots (locked screen, hidden window): `cargo run -p oracle-guide-ui-egui --example ui_shot -- script.jsonl`, where each line is one of the requests above, `{"shot": "/abs/out.png"}` or `{"steps": n}` (renders the whole UI offscreen with wgpu).
 
-The MCP server (`designcraft-cli mcp`) wraps the same methods for Claude and other agents.
+The MCP server (`oracle-guide-cli mcp`) wraps the same methods for Claude and other agents.
 
 ### Click and drag limits
 

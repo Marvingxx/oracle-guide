@@ -1,4 +1,4 @@
-use designcraft_doc::PageSide::{self, Left, Right};
+use oracle_guide_doc::PageSide::{self, Left, Right};
 
 use super::*;
 

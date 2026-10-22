@@ -8,8 +8,8 @@ repair/remove, and explicit install/uninstall/repair success, cancellation and f
 Regenerate or check from a sibling craft-libs checkout:
 
 ```sh
-cargo run --locked -p craft-installer -- --write --app designcraft ../designcraft/packaging/windows/installer-ui.wxs
-cargo run --locked -p craft-installer -- --check --app designcraft ../designcraft/packaging/windows/installer-ui.wxs
+cargo run --locked -p craft-installer -- --write --app oracle-guide ../oracle-guide/packaging/windows/installer-ui.wxs
+cargo run --locked -p craft-installer -- --check --app oracle-guide ../oracle-guide/packaging/windows/installer-ui.wxs
 ```
 
 Edit the shared templates/profile and regenerate; avoid editing this snapshot by hand. The

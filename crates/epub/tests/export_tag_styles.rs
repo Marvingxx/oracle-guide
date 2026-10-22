@@ -1,9 +1,9 @@
 use std::io::{Cursor, Read};
 
-use designcraft_doc::build::NewDocument;
-use designcraft_doc::geom::Rect;
-use designcraft_doc::{Align, CharAttrs, CharacterStyle, Document, ExportTag, ParaAttrs, ParaFormat, ParagraphStyle, SpreadRef, story};
-use designcraft_epub::{EpubOptions, HtmlOptions, export_epub, export_html};
+use oracle_guide_doc::build::NewDocument;
+use oracle_guide_doc::geom::Rect;
+use oracle_guide_doc::{Align, CharAttrs, CharacterStyle, Document, ExportTag, ParaAttrs, ParaFormat, ParagraphStyle, SpreadRef, story};
+use oracle_guide_epub::{EpubOptions, HtmlOptions, export_epub, export_html};
 
 fn fixture() -> Document {
     let mut doc = Document::new(&NewDocument::default());

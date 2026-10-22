@@ -1,4 +1,4 @@
-//! The DesignCraft document model (pure data + serde).
+//! The Oracle Brand Guide document model (pure data + serde).
 //!
 //! A [`Document`] holds spreads of pages, parent ("master") spreads, layers, stories, styles,
 //! swatches, sections and embedded assets. Spreads, items and stories are `Arc`-shared so an
@@ -49,8 +49,8 @@ pub use datamerge::{
     DataField, DataFieldKind, DataMerge, DataSource, Delimiter, Fingerprint, MergeOptions, Placeholder, PlaceholderAnchor, PlaceholderRole,
     SourceStatus,
 };
-pub use designcraft_color as color;
-pub use designcraft_geom as geom;
+pub use oracle_guide_color as color;
+pub use oracle_guide_geom as geom;
 pub use edit::{ItemLoc, ItemPath, SpreadRef, hit_descendant, item_hit as edit_hit};
 pub use endnotes::{ENDNOTE_REF, EditorialNote, EndnoteOptions, NOTE_MARK};
 pub use flex::{FlexAlign, FlexDirection, FlexJustify, FlexLayout, FlexSize};
@@ -65,8 +65,8 @@ pub use styles::*;
 pub use table::*;
 pub use xref::{ANCHOR_MARK, CrossRef, TextAnchor, XREF_MARK, XrefFormat};
 
-use designcraft_color::Swatch;
-use designcraft_geom::Unit;
+use oracle_guide_color::Swatch;
+use oracle_guide_geom::Unit;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, thiserror::Error, PartialEq)]
@@ -406,6 +406,26 @@ pub struct DocSettings {
     /// The fill and stroke new shapes are drawn with: what the Tools panel's proxy shows and sets
     /// with nothing selected (InDesign's document defaults).
     pub new_object: NewObjectColors,
+    /// Oracle: the brand project (Brand Kit `brand.json`) this document's brand blocks follow.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brand: Option<BrandLink>,
+}
+
+/// Oracle: the link from a brand guide to its Brand Kit project. Brand blocks are text variables,
+/// swatches and frames labelled `oracle:logo:<id>` / `oracle:mockup:<id>`; nothing changes until
+/// the designer synchronises.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct BrandLink {
+    /// `brand.json`, as linked (absolute).
+    pub path: String,
+    /// The same, relative to the document's folder (found again when both moved together).
+    pub relative: String,
+    /// Brand colour id → the swatch that shows it (kept across renames).
+    pub swatches: std::collections::BTreeMap<String, String>,
+    /// The swatches in the brand's colour order: a guide reused for another brand (a personal
+    /// template) gives the n-th colour's swatch to that brand's n-th colour.
+    pub palette: Vec<String>,
 }
 
 fn is_true(b: &bool) -> bool {
@@ -468,6 +488,7 @@ impl Default for DocSettings {
             glyph_fallback: false,
             ruler_origin: RulerOrigin::Spread,
             zero_point: [0.0, 0.0],
+            brand: None,
             zero_point_locked: false,
             column_guides_locked: true,
             new_object: NewObjectColors::default(),
@@ -542,7 +563,7 @@ pub struct Asset {
     /// Where the `pdf_crop` box sits on the page as rendered (its visible crop box, rotated as it
     /// displays): left, top, right, bottom as fractions of the page's width and height. Graphic
     /// space (0,0)-(w,h) spans this box. `None`: the whole page, or a Bounding Box crop not
-    /// measured yet (`designcraft_render::shown_box` measures it when the graphic is drawn).
+    /// measured yet (`oracle_guide_render::shown_box` measures it when the graphic is drawn).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pdf_box: Option<[f64; 4]>,
 }
@@ -923,8 +944,8 @@ impl Document {
         if global { self.settings.global_light } else { angle }
     }
 
-    pub fn resolve_color(&self, swatch: &str, tint: f32) -> Option<designcraft_color::Color> {
-        designcraft_color::swatch::resolve(&self.swatches, swatch, tint)
+    pub fn resolve_color(&self, swatch: &str, tint: f32) -> Option<oracle_guide_color::Color> {
+        oracle_guide_color::swatch::resolve(&self.swatches, swatch, tint)
     }
 
     /// Validate structural invariants (ids unique, threads consistent, stories well-formed).

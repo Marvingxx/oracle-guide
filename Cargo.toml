@@ -1,37 +1,37 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "apps/*", "xtask"]
-default-members = ["crates/*", "apps/designcraft", "apps/designcraft-cli", "xtask"]
+default-members = ["crates/*", "apps/oracle-guide", "apps/oracle-guide-cli", "xtask"]
 
 [workspace.package]
 version = "0.11.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.95"
-repository = "https://github.com/storytold/designcraft"
+repository = "https://github.com/Marvingxx/oracle-guide"
 
 [workspace.dependencies]
 # Shared reader and writer; publish the immutable revision before this consumer.
 craft-pdf = { git = "https://github.com/storytold/craft-libs", rev = "89dcbb3060377a26c99a6d80caa16084366704c4", version = "=0.1.0", default-features = false }
 # internal
-designcraft-geom = { path = "crates/geom" }
-designcraft-color = { path = "crates/color" }
-designcraft-doc = { path = "crates/doc" }
-designcraft-fonts = { path = "crates/fonts" }
-designcraft-compose = { path = "crates/compose" }
-designcraft-images = { path = "crates/images" }
-designcraft-render = { path = "crates/render" }
-designcraft-pdf = { path = "crates/pdf" }
-designcraft-idml = { path = "crates/idml" }
-designcraft-epub = { path = "crates/epub" }
-designcraft-pptx = { path = "crates/pptx" }
-designcraft-textimport = { path = "crates/textimport" }
-designcraft-format = { path = "crates/format" }
-designcraft-tools = { path = "crates/tools" }
-designcraft-engine = { path = "crates/engine" }
-designcraft-ui-egui = { path = "crates/ui-egui" }
-designcraft-mcp = { path = "crates/mcp" }
-designcraft-testkit = { path = "crates/testkit" }
+oracle-guide-geom = { path = "crates/geom" }
+oracle-guide-color = { path = "crates/color" }
+oracle-guide-doc = { path = "crates/doc" }
+oracle-guide-fonts = { path = "crates/fonts" }
+oracle-guide-compose = { path = "crates/compose" }
+oracle-guide-images = { path = "crates/images" }
+oracle-guide-render = { path = "crates/render" }
+oracle-guide-pdf = { path = "crates/pdf" }
+oracle-guide-idml = { path = "crates/idml" }
+oracle-guide-epub = { path = "crates/epub" }
+oracle-guide-pptx = { path = "crates/pptx" }
+oracle-guide-textimport = { path = "crates/textimport" }
+oracle-guide-format = { path = "crates/format" }
+oracle-guide-tools = { path = "crates/tools" }
+oracle-guide-engine = { path = "crates/engine" }
+oracle-guide-ui-egui = { path = "crates/ui-egui" }
+oracle-guide-mcp = { path = "crates/mcp" }
+oracle-guide-testkit = { path = "crates/testkit" }
 
 # foundation
 kurbo = { version = "0.13", features = ["serde"] }

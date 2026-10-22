@@ -12,11 +12,11 @@ use std::time::Duration;
 use craft_pdf::interpret::Function;
 use craft_pdf::syntax::Pdf;
 use craft_pdf::syntax::object::{Object, ObjectIdentifier};
-use designcraft_compose::Cache;
-use designcraft_doc::build::NewDocument;
-use designcraft_doc::{Asset, AssetId, Content, Document, Graphic, Item, ItemId, PdfCrop, Shape, SpreadRef};
-use designcraft_geom::{Affine, Rect, shapes};
-use designcraft_render::{Rendered, Renderer, pdf_crop_box, pdf_page_size};
+use oracle_guide_compose::Cache;
+use oracle_guide_doc::build::NewDocument;
+use oracle_guide_doc::{Asset, AssetId, Content, Document, Graphic, Item, ItemId, PdfCrop, Shape, SpreadRef};
+use oracle_guide_geom::{Affine, Rect, shapes};
+use oracle_guide_render::{Rendered, Renderer, pdf_crop_box, pdf_page_size};
 
 const WHITE: [u8; 4] = [255, 255, 255, 255];
 const RED: [u8; 4] = [255, 0, 0, 255];

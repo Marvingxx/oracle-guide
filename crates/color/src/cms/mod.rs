@@ -35,7 +35,7 @@ pub const PROPHOTO_RGB: &str = "ProPhoto RGB";
 /// CMYK working space.
 pub const COATED_FOGRA39: &str = craft_cms::builtin::COATED_FOGRA39_DESCRIPTION;
 /// Our parametric press model (see [`generic`]). Not an Adobe/ECI profile.
-pub const GENERIC_CMYK: &str = "DesignCraft Generic CMYK (SWOP-like)";
+pub const GENERIC_CMYK: &str = "Oracle Brand Guide Generic CMYK (SWOP-like)";
 /// Profile-free CMYK (`rgb = (1−c)(1−k)` …): uncalibrated, kept for legacy numbers.
 pub const DEVICE_CMYK: &str = "Device CMYK (uncalibrated)";
 

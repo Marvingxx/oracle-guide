@@ -4,10 +4,10 @@
 
 use std::sync::Arc;
 
-use designcraft_compose::Cache;
-use designcraft_doc::Document;
-use designcraft_geom::Affine;
-use designcraft_render::{Placed, RenderOptions, Rendered};
+use oracle_guide_compose::Cache;
+use oracle_guide_doc::Document;
+use oracle_guide_geom::Affine;
+use oracle_guide_render::{Placed, RenderOptions, Rendered};
 
 pub struct Job {
     pub token: u64,
@@ -38,9 +38,9 @@ impl Worker {
         let (tx, jobs) = std::sync::mpsc::channel::<Job>();
         let (done_tx, rx) = std::sync::mpsc::channel::<Done>();
         std::thread::Builder::new()
-            .name("designcraft-render".into())
+            .name("oracle-guide-render".into())
             .spawn(move || {
-                let mut r = designcraft_render::Renderer::new();
+                let mut r = oracle_guide_render::Renderer::new();
                 while let Ok(mut job) = jobs.recv() {
                     // Only the newest job matters.
                     while let Ok(newer) = jobs.try_recv() {

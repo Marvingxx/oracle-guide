@@ -1,8 +1,8 @@
-//! Help › About DesignCraft: tabs About · Contributors · Models. About is the splash with the
+//! Help › About Oracle Brand Guide: tabs About · Contributors · Models. About is the splash with the
 //! ArtCraft mark, version, and community links (Discord first and largest), plus the other ArtCraft
 //! apps; Contributors and Models are the compiled-in credits (`crate::credits`).
 
-use designcraft_engine::links;
+use oracle_guide_engine::links;
 use egui::{Color32, Rect, Sense, Stroke, pos2, vec2};
 use serde_json::json;
 
@@ -32,7 +32,7 @@ pub const ABOUT_TABS: [&str; 3] = ["About", "Contributors", "Models"];
 
 /// Paint the ArtCraft mark into `rect` (square), rasterised once per size and cached.
 pub fn paint_mark(ui: &egui::Ui, rect: Rect, color: Color32) {
-    use designcraft_render::vello_cpu::{self, kurbo, peniko};
+    use oracle_guide_render::vello_cpu::{self, kurbo, peniko};
     let ctx = ui.ctx();
     let ppp = ctx.pixels_per_point();
     let px = ((rect.width().min(rect.height()) * ppp).round() as u32).clamp(8, 1024);
@@ -152,7 +152,7 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
             ui.add_space(6.0);
             ui.label(crate::rtl::widget(
                 ui,
-                egui::RichText::new(crate::i18n::tr(&app.ui.language, "DesignCraft")).font(semibold(26.0)).color(t.text_strong),
+                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Oracle Brand Guide")).font(semibold(26.0)).color(t.text_strong),
             ));
             crate::rtl::label(
                 ui,
@@ -169,28 +169,17 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
             ));
             ui.label(crate::rtl::widget(
                 ui,
-                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Part of the ArtCraft suite of open creative tools."))
+                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Part of the Oracle suite, forked from ArtCraft's DesignCraft."))
                     .size(12.0)
                     .color(t.text_dim),
             ));
             ui.add_space(16.0);
-            if discord_button(ui, crate::i18n::tr(&app.ui.language, "Join the ArtCraft Discord"), vec2(300.0, 40.0)) {
-                open = Some("discord");
-            }
-            ui.add_space(4.0);
-            ui.label(crate::rtl::widget(
-                ui,
-                egui::RichText::new(crate::i18n::tr(&app.ui.language, "discord.gg/artcraft — help, feedback and show-and-tell"))
-                    .size(11.0)
-                    .color(t.text_dim),
-            ));
-            ui.add_space(14.0);
             ui.horizontal(|ui| {
                 // Centre the row of links.
                 let w = 330.0;
                 ui.add_space(((ui.available_width() - w) / 2.0).max(0.0));
                 for (text, key) in
-                    [("DesignCraft page", "appPage"), ("GitHub", "github"), ("getartcraft.com", "website"), ("Report an issue", "issues")]
+                    [("GitHub", "github"), ("Report an issue", "issues")]
                 {
                     if link(ui, crate::i18n::tr(&app.ui.language, text), links::get(key).unwrap_or_default(), t.accent) {
                         open = Some(key);
