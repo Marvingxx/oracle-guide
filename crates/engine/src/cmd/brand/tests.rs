@@ -261,6 +261,15 @@ fn an_eight_page_guide_exports_a_readable_pdf_and_follows_the_brand() {
     assert!(compact(&pages[6]).contains("Inter") && compact(&pages[6]).contains("Textecourant"), "{:?}", pages[6]);
     assert!(compact(&pages[7]).contains("Nepasdéformerlelogo"), "{:?}", pages[7]);
 
+    // For print: PDF/X-4 with bleed and crop marks, with no conformance issue (the logos' and
+    // swatches' RGB is colour-managed as sRGB under the CMYK output intent).
+    let print = s.execute("file.exportPdf", &json!({"standard": "x4", "bleed": true, "marks": true})).unwrap();
+    assert_eq!(print["pages"], 8);
+    let issues: Vec<&Value> = print["warnings"].as_array().unwrap().iter().filter(|w| w.as_str().is_some_and(|w| w.starts_with("PDF/X-4"))).collect();
+    assert!(issues.is_empty(), "{issues:?}");
+    let bytes = super::super::base64_decode(print["base64"].as_str().unwrap());
+    assert!(oracle_guide_pdf::check_pdfx4(&bytes).is_empty());
+
     // Saved, closed, reopened: same pages, same links, same text.
     let file = root.join("Charte.oracle-guide");
     s.execute("file.save", &json!({"path": file.display().to_string()})).unwrap();

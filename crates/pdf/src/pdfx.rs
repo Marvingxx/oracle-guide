@@ -123,6 +123,18 @@ pub fn make_pdfx4(pdf: &[u8], title: &str, date: Option<i64>) -> Option<Vec<u8>>
         b.extend_from_slice(b"\nendstream");
         put(&mut out, meta, &b);
     }
+    // Oracle: DeviceRGB (vector fills and strokes, untagged images) is sRGB in this exporter:
+    // say so with a `DefaultRGB` colour space in every page's and form's resources, which makes
+    // it colour-managed under the CMYK output intent (ISO 15930-7). Grey and CMYK stay device.
+    let srgb_id = next;
+    next += 1;
+    let mut icc = format!("<</N 3/Length {}>>\nstream\n", crate::export::SRGB_ICC.len()).into_bytes();
+    icc.extend_from_slice(crate::export::SRGB_ICC);
+    icc.extend_from_slice(b"\nendstream");
+    put(&mut out, srgb_id, &icc);
+    for (id, body) in default_rgb_updates(pdf, size, srgb_id) {
+        put(&mut out, id, &body);
+    }
     // Cross-reference section and trailer.
     let xref_at = out.len();
     entries.sort();
@@ -134,6 +146,192 @@ pub fn make_pdfx4(pdf: &[u8], title: &str, date: Option<i64>) -> Option<Vec<u8>>
     x.push_str(&format!("trailer\n<</Size {next}/Root {root} 0 R/Info {info_id} 0 R{id}/Prev {prev}>>\nstartxref\n{xref_at}\n%%EOF\n"));
     out.extend_from_slice(x.as_bytes());
     Some(out)
+}
+
+/// The objects to state again so that every page's and form XObject's resources hold
+/// `/DefaultRGB [/ICCBased srgb_id 0 R]`: resource dictionaries referenced by pages and forms,
+/// and pages and forms whose resources are inline. Streams keep their data byte for byte.
+fn default_rgb_updates(pdf: &[u8], size: usize, srgb_id: usize) -> Vec<(usize, Vec<u8>)> {
+    let entry = format!("/DefaultRGB[/ICCBased {srgb_id} 0 R]");
+    let mut out: Vec<(usize, Vec<u8>)> = Vec::new();
+    let mut resource_dicts: Vec<usize> = Vec::new();
+    let mut colour_spaces: Vec<usize> = Vec::new();
+    let index = object_index(pdf);
+    let object = |id: usize| index.get(&id).cloned();
+    for id in 1..size {
+        let Some(r) = object(id) else { continue };
+        let body = &pdf[r];
+        let dict_end = find(body, b"stream", 0).unwrap_or(body.len());
+        let dict = &body[..dict_end];
+        let is_page = find(dict, b"/Type/Page", 0).is_some_and(|i| dict.get(i + 10) != Some(&b's'));
+        let is_form = find(dict, b"/Subtype/Form", 0).is_some();
+        if !(is_page || is_form) {
+            continue;
+        }
+        let Some(at) = find(dict, b"/Resources", 0) else { continue };
+        let after = at + b"/Resources".len();
+        let rest = &dict[after..];
+        let skip = rest.iter().take_while(|c| c.is_ascii_whitespace()).count();
+        if rest[skip..].starts_with(b"<<") {
+            let open = after + skip;
+            let Some(close) = matching(dict, open) else { continue };
+            let Some((new_res, indirect)) = with_default_rgb(&dict[open..close], &entry) else { continue };
+            if let Some(cs) = indirect {
+                colour_spaces.push(cs);
+                continue;
+            }
+            let mut b = dict[..open].to_vec();
+            b.extend_from_slice(&new_res);
+            b.extend_from_slice(&body[close..]);
+            out.push((id, trim_body(b)));
+        } else if let Some(n) = reference(&rest[skip..]) {
+            resource_dicts.push(n);
+        }
+    }
+    resource_dicts.sort_unstable();
+    resource_dicts.dedup();
+    for n in resource_dicts {
+        let Some(r) = object(n) else { continue };
+        let body = &pdf[r];
+        let start = body.iter().take_while(|c| c.is_ascii_whitespace()).count();
+        let Some(close) = matching(body, start) else { continue };
+        match with_default_rgb(&body[start..close], &entry) {
+            Some((new_res, None)) => {
+                let mut b = new_res;
+                b.extend_from_slice(&body[close..]);
+                out.push((n, trim_body(b)));
+            }
+            Some((_, Some(cs))) => colour_spaces.push(cs),
+            None => {}
+        }
+    }
+    // Colour-space dictionaries that are objects of their own get the entry inside.
+    colour_spaces.sort_unstable();
+    colour_spaces.dedup();
+    for n in colour_spaces {
+        let Some(r) = object(n) else { continue };
+        let body = &pdf[r];
+        let start = body.iter().take_while(|c| c.is_ascii_whitespace()).count();
+        if !body[start..].starts_with(b"<<") || find(body, b"/DefaultRGB", 0).is_some() {
+            continue;
+        }
+        let mut b = body[..start + 2].to_vec();
+        b.extend_from_slice(entry.as_bytes());
+        b.extend_from_slice(&body[start + 2..]);
+        out.push((n, trim_body(b)));
+    }
+    out
+}
+
+/// Every object's body range (`N 0 obj` … `endobj`), found in one pass; a later copy of an
+/// object (an incremental update) wins, as in [`object`].
+fn object_index(pdf: &[u8]) -> std::collections::HashMap<usize, std::ops::Range<usize>> {
+    let mut map = std::collections::HashMap::new();
+    let mut i = 0;
+    while let Some(at) = find(pdf, b" 0 obj", i) {
+        let mut d = at;
+        while d > 0 && pdf[d - 1].is_ascii_digit() {
+            d -= 1;
+        }
+        let header_ok = d < at && (d == 0 || matches!(pdf[d - 1], b'\n' | b'\r'));
+        let start = at + b" 0 obj".len();
+        if header_ok
+            && let Some(id) = std::str::from_utf8(&pdf[d..at]).ok().and_then(|n| n.parse::<usize>().ok())
+            && let Some(end) = find(pdf, b"endobj", start)
+        {
+            map.insert(id, start..end);
+            i = end;
+            continue;
+        }
+        i = start;
+    }
+    map
+}
+
+/// A resources dictionary (`<<…>>`, delimiters included) with `entry` in its `/ColorSpace`
+/// dictionary; or the object number of an indirect `/ColorSpace` dictionary to update instead.
+/// `None` when it already has a `DefaultRGB`.
+fn with_default_rgb(res: &[u8], entry: &str) -> Option<(Vec<u8>, Option<usize>)> {
+    if find(res, b"/DefaultRGB", 0).is_some() {
+        return None;
+    }
+    let Some(at) = find(res, b"/ColorSpace", 0) else {
+        let mut b = res[..2].to_vec();
+        b.extend_from_slice(format!("/ColorSpace<<{entry}>>").as_bytes());
+        b.extend_from_slice(&res[2..]);
+        return Some((b, None));
+    };
+    let after = at + b"/ColorSpace".len();
+    let skip = res[after..].iter().take_while(|c| c.is_ascii_whitespace()).count();
+    let open = after + skip;
+    if res[open..].starts_with(b"<<") {
+        let mut b = res[..open + 2].to_vec();
+        b.extend_from_slice(entry.as_bytes());
+        b.extend_from_slice(&res[open + 2..]);
+        Some((b, None))
+    } else {
+        reference(&res[open..]).map(|n| (res.to_vec(), Some(n)))
+    }
+}
+
+/// `N 0 R` at the start of `s`.
+fn reference(s: &[u8]) -> Option<usize> {
+    let text = std::str::from_utf8(s.get(..s.len().min(32))?).ok().or_else(|| std::str::from_utf8(&s[..s.len().min(16)]).ok())?;
+    let mut parts = text.split_ascii_whitespace();
+    let n = parts.next()?.parse().ok()?;
+    (parts.next()? == "0" && parts.next()?.starts_with('R')).then_some(n)
+}
+
+/// The index just past the `>>` that closes the `<<` at `open`.
+fn matching(s: &[u8], open: usize) -> Option<usize> {
+    let mut depth = 0usize;
+    let mut i = open;
+    while i + 1 < s.len() {
+        match (s[i], s[i + 1]) {
+            (b'<', b'<') => {
+                depth += 1;
+                i += 2;
+            }
+            (b'>', b'>') => {
+                depth = depth.checked_sub(1)?;
+                i += 2;
+                if depth == 0 {
+                    return Some(i);
+                }
+            }
+            (b'(', _) => {
+                // A literal string: skip it (with escapes and nested parentheses).
+                let mut nest = 0usize;
+                while i < s.len() {
+                    match s[i] {
+                        b'\\' => i += 1,
+                        b'(' => nest += 1,
+                        b')' => {
+                            nest -= 1;
+                            if nest == 0 {
+                                break;
+                            }
+                        }
+                        _ => {}
+                    }
+                    i += 1;
+                }
+                i += 1;
+            }
+            _ => i += 1,
+        }
+    }
+    None
+}
+
+/// An object body without its leading line break (`put` adds its own).
+fn trim_body(mut b: Vec<u8>) -> Vec<u8> {
+    let lead = b.iter().take_while(|c| **c == b'\n' || **c == b'\r').count();
+    b.drain(..lead);
+    while b.last().is_some_and(|c| *c == b'\n' || *c == b'\r') {
+        b.pop();
+    }
+    b
 }
 
 /// krilla gives every transparency group it writes (placed PDF pages, opacity, isolated
@@ -610,9 +808,13 @@ mod tests {
         place(&mut d, "photo.pdf", pdf_with_image(photo), (100.0, 50.0), (72.0, 72.0));
         let r = x4(&d);
         assert_eq!(image_spaces(&r.bytes), ["DeviceRGB"]);
-        let rgb: Vec<&String> = r.warnings.iter().filter(|w| w.contains("RGB")).collect();
-        assert_eq!(rgb.len(), 1, "{:?}", r.warnings);
-        assert!(rgb[0].starts_with("PDF/X-4: an RGB image (object ") && rgb[0].contains("4 × 2 px) on page 1:"), "{}", rgb[0]);
+        // Oracle: the exporter's DefaultRGB (sRGB) colour-manages it.
+        assert!(!r.warnings.iter().any(|w| w.contains("RGB")), "{:?}", r.warnings);
+        // Without it, the check reports the image with its object and size.
+        let bare = strip_default_rgb(&r.bytes);
+        let rgb: Vec<String> = check_pdfx4(&bare).into_iter().filter(|w| w.contains("RGB")).collect();
+        assert_eq!(rgb.len(), 1, "{rgb:?}");
+        assert!(rgb[0].starts_with("an RGB image (object ") && rgb[0].contains("4 × 2 px) on page 1:"), "{}", rgb[0]);
         // Without a PDF/X output intent there is nothing to check RGB against.
         let plain = export_pdf_with_report(&d, &Cache::new(), &PdfOptions::default()).unwrap();
         assert!(!check_pdfx4(&plain.bytes).iter().any(|i| i.contains("RGB")));
@@ -632,14 +834,32 @@ mod tests {
         assert!(r.warnings.is_empty(), "{:?}", r.warnings);
     }
 
-    /// RGB swatches paint in DeviceRGB.
+    /// RGB swatches paint in DeviceRGB, colour-managed by the pages' DefaultRGB (sRGB); without
+    /// it they would be reported.
     #[test]
-    fn device_rgb_fills_are_flagged() {
+    fn device_rgb_fills_are_colour_managed() {
         let mut d = Document::new(&NewDocument { pages: 2, ..NewDocument::default() });
         d.swatches.push(Swatch::color("Brand Red", Color::rgb(0.9, 0.1, 0.1)));
         add_box(&mut d, Rect::new(36.0, 400.0, 136.0, 500.0), "Brand Red");
         let r = x4(&d);
-        assert_eq!(r.warnings, ["PDF/X-4: RGB fills or strokes on page 1: under a CMYK output intent RGB needs an ICC profile"]);
+        assert!(r.warnings.is_empty(), "{:?}", r.warnings);
+        assert_eq!(check_pdfx4(&strip_default_rgb(&r.bytes)), ["RGB fills or strokes on page 1: under a CMYK output intent RGB needs an ICC profile"]);
+        // Every page's resources name it, once.
+        let text = String::from_utf8_lossy(&r.bytes);
+        assert!(text.matches("/DefaultRGB[/ICCBased").count() >= 2, "both pages");
+    }
+
+    /// The same file with its DefaultRGB entries renamed away (same length), to check what the
+    /// check reports without them.
+    fn strip_default_rgb(pdf: &[u8]) -> Vec<u8> {
+        let mut out = pdf.to_vec();
+        let needle = b"/DefaultRGB";
+        let mut i = 0;
+        while let Some(at) = crate::transitions::find(&out, needle, i) {
+            out[at + 1..at + needle.len()].copy_from_slice(b"NotDefault");
+            i = at + needle.len();
+        }
+        out
     }
 
     /// A minimal PDF with a CMYK (N 4) PDF/X output intent and one page with `entries` (its

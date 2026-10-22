@@ -62,9 +62,11 @@ fn mixed_gradient_export_survives_in_subprocess() {
                 let archival_rgb = standard == Standard::PdfA2b && !colors.iter().any(|c| matches!(c, Color::Gray { .. }));
                 assert_eq!(conversion_warnings(&report.warnings), usize::from(!archival_rgb), "{standard:?}: {:?}", report.warnings);
                 if standard == Standard::PdfX4 {
+                    // Oracle: the converted RGB is colour-managed by the pages' DefaultRGB (sRGB),
+                    // so PDF/X-4 has nothing left to report; the conversion warning above stays.
                     assert!(
-                        report.warnings.iter().any(|w| w.starts_with("PDF/X-4:") && w.contains("RGB")),
-                        "RGB conformance warning must survive: {:?}",
+                        !report.warnings.iter().any(|w| w.starts_with("PDF/X-4:") && w.contains("RGB")),
+                        "no RGB conformance issue under DefaultRGB: {:?}",
                         report.warnings
                     );
                 }

@@ -39,13 +39,11 @@ Le guide suit la marque à travers ce que la mise en page sait déjà faire :
   sa propre variable) et une valeur vide s'affiche « — ».
 - CMJN, Pantone et RAL sont ceux saisis dans le Brand Kit (avec leur profil ICC), jamais calculés.
   Les nuances sont en RVB (valeur HEX).
-- **PDF/X-4 (impression)** : le contrôle intégré (`oracle-guide-cli validate-pdf`) refuse aujourd'hui
-  un guide qui contient des logos SVG ou des nuances RVB : l'exporteur écrit ces couleurs
-  vectorielles en DeviceRGB, interdit sous une intention de sortie CMJN (les images, elles, reçoivent
-  un profil sRGB). L'export le signale par un avertissement. Corriger demande de toucher à
-  l'exporteur (krilla, embarqué dans craft-libs) : `DefaultRGB` par page ou couleurs ICC. Activer
-  `no_device_cs` partout a été essayé et écarté (il convertit aussi le gris et casse 5 tests). Un
-  PDF écran (sans norme) n'est pas concerné ; aucun contrôle PDF/X externe n'a été fait.
+- **PDF/X-4 (impression)** : l'export ajoute à chaque page un espace `DefaultRGB` (profil sRGB) :
+  les couleurs vectorielles RVB (logos SVG, nuances RVB) et les images non étiquetées deviennent
+  gérées sous l'intention de sortie CMJN ; le gris et le CMJN restent en valeurs d'appareil. Le
+  contrôle intégré (`oracle-guide-cli validate-pdf`) passe sur le guide de démo. Aucun contrôle
+  externe (preflight d'un imprimeur, Acrobat) n'a été fait.
 
 ## Tests
 
