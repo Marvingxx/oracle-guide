@@ -38,7 +38,14 @@ Le guide suit la marque à travers ce que la mise en page sait déjà faire :
 - Une variable ne se coupe jamais en fin de ligne : les valeurs restent courtes (le profil CMJN a
   sa propre variable) et une valeur vide s'affiche « — ».
 - CMJN, Pantone et RAL sont ceux saisis dans le Brand Kit (avec leur profil ICC), jamais calculés.
-  Les nuances sont en RVB (valeur HEX) ; l'export PDF/X n'est pas validé par un contrôle externe.
+  Les nuances sont en RVB (valeur HEX).
+- **PDF/X-4 (impression)** : le contrôle intégré (`oracle-guide-cli validate-pdf`) refuse aujourd'hui
+  un guide qui contient des logos SVG ou des nuances RVB : l'exporteur écrit ces couleurs
+  vectorielles en DeviceRGB, interdit sous une intention de sortie CMJN (les images, elles, reçoivent
+  un profil sRGB). L'export le signale par un avertissement. Corriger demande de toucher à
+  l'exporteur (krilla, embarqué dans craft-libs) : `DefaultRGB` par page ou couleurs ICC. Activer
+  `no_device_cs` partout a été essayé et écarté (il convertit aussi le gris et casse 5 tests). Un
+  PDF écran (sans norme) n'est pas concerné ; aucun contrôle PDF/X externe n'a été fait.
 
 ## Tests
 
