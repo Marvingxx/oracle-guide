@@ -36,6 +36,8 @@ unicode-segmentation = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 craft-atomic = { workspace = true }
+# Documents of the other Oracle apps, drawn by them (io::read_graphic).
+oracle-suite-link = { path = "../../../oracle-library/link" }
 tempfile = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]

@@ -26,6 +26,11 @@ egui = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 log = { workspace = true }
+oracle-guide-format = { workspace = true }
+
+# The Oracle Library window (Window › Oracle Library), shared by the Oracle apps.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+oracle-library-ui = { path = "../../../oracle-library/ui" }
 
 [dev-dependencies]
 tempfile = { workspace = true }

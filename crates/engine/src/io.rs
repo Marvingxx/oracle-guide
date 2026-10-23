@@ -177,3 +177,44 @@ pub fn read_dir(path: impl AsRef<Path>) -> std::io::Result<std::fs::ReadDir> {
     crate::file_access::check_read(path).map_err(|e| std::io::Error::new(std::io::ErrorKind::PermissionDenied, e))?;
     std::fs::read_dir(path)
 }
+
+/// Whether `path` is a document another Oracle app draws for this one (an `.oracle-vector` logo, a
+/// `.pcraft` image). A Brand Guide's own `.oracle-guide` isn't: it is placed as a page of objects.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn is_oracle_drawing(path: &Path) -> bool {
+    oracle_suite_link::oracle_format(path).is_some_and(|f| f.app != oracle_suite_link::App::Guide)
+}
+
+/// What another Oracle app's document is placed as: SVG when it draws as SVG (it stays vector),
+/// else PNG.
+#[cfg(not(target_arch = "wasm32"))]
+fn drawing_kind(path: &Path) -> oracle_suite_link::Preview {
+    use oracle_suite_link::Preview;
+    match oracle_suite_link::oracle_format(path) {
+        Some(f) if f.can(Preview::Svg) => Preview::Svg,
+        _ => Preview::Png,
+    }
+}
+
+/// The bytes a placed graphic takes from `path`: the file's, or for another Oracle app's document
+/// the drawing that app makes of it (Oracle Vector's SVG), so it places without an export.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn read_graphic(path: impl AsRef<Path>) -> Result<Vec<u8>, String> {
+    let path = path.as_ref();
+    if !is_oracle_drawing(path) {
+        return read_file(path);
+    }
+    crate::file_access::check_read(path)?;
+    let drawn = oracle_suite_link::render(path, drawing_kind(path))?;
+    std::fs::read(&drawn.path).map_err(|e| format!("{}: {e}", drawn.path.display()))
+}
+
+/// For another Oracle app's document: the drawing of its current version, if it was made already
+/// (nothing is run). `None` for other files, and when the current version wasn't drawn yet.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn current_drawing(path: &Path) -> Option<Vec<u8>> {
+    if !is_oracle_drawing(path) || crate::file_access::check_read(path).is_err() {
+        return None;
+    }
+    std::fs::read(oracle_suite_link::cached(path, drawing_kind(path))?).ok()
+}

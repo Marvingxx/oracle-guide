@@ -168,6 +168,14 @@ pub fn status(a: &oracle_guide_doc::Asset, document: Option<&Path>) -> &'static 
         if !crate::io::is_file(&path) {
             return "missing";
         }
+        // Another Oracle app's document: current while the placed copy is the drawing of the file's
+        // current version. A new save has no drawing yet, so it reads as modified until updated.
+        if crate::io::is_oracle_drawing(&path) {
+            return match crate::io::current_drawing(&path) {
+                Some(drawn) if drawn == *a.data => "ok",
+                _ => "modified",
+            };
+        }
         match crate::io::metadata(&path) {
             Err(_) => "missing",
             Ok(m) if m.len() as usize != a.data.len() => "modified",
@@ -397,7 +405,7 @@ fn reimport(d: &mut Document, sid: StoryId, path: &str, bytes: &[u8], before: Fi
 #[cfg(not(target_arch = "wasm32"))]
 fn reload(path: impl AsRef<Path>) -> Result<(Vec<u8>, (u32, u32))> {
     let path = path.as_ref();
-    let b = crate::io::read_file(path).map_err(EngineError::Other)?;
+    let b = crate::io::read_graphic(path).map_err(EngineError::Other)?;
     if oracle_guide_render::is_pdf(&b) {
         oracle_guide_render::check_pdf_input_size(b.len()).map_err(|e| bad("links", format!("{}: {e}", path.display())))?;
     }
@@ -1506,5 +1514,54 @@ mod text_link_read_tests {
         assert!(read(&big).unwrap_err().contains("larger than"));
         assert!(!super::checkable_size(MAX_TEXT_LINK_BYTES as usize + 1), "placing it doesn't link it");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+/// Documents of the other Oracle apps, placed linked (an `.oracle-vector` logo drawn by Oracle
+/// Vector), when this suite's Oracle Vector is there to draw them.
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg(test)]
+mod oracle_tests {
+    use super::*;
+
+    /// Oracle Vector saving `svg`'s artwork as `doc` (a real save: new contents, new time).
+    fn save_in_vector(svg: &str, doc: &Path) -> Option<()> {
+        let cli = oracle_suite_link::App::Vector.cli()?;
+        let src = doc.with_extension("svg");
+        std::fs::write(&src, svg).unwrap();
+        assert!(std::process::Command::new(cli).arg("convert").arg(&src).arg(doc).status().unwrap().success());
+        Some(())
+    }
+
+    fn rect(width: u32, color: &str) -> String {
+        format!(r#"<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="20"><rect width="{width}" height="20" fill="{color}"/></svg>"#)
+    }
+
+    #[test]
+    fn a_vector_logo_places_as_svg_and_its_link_follows_new_saves() {
+        let dir = std::env::temp_dir().join(format!("oracle-guide-ov-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let logo = dir.join("logo.oracle-vector");
+        if save_in_vector(&rect(40, "#d31c3b"), &logo).is_none() {
+            return;
+        }
+        let mut s = Session::new();
+        s.execute("file.new", &json!({})).unwrap();
+        s.execute("file.place", &json!({"path": logo.to_string_lossy(), "x": 72, "y": 72})).unwrap();
+        let rows = s.execute("links.list", &json!({})).unwrap();
+        let row = &rows.as_array().unwrap()[0];
+        assert_eq!((row["name"].as_str(), row["status"].as_str()), (Some("logo.oracle-vector"), Some("ok")), "{row}");
+        let asset = s.doc().unwrap().doc.assets.values().next().unwrap().clone();
+        assert!(std::str::from_utf8(&asset.data).unwrap().contains("<svg"), "placed as Oracle Vector's SVG: it stays vector");
+        // Saved again in Oracle Vector, twice as wide: modified, then updated.
+        std::thread::sleep(std::time::Duration::from_millis(30));
+        save_in_vector(&rect(80, "#1c3bd3"), &logo).unwrap();
+        assert_eq!(s.execute("links.list", &json!({})).unwrap()[0]["status"], "modified");
+        assert_eq!(s.execute("links.update", &json!({})).unwrap()["updated"], 1);
+        assert_eq!(s.execute("links.list", &json!({})).unwrap()[0]["status"], "ok");
+        let updated = s.doc().unwrap().doc.assets.values().next().unwrap().clone();
+        assert_eq!(updated.link, asset.link, "still linked to the .oracle-vector");
+        assert!(std::str::from_utf8(&updated.data).unwrap().contains("1c3bd3") || updated.data != asset.data);
     }
 }

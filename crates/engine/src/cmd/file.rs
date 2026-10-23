@@ -593,8 +593,10 @@ fn file_place(s: &mut Session, p: &Value) -> Result<Value> {
         (base64_decode(b), str_param(p, "name").unwrap_or("image").to_string(), None)
     } else if let Some(path) = str_param(p, "path") {
         before = super::datamerge::fingerprint_from_path(path);
+        // Another Oracle app's document (an `.oracle-vector` logo) comes in as the drawing its app
+        // makes of it; the link stays on the document itself.
         #[cfg(not(target_arch = "wasm32"))]
-        let b = crate::io::read_file(path).map_err(EngineError::Other)?;
+        let b = crate::io::read_graphic(path).map_err(EngineError::Other)?;
         #[cfg(target_arch = "wasm32")]
         let b: Vec<u8> = vec![];
         let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| path.into());

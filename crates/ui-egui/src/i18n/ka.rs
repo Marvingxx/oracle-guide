@@ -129,6 +129,8 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Properties", "თვისებები"),
     ("Layers", "შრეები"),
     ("Links", "ბმულები"),
+    ("Oracle Library", "Oracle-ის ბიბლიოთეკა"),
+    ("Add to Oracle Library", "Oracle-ის ბიბლიოთეკაში დამატება"),
     ("Swatches", "ფერის ნიმუშები"),
     ("Color", "ფერი"),
     ("Stroke", "კონტური"),

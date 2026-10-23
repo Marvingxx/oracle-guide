@@ -7,6 +7,10 @@
 #![forbid(unsafe_code)]
 
 pub mod about;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod library_send;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod link_follow;
 pub mod canvas;
 pub mod chrome;
 pub mod control;
@@ -609,6 +613,12 @@ pub struct DesignApp {
     last_time: f64,
     /// When recovery data was last written (seconds, egui time).
     pub last_recovery: f64,
+    /// Placed graphics following their files (Oracle Edit and Vector saves show by themselves).
+    #[cfg(not(target_arch = "wasm32"))]
+    pub link_follow: link_follow::LinkFollow,
+    /// The Oracle Library window (Window › Oracle Library).
+    #[cfg(not(target_arch = "wasm32"))]
+    pub oracle_library: oracle_library_ui::InAppLibrary,
     /// The egui context (set by the first frame): copied text goes to the system clipboard through it.
     egui_ctx: Option<egui::Context>,
     /// A control-channel request is being handled: commands it runs never read or write the
@@ -694,6 +704,10 @@ impl DesignApp {
             native_shortcuts: Default::default(),
             last_time: 0.0,
             last_recovery: 0.0,
+            #[cfg(not(target_arch = "wasm32"))]
+            link_follow: Default::default(),
+            #[cfg(not(target_arch = "wasm32"))]
+            oracle_library: oracle_library_ui::InAppLibrary::new("oracle-guide"),
             egui_ctx: None,
             in_control: false,
             object_clip_text: None,
@@ -1162,6 +1176,9 @@ impl DesignApp {
             self.restyle = false;
         }
         let now = ctx.input(|i| i.time);
+        // Linked graphics saved by another app (an Oracle Vector logo) update by themselves.
+        #[cfg(not(target_arch = "wasm32"))]
+        link_follow::tick(self, now);
         // Crash recovery: unsaved documents are written to the recovery folder every 30 s.
         #[cfg(not(target_arch = "wasm32"))]
         if self.session.recovery_dir.is_some() && now - self.last_recovery > (self.session.prefs.recovery_minutes * 60.0).max(5.0) {
@@ -1192,6 +1209,8 @@ impl DesignApp {
             menus::shortcuts(self, ctx);
         }
         self.flush_window_commands(ctx);
+        #[cfg(not(target_arch = "wasm32"))]
+        self.oracle_library.ui(ctx, self.ui.language.starts_with("fr"));
         #[cfg(not(target_arch = "wasm32"))]
         {
             let (dropped, pointer) = ctx.input(|i| (i.raw.dropped_files.clone(), i.pointer.hover_pos()));
@@ -1478,6 +1497,13 @@ impl DesignApp {
 
     /// Inject synthetic events (one pointer event per frame), retaining control provenance.
     pub fn raw_input_hook(&mut self, raw: &mut egui::RawInput) {
+        // Files dropped on the Oracle Library window go into the library; assets dragged out of it
+        // arrive as dropped files.
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            self.oracle_library.claim_drops(raw, None);
+            self.oracle_library.inject_drops(raw);
+        }
         let private = !self.control_synthetic.is_empty();
         self.control_input_frame.store(private, std::sync::atomic::Ordering::Relaxed);
         let events = if private { &mut self.control_synthetic } else { &mut self.synthetic };

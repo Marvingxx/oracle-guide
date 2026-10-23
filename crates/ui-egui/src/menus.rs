@@ -20,6 +20,8 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
     ("app.openDialog", "Open…", Some("Cmd+O"), "{}"),
     ("app.openRecent", "Open Recent File", None, "{index} — file.openRecent, with an alert when the file can't be opened"),
     ("app.placeDialog", "Place…", Some("Cmd+D"), "{}"),
+    ("app.addToLibrary", "Add to Oracle Library", None, "{} — the active document, as it is now, into the Oracle Library (its \"Mes créations\" folder)"),
+    ("window.oracleLibrary", "Oracle Library", None, "{} — show or hide the Oracle Library window: the asset folder, searchable, dragged onto the page"),
     ("app.saveDialog", "Save As…", Some("Cmd+Shift+S"), "{}"),
     ("app.save", "Save", Some("Cmd+S"), "{}"),
     ("app.quit", "Quit Oracle Brand Guide", Some("Cmd+Q"), "{} — close the window; each document with unsaved changes asks first"),
@@ -327,6 +329,7 @@ pub const MENUS: &[(&str, &[&str])] = &[
             "cmd:file.revert",
             "-",
             "ui:app.placeDialog",
+            "ui:app.addToLibrary",
             "ui:app.placeWithOptions",
             "-",
             "ui:app.exportPdf",
@@ -869,6 +872,7 @@ pub const MENUS: &[(&str, &[&str])] = &[
             "ui:window.panel|Layers|{\"panel\": \"layers\"}",
             "ui:window.panel|Links|{\"panel\": \"links\"}",
             "ui:window.panel|Brand|{\"panel\": \"brand\"}",
+            "ui:window.oracleLibrary",
             ">Object & Layout",
             "ui:window.panel|Align|{\"panel\": \"align\"}",
             "ui:window.panel|Flex Layout|{\"panel\": \"flexLayout\"}",
@@ -992,6 +996,10 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
         Ok(json!(*b))
     };
     Some(match id {
+        #[cfg(not(target_arch = "wasm32"))]
+        "window.oracleLibrary" => flag(&mut app.oracle_library.open),
+        #[cfg(not(target_arch = "wasm32"))]
+        "app.addToLibrary" => crate::library_send::add_active(app).map(|()| Value::Null),
         "window.minimize" => {
             app.pending_window_commands.push(egui::ViewportCommand::Minimized(true));
             Ok(Value::Null)
