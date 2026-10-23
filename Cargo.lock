@@ -3309,6 +3309,7 @@ dependencies = [
  "oracle-suite-link",
  "resvg 0.45.1",
  "rfd",
+ "winsafe",
 ]
 
 [[package]]

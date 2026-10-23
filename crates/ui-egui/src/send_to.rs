@@ -33,9 +33,16 @@ pub fn send_active(app: &mut DesignApp, target: App) -> Result<Value, String> {
 }
 
 /// Takes what the other Oracle apps sent: each file placed, linked, in the active document (opened
-/// as a document when none is open, or when asked to open it). Looks at most every second, on frames
-/// the app draws anyway (it never wakes itself for it).
+/// as a document when none is open, or when asked to open it). Looks at most every second; the
+/// watch wakes an idle app when something waits.
 pub fn poll(app: &mut DesignApp, ctx: &egui::Context, now: f64) {
+    // Once: a background thread keeps this app marked as running, and wakes it when something is sent.
+    let watching = egui::Id::new("oracle-suite-inbox-watch");
+    if !ctx.data(|d| d.get_temp::<bool>(watching).unwrap_or(false)) {
+        ctx.data_mut(|d| d.insert_temp(watching, true));
+        let waker = ctx.clone();
+        inbox::watch(App::Guide, move || waker.request_repaint());
+    }
     if now - app.inbox_last < EVERY {
         return;
     }

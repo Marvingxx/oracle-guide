@@ -714,6 +714,7 @@ const TABLE: &[(&str, [&str; 5])] = &[
     ("Links", ["Verknüpfungen", "Liens", "Vínculos", "リンク", "链接"]),
     ("Edit Original", ["Original bearbeiten", "Modifier l'original", "Editar original", "元データを編集", "编辑原稿"]),
     ("Send to Oracle Edit", ["An Oracle Edit senden", "Envoyer vers Oracle Edit", "Enviar a Oracle Edit", "Oracle Edit に送る", "发送到 Oracle Edit"]),
+    ("Send to Oracle Motion", ["An Oracle Motion senden", "Envoyer vers Oracle Motion", "Enviar a Oracle Motion", "Oracle Motion に送る", "发送到 Oracle Motion"]),
     ("Sent to {app}", ["An {app} gesendet", "Envoyé vers {app}", "Enviado a {app}", "{app} に送りました", "已发送到 {app}"]),
     (
         "Opened in {app}: save it there to update it here",
