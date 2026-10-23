@@ -10,6 +10,8 @@ pub mod about;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod library_send;
 #[cfg(not(target_arch = "wasm32"))]
+pub mod send_to;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod link_follow;
 pub mod canvas;
 pub mod chrome;
@@ -619,6 +621,9 @@ pub struct DesignApp {
     /// The Oracle Library window (Window › Oracle Library).
     #[cfg(not(target_arch = "wasm32"))]
     pub oracle_library: oracle_library_ui::InAppLibrary,
+    /// When the Oracle inbox (Send to from the other Oracle apps) was last looked at.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub inbox_last: f64,
     /// The egui context (set by the first frame): copied text goes to the system clipboard through it.
     egui_ctx: Option<egui::Context>,
     /// A control-channel request is being handled: commands it runs never read or write the
@@ -708,6 +713,8 @@ impl DesignApp {
             link_follow: Default::default(),
             #[cfg(not(target_arch = "wasm32"))]
             oracle_library: oracle_library_ui::InAppLibrary::new("oracle-guide"),
+            #[cfg(not(target_arch = "wasm32"))]
+            inbox_last: f64::NEG_INFINITY,
             egui_ctx: None,
             in_control: false,
             object_clip_text: None,
@@ -1179,6 +1186,9 @@ impl DesignApp {
         // Linked graphics saved by another app (an Oracle Vector logo) update by themselves.
         #[cfg(not(target_arch = "wasm32"))]
         link_follow::tick(self, now);
+        // What the other Oracle apps sent (Send to): placed, linked.
+        #[cfg(not(target_arch = "wasm32"))]
+        send_to::poll(self, ctx, now);
         // Crash recovery: unsaved documents are written to the recovery folder every 30 s.
         #[cfg(not(target_arch = "wasm32"))]
         if self.session.recovery_dir.is_some() && now - self.last_recovery > (self.session.prefs.recovery_minutes * 60.0).max(5.0) {

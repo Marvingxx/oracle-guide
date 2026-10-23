@@ -2477,6 +2477,26 @@ pub fn links_panel(app: &mut DesignApp, ui: &mut egui::Ui) {
         if ui.button(crate::rtl::widget(ui, crate::i18n::tr(&app.ui.language, "Go To"))).clicked() {
             let _ = app.run("links.goTo", target.clone());
         }
+        // Another Oracle app's document (an Oracle Vector logo): opened in its app; saving it there
+        // updates it here (link_follow).
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(file) = rows
+            .iter()
+            .find(|r| r["asset"].as_u64() == Some(aid))
+            .and_then(|r| r["path"].as_str())
+            .filter(|p| oracle_suite_link::oracle_format(std::path::Path::new(p)).is_some())
+            .map(str::to_string)
+            && ui.button(crate::rtl::widget(ui, crate::i18n::tr(&app.ui.language, "Edit Original"))).clicked()
+        {
+            let document = app.session.active().and_then(|d| d.path.clone());
+            let opened = oracle_guide_engine::io::document_path(&file, document.as_deref().map(std::path::Path::new))
+                .map_err(|e| e.to_string())
+                .and_then(|path| oracle_suite_link::edit_original(&path));
+            match opened {
+                Ok(owner) => app.status(crate::i18n::tr(&app.ui.language, "Opened in {app}: save it there to update it here").replace("{app}", owner.name())),
+                Err(e) => app.status(e),
+            }
+        }
         let edited = rows.iter().any(|r| r["story"].as_u64() == Some(aid) && r["edited"].as_bool() == Some(true));
         let update = ui.button(crate::rtl::widget(ui, crate::i18n::tr(&app.ui.language, "Update")));
         let update = if edited {

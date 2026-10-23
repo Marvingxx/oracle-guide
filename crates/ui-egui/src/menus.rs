@@ -20,6 +20,7 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
     ("app.openDialog", "Open…", Some("Cmd+O"), "{}"),
     ("app.openRecent", "Open Recent File", None, "{index} — file.openRecent, with an alert when the file can't be opened"),
     ("app.placeDialog", "Place…", Some("Cmd+D"), "{}"),
+    ("app.sendToEdit", "Send to Oracle Edit", None, "{} — the guide placed, linked, in Oracle Edit's open document (Oracle Edit is started if needed)"),
     ("app.addToLibrary", "Add to Oracle Library", None, "{} — the active document, as it is now, into the Oracle Library (its \"Mes créations\" folder)"),
     ("window.oracleLibrary", "Oracle Library", None, "{} — show or hide the Oracle Library window: the asset folder, searchable, dragged onto the page"),
     ("app.saveDialog", "Save As…", Some("Cmd+Shift+S"), "{}"),
@@ -330,6 +331,7 @@ pub const MENUS: &[(&str, &[&str])] = &[
             "-",
             "ui:app.placeDialog",
             "ui:app.addToLibrary",
+            "ui:app.sendToEdit",
             "ui:app.placeWithOptions",
             "-",
             "ui:app.exportPdf",
@@ -1000,6 +1002,8 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
         "window.oracleLibrary" => flag(&mut app.oracle_library.open),
         #[cfg(not(target_arch = "wasm32"))]
         "app.addToLibrary" => crate::library_send::add_active(app).map(|()| Value::Null),
+        #[cfg(not(target_arch = "wasm32"))]
+        "app.sendToEdit" => crate::send_to::send_active(app, oracle_suite_link::App::Edit),
         "window.minimize" => {
             app.pending_window_commands.push(egui::ViewportCommand::Minimized(true));
             Ok(Value::Null)
