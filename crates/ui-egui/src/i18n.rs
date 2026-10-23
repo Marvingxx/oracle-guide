@@ -2514,7 +2514,7 @@ const TABLE: &[(&str, [&str; 5])] = &[
     ("Keyboard Increments", ["Keyboard Increments", "Incréments au clavier", "Keyboard Increments", "Keyboard Increments", "键盘增量"]),
     ("Liquid guides", ["Liquid guides", "Repères liquides", "Liquid guides", "Liquid guides", "自适应参考线"]),
     ("Markers", ["Markers", "Marqueurs", "Markers", "Markers", "标记"]),
-    ("More ArtCraft apps", ["More ArtCraft apps", "Autres applications ArtCraft", "More ArtCraft apps", "More ArtCraft apps", "更多 ArtCraft 应用"]),
+    ("More Oracle apps", ["More Oracle apps", "Autres applications Oracle", "More Oracle apps", "More Oracle apps", "更多 Oracle 应用"]),
     ("Nested Line Styles", ["Nested Line Styles", "Styles de ligne imbriqués", "Nested Line Styles", "Nested Line Styles", "嵌套行样式"]),
     ("Nested Styles", ["Nested Styles", "Styles imbriqués", "Nested Styles", "Nested Styles", "嵌套样式"]),
     (

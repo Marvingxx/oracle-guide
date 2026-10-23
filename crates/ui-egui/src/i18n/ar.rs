@@ -1069,7 +1069,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Merge into Active Layer", "دمج في الطبقة النشطة"),
     ("Misspelled word → Correction (one per line):", "كلمة خاطئة ← تصحيح (واحد في كل سطر):"),
     ("Mobile", "جوال"),
-    ("More ArtCraft apps", "المزيد من تطبيقات ArtCraft"),
+    ("More Oracle apps", "المزيد من تطبيقات Oracle"),
     ("Move Selection Here", "نقل التحديد إلى هنا"),
     ("Select; drag to move the selection to another layer", "تحديد؛ اسحب لنقل التحديد إلى طبقة أخرى"),
     ("Move to Color Group", "نقل إلى مجموعة ألوان"),

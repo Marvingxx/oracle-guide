@@ -1,6 +1,6 @@
 //! Help › About Oracle Brand Guide: tabs About · Contributors · Models. About is the splash with the
-//! ArtCraft mark, version, and community links (Discord first and largest), plus the other ArtCraft
-//! apps; Contributors and Models are the compiled-in credits (`crate::credits`).
+//! Oracle mark, version and links, plus the other Oracle apps; Contributors and Models are the
+//! compiled-in credits (`crate::credits`).
 
 use oracle_guide_engine::links;
 use egui::{Color32, Rect, Sense, Stroke, pos2, vec2};
@@ -9,39 +9,45 @@ use serde_json::json;
 use crate::DesignApp;
 use crate::theme::{Tokens, semibold};
 
-/// ArtCraft brand blue (from `docs/brand/artcraft-mark.svg`).
-pub const BRAND: Color32 = Color32::from_rgb(0x4e, 0x7b, 0xfb);
+/// Oracle red (#d31c3b), the mark's colour (`docs/brand/oracle-mark.svg`).
+pub const BRAND: Color32 = Color32::from_rgb(0xd3, 0x1c, 0x3b);
 /// Discord's brand colour, used for the "Join our Discord" buttons (colour only; no Discord artwork).
 pub const DISCORD: Color32 = Color32::from_rgb(0x58, 0x65, 0xf2);
 
-/// The ArtCraft mark outline (viewBox -10 -19.42 136.34 136.34), from `docs/brand/artcraft-mark.svg`.
-const MARK_PATH: &str = "M104.28,49.49L81.55,0h-31.23l-3.17,4.76L14.75,53.63,0,75.85l21.55,21.55,63.79-36.94,16.99,37.04,14.01-21.74-12.06-26.27ZM32.89,65.66l32.42-48.87,10.91,23.77-43.32,25.09Z";
+/// The Oracle mark (viewBox 0 0 66.94 66.94), from `docs/brand/oracle-mark.svg`: a disc with a
+/// four-pointed star cut out of it, drawn over a white disc so the star reads on any background.
+const MARK_PATH: &str = "M33.47,0C14.98,0,0,14.98,0,33.47s14.98,33.47,33.47,33.47,33.47-14.98,33.47-33.47S51.96,0,33.47,0ZM57.55,34.05l-18.72,6.09c-.07.03-.12.08-.14.15l-5.69,17.77c-.07.2-.36.2-.42,0l-5.69-17.91c-.02-.07-.07-.12-.14-.14l-18.65-6.02c-.2-.07-.2-.36.01-.42l18.5-5.76c.07-.02.12-.08.15-.15l5.95-18.7c.06-.2.36-.2.42.01l5.69,18.56c.02.07.08.12.15.14l18.58,5.96c.21.07.21.36,0,.42Z";
+/// The mark's side in its own units.
+const MARK_SIZE: f64 = 66.94;
 
-/// The other ArtCraft apps (app-page slug, name, what it is) — same list as the README.
+/// The other Oracle apps (GitHub repository, name, what it is) — same list as the README.
 pub const SIBLINGS: &[(&str, &str, &str)] = &[
-    ("photocraft", "PhotoCraft", "image editing"),
-    ("vectorcraft", "VectorCraft", "vector illustration"),
-    ("filmcraft", "FilmCraft", "video editing, color and sound"),
-    ("lightcraft", "LightCraft", "photo library and raw development"),
-    ("pdfcraft", "PdfCraft", "reading, organizing and protecting PDFs"),
-    ("effectcraft", "EffectCraft", "motion graphics and visual effects"),
+    ("oracle-edit", "Oracle Edit", "image editing"),
+    ("oracle-vector", "Oracle Vector", "vector illustration"),
+    ("oracle-brand", "Oracle Brand Kit", "brand identities and client deliveries"),
+    ("oracle-brand", "Oracle Mockup Studio", "2D mockups"),
 ];
+
+/// Where the Oracle apps' repositories live.
+pub const ORACLE_GITHUB: &str = "https://github.com/Marvingxx";
 
 /// The About window's tabs, in `UiState::about_tab` order (`help.about {tab}` names them in lowercase).
 pub const ABOUT_TABS: [&str; 3] = ["About", "Contributors", "Models"];
 
-/// Paint the ArtCraft mark into `rect` (square), rasterised once per size and cached.
+/// Paint the Oracle mark into `rect` (square), rasterised once per size and cached.
 pub fn paint_mark(ui: &egui::Ui, rect: Rect, color: Color32) {
+    use oracle_guide_render::vello_cpu::kurbo::Shape as _;
     use oracle_guide_render::vello_cpu::{self, kurbo, peniko};
     let ctx = ui.ctx();
     let ppp = ctx.pixels_per_point();
     let px = ((rect.width().min(rect.height()) * ppp).round() as u32).clamp(8, 1024);
-    let key = egui::Id::new(("artcraft_mark", px, color.to_array()));
+    let key = egui::Id::new(("oracle_mark", px, color.to_array()));
     let tex: Option<egui::TextureHandle> = ctx.data(|d| d.get_temp(key));
     let tex = tex.unwrap_or_else(|| {
         let mut rc = vello_cpu::RenderContext::new_with(px as u16, px as u16, vello_cpu::RenderSettings { num_threads: 0, ..Default::default() });
-        let k = px as f64 / 136.34;
-        rc.set_transform(kurbo::Affine::scale(k) * kurbo::Affine::translate((10.0, 19.42)));
+        rc.set_transform(kurbo::Affine::scale(px as f64 / MARK_SIZE));
+        rc.set_paint(peniko::Color::from_rgba8(255, 255, 255, 255));
+        rc.fill_path(&kurbo::Circle::new((33.47, 33.47), 30.0).to_path(0.1));
         let [r, g, b, a] = color.to_srgba_unmultiplied();
         rc.set_paint(peniko::Color::from_rgba8(r, g, b, a));
         if let Ok(p) = kurbo::BezPath::from_svg(MARK_PATH) {
@@ -52,7 +58,7 @@ pub fn paint_mark(ui: &egui::Ui, rect: Rect, color: Color32) {
         let mut res = vello_cpu::Resources::new();
         rc.render(&mut pm, &mut res);
         let ci = egui::ColorImage::from_rgba_premultiplied([px as usize, px as usize], pm.data_as_u8_slice());
-        let t = crate::widgets::load_texture(ctx, "artcraft_mark", ci, egui::TextureOptions::LINEAR);
+        let t = crate::widgets::load_texture(ctx, "oracle_mark", ci, egui::TextureOptions::LINEAR);
         ctx.data_mut(|d| d.insert_temp(key, t.clone()));
         t
     });
@@ -192,7 +198,7 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
             ui.add_space(6.0);
             ui.label(crate::rtl::widget(
                 ui,
-                egui::RichText::new(crate::i18n::tr(&app.ui.language, "More ArtCraft apps")).font(semibold(12.0)).color(t.text_strong),
+                egui::RichText::new(crate::i18n::tr(&app.ui.language, "More Oracle apps")).font(semibold(12.0)).color(t.text_strong),
             ));
             ui.add_space(4.0);
             ui.horizontal(|ui| {
@@ -203,8 +209,8 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
                     .sum::<f32>()
                     - ui.spacing().item_spacing.x;
                 ui.add_space(((ui.available_width() - w) / 2.0).max(0.0));
-                for (slug, name, what) in SIBLINGS {
-                    let url = format!("{}/apps/{slug}", links::WEBSITE);
+                for (repo, name, what) in SIBLINGS {
+                    let url = format!("{ORACLE_GITHUB}/{repo}");
                     let b = ui
                         .add(egui::Button::new(egui::RichText::new(*name).size(12.0)).corner_radius(10.0))
                         .on_hover_text(format!("{} — {url}", crate::i18n::tr(&app.ui.language, what)));

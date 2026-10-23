@@ -1003,7 +1003,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Keyboard Increments", "Кроки переміщення клавішами"),
     ("Liquid guides", "Напрямні гнучкого макета"),
     ("Markers", "Маркери"),
-    ("More ArtCraft apps", "Інші програми ArtCraft"),
+    ("More Oracle apps", "Інші програми Oracle"),
     ("Nested Line Styles", "Вкладені стилі рядків"),
     ("Nested Styles", "Вкладені стилі"),
     ("No articles: exports follow page order.", "Немає статей: експорт дотримується порядку сторінок."),

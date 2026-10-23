@@ -927,7 +927,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Keyboard Increments", "Schritte per Tastatur"),
     ("Liquid guides", "Flüssige Hilfslinien"),
     ("Markers", "Marken"),
-    ("More ArtCraft apps", "Weitere ArtCraft-Apps"),
+    ("More Oracle apps", "Weitere Oracle-Apps"),
     ("Nested Line Styles", "Verschachtelte Zeilenformate"),
     ("Nested Styles", "Verschachtelte Formate"),
     ("No articles: exports follow page order.", "Keine Artikel: Exporte folgen der Seitenreihenfolge."),

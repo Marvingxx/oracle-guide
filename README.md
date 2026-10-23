@@ -1,15 +1,12 @@
 <p align="center">
-  <a href="https://getartcraft.com/">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/artcraft-logo-white.svg">
-      <img alt="ArtCraft" src="docs/brand/artcraft-logo.svg" width="200">
-    </picture>
-  </a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/oracle-logo-white.svg">
+    <img alt="Oracle" src="docs/brand/oracle-logo.svg" width="200">
+  </picture>
 </p>
 
-
 <p align="center">
-  <img src="assets/app-icon/hicolor/256x256/apps/app.oracle.oracle-guide.png" width="128" height="128" alt="Oracle Brand Guide icon: an engraved cat in a polka-dot scarf on a green tile">
+  <img src="assets/app-icon/hicolor/256x256/apps/app.oracle.oracle-guide.png" width="128" height="128" alt="Oracle Brand Guide icon">
 </p>
 
 <h1 align="center">Oracle Brand Guide</h1>
@@ -30,19 +27,13 @@
   <img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20%2F%20Apache--2.0-4d7a0a?style=flat-square">
   <img alt="Agent-drivable over MCP" src="https://img.shields.io/badge/agents-MCP-7bb51c?style=flat-square">
   <br>
-  <a href="https://sonarcloud.io/project/overview?id=storytold_oracle_guide"><img alt="Scanned by SonarCloud" src="https://img.shields.io/badge/Scanned_by-SonarCloud-4b9fd5?style=flat-square&logo=sonarqubecloud&logoColor=white"></a>
-  <a href="https://coderabbit.ai"><img alt="Reviewed by CodeRabbit" src="https://img.shields.io/coderabbit/prs/github/Marvingxx/oracle-guide?style=flat-square&label=Reviewed%20by%20CodeRabbit&logo=coderabbit"></a>
 </p>
 
 <p align="center">
-  <a href="https://discord.gg/artcraft"><img alt="Join the ArtCraft community on Discord" src="https://img.shields.io/badge/Join%20us%20on%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="40"></a>
+  <a href="https://github.com/Marvingxx/oracle-guide/releases/latest"><b>Download Oracle Brand Guide</b></a> ·
+  <a href="https://github.com/Marvingxx/oracle-suite">Oracle Suite</a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/Marvingxx/oracle-guide"><b>Oracle Brand Guide on getartcraft.com</b></a> ·
-  <a href="https://getartcraft.com/">ArtCraft</a> ·
-  <a href="https://getartcraft.com/apps">All Crafting Apps</a>
-</p>
 
 <br>
 
@@ -51,9 +42,6 @@
   <br><sub><b>Quarterly, Spring Issue</b>: threaded three-column body text, a wrapped pull quote and parent-page folios, all set by Oracle Brand Guide's own paragraph composer.</sub>
 </p>
 
-> [!NOTE]
-> **ArtCraft is a community of artists from all walks of life.** Digital, generative, music,
-> games &mdash; if you make things, you're one of us. **[Come say hi on Discord](https://discord.gg/artcraft).**
 
 <p align="center">
   <a href="#the-sample-magazine">The sample magazine</a> ·
@@ -264,7 +252,7 @@ egui frontend is a separate crate, so the UI can be swapped without touching the
 
 ## Downloads
 
-**New to Oracle Brand Guide?** Download it from the [Oracle Brand Guide page on getartcraft.com](https://github.com/Marvingxx/oracle-guide). That's the easiest way to install it.
+**New to Oracle Brand Guide?** Download it from the [Oracle Brand Guide releases on GitHub](https://github.com/Marvingxx/oracle-guide). That's the easiest way to install it.
 
 **Want a specific build or format?** On GitHub, the [latest release](https://github.com/Marvingxx/oracle-guide/releases/latest) has every build listed below, and [all releases](https://github.com/Marvingxx/oracle-guide/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
 
@@ -324,45 +312,21 @@ emerge --ask media-gfx/oracle-guide-bin
 |---|---|---|
 | Static site | `oracle-guide-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
 
-## The Crafting Apps
+## The Oracle suite
 
-Oracle Brand Guide is one of the **Crafting Apps**: free, open-source creative tools from the
-[ArtCraft](https://getartcraft.com/) team, each written from scratch in Rust and each able to
-stand on its own.
+Oracle Brand Guide is part of **Oracle**, a personal creative suite, free and local:
 
-| | App | What it's for | Code | Learn more |
-|:-:|---|---|---|---|
-| <img src="https://raw.githubusercontent.com/storytold/photocraft/main/assets/app-icon/hicolor/64x64/apps/app.oracle.photocraft.png" alt="" width="32" height="32"> | **PhotoCraft** | Image editing: layers, masks, type and real PSD files | [GitHub](https://github.com/storytold/photocraft) | [Website](https://getartcraft.com/apps/photocraft) |
-| <img src="https://raw.githubusercontent.com/storytold/vectorcraft/main/assets/app-icon/hicolor/64x64/apps/app.oracle.vectorcraft.png" alt="" width="32" height="32"> | **VectorCraft** | Vector illustration | [GitHub](https://github.com/storytold/vectorcraft) | [Website](https://getartcraft.com/apps/vectorcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/filmcraft/main/assets/app-icon/hicolor/64x64/apps/app.oracle.filmcraft.png" alt="" width="32" height="32"> | **FilmCraft** | Video editing, color and sound | [GitHub](https://github.com/storytold/filmcraft) | [Website](https://getartcraft.com/apps/filmcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/lightcraft/main/assets/app-icon/hicolor/64x64/apps/app.oracle.lightcraft.png" alt="" width="32" height="32"> | **LightCraft** | Photo library and raw development | [GitHub](https://github.com/storytold/lightcraft) | [Website](https://getartcraft.com/apps/lightcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/pdfcraft/main/assets/app-icon/hicolor/64x64/apps/app.oracle.pdfcraft.png" alt="" width="32" height="32"> | **PdfCraft** | Reading, organizing and protecting PDFs | [GitHub](https://github.com/storytold/pdfcraft) | [Website](https://getartcraft.com/apps/pdfcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/effectcraft/main/assets/app-icon/hicolor/64x64/apps/app.oracle.effectcraft.png" alt="" width="32" height="32"> | **EffectCraft** | Motion graphics and visual effects | [GitHub](https://github.com/storytold/effectcraft) | [Website](https://getartcraft.com/apps/effectcraft) |
-| <img src="https://raw.githubusercontent.com/Marvingxx/oracle-guide/main/assets/app-icon/hicolor/64x64/apps/app.oracle.oracle-guide.png" alt="" width="32" height="32"> | **Oracle Brand Guide** | **Page layout and publishing · you are here** | [GitHub](https://github.com/Marvingxx/oracle-guide) | [Website](https://github.com/Marvingxx/oracle-guide) |
+| App | What it's for | Code |
+|---|---|---|
+| **Oracle Suite** | Launcher: installs, updates and opens the apps; the shared asset library | [oracle-suite](https://github.com/Marvingxx/oracle-suite) |
+| **Oracle Edit** | Image editing | [oracle-edit](https://github.com/Marvingxx/oracle-edit) |
+| **Oracle Vector** | Vector illustration | [oracle-vector](https://github.com/Marvingxx/oracle-vector) |
+| **Oracle Brand Kit** · **Oracle Mockup Studio** | Brand identities and client deliveries · 2D mockups | [oracle-brand](https://github.com/Marvingxx/oracle-brand) |
+| **Oracle Brand Guide** | Brand guidelines and page layout | [oracle-guide](https://github.com/Marvingxx/oracle-guide) |
 
-And [**ArtCraft**](https://getartcraft.com/) itself, our AI image and video studio for artists who want real control.
-
-<br>
-
-<p align="center">
-  <a href="https://discord.gg/artcraft"><img alt="Join the ArtCraft community on Discord" src="https://img.shields.io/badge/Join%20us%20on%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="40"></a>
-</p>
-
-<h3 align="center">Come make things with us</h3>
-
-<p align="center">
-  Our Discord is where artists of every kind hang out: people who paint, shoot, draw, cut film,
-  set type, and people still figuring out what they like to make. Share what you're working on,
-  ask for help, tell us what's broken, or tell us what you wish these tools could do.
-  Whatever your medium and however long you've been at it, you're welcome here.
-</p>
-
-<p align="center">
-  <a href="https://discord.gg/artcraft"><b>discord.gg/artcraft</b></a> ·
-  <a href="https://getartcraft.com/">getartcraft.com</a> ·
-  <a href="https://getartcraft.com/apps">The Crafting Apps</a> ·
-  <a href="https://github.com/Marvingxx/oracle-guide">Oracle Brand Guide</a>
-</p>
+Oracle Brand Guide started as a fork of [DesignCraft](https://github.com/storytold/designcraft) by the ArtCraft
+team (MIT OR Apache-2.0), taken on 22 October 2026 and developed separately since. It is not
+affiliated with or endorsed by ArtCraft.
 
 ## License and credits
 
@@ -375,14 +339,9 @@ with its author, source and license in [ASSETS.md](ASSETS.md).
 The bundled fonts, and the craft-fonts fonts embedded by release builds, are under the SIL Open
 Font License; all UI icons are drawn in code and are original.
 
-The ArtCraft name, wordmark and logos in [`docs/brand/`](docs/brand/) are trademarks of the
-ArtCraft Team and are not covered by this license. They may be used only unmodified, and only as
-part of this repository and Oracle Brand Guide, under [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt).
-Forks and modified versions must remove them.
+The Oracle name and logo in [`docs/brand/`](docs/brand/) are the project's brand marks and are not
+covered by this license (see [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt)). The
+ArtCraft marks of the original project have been removed, as its brand license asks of forks.
 
 <br>
 
-<p align="center">
-  <a href="https://getartcraft.com/"><img alt="ArtCraft" src="docs/brand/artcraft-mark.svg" width="28"></a><br>
-  <sub>Made by the <a href="https://getartcraft.com/">ArtCraft</a> team and community.</sub>
-</p>

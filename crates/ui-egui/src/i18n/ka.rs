@@ -935,7 +935,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Keyboard Increments", "კლავიატურით ბიჯები"),
     ("Liquid guides", "მოქნილი დამხმარე ხაზები"),
     ("Markers", "მარკერები"),
-    ("More ArtCraft apps", "ArtCraft-ის სხვა აპლიკაციები"),
+    ("More Oracle apps", "Oracle-ის სხვა აპლიკაციები"),
     ("Nested Line Styles", "ხაზის ჩადგმული სტილები"),
     ("Nested Styles", "ჩადგმული სტილები"),
     ("No articles: exports follow page order.", "სტატიები არ არის: ექსპორტი გვერდების რიგს მიჰყვება."),

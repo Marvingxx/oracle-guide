@@ -1118,7 +1118,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Keyboard Increments", "キーボードの移動量"),
     ("Liquid guides", "リキッドガイド"),
     ("Markers", "マーカー"),
-    ("More ArtCraft apps", "他の ArtCraft アプリ"),
+    ("More Oracle apps", "他の Oracle アプリ"),
     ("Nested Line Styles", "入れ子行スタイル"),
     ("Nested Styles", "入れ子スタイル"),
     ("No articles: exports follow page order.", "アーティクルがありません。ページ順に書き出します。"),
