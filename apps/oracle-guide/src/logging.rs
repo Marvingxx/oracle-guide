@@ -10,7 +10,7 @@
 //! Levels: `info` for Oracle Brand Guide's own crates, `warn` for everything else (wgpu and naga are
 //! chatty). `RUST_LOG` replaces that with env_logger-style directives: `debug`,
 //! `warn,oracle_guide_render=trace`, `wgpu_core=info`. A directive ending in `*` matches every
-//! target that starts with it (`oracle-guide*=debug`).
+//! target that starts with it (`oracle_guide*=debug`).
 //!
 //! Records logged before the settings directory is known are kept (up to [`MAX_PENDING`]) and
 //! written once the file is attached. Writing never panics: a file that can't be created or
@@ -33,7 +33,7 @@ pub const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 /// Records kept in memory until the log file is attached.
 pub const MAX_PENDING: usize = 512;
 /// The built-in filter when `RUST_LOG` is unset or empty.
-pub const DEFAULT_FILTER: &str = "warn,oracle-guide*=info";
+pub const DEFAULT_FILTER: &str = "warn,oracle_guide*=info";
 
 /// Per-target level filter parsed from env_logger-style directives.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -260,7 +260,7 @@ mod tests {
     #[test]
     fn the_default_filter_shows_oracle_guide_info_and_other_crates_warnings() {
         let f = Filter::parse(DEFAULT_FILTER);
-        assert_eq!(f.level_for("oracle-guide"), LevelFilter::Info);
+        assert_eq!(f.level_for("oracle_guide"), LevelFilter::Info);
         assert_eq!(f.level_for("oracle_guide::control_server"), LevelFilter::Info);
         assert_eq!(f.level_for("oracle_guide_render::tile"), LevelFilter::Info);
         assert_eq!(f.level_for("wgpu_core::device"), LevelFilter::Warn);
@@ -285,12 +285,12 @@ mod tests {
 
     #[test]
     fn hostile_specs_never_panic_and_fall_back_sensibly() {
-        for spec in ["", ",,,", "=", "=debug", "oracle-guide=", "nonsense=loud", "🦀=info", "*", "a=b=c", "warn,,oracle-guide=DEBUG"] {
+        for spec in ["", ",,,", "=", "=debug", "oracle_guide=", "nonsense=loud", "🦀=info", "*", "a=b=c", "warn,,oracle_guide=DEBUG"] {
             let f = Filter::parse(spec);
-            let _ = f.level_for("oracle-guide");
+            let _ = f.level_for("oracle_guide");
             let _ = f.max();
         }
-        assert_eq!(Filter::parse("warn,,oracle-guide=DEBUG").level_for("oracle-guide"), LevelFilter::Debug);
+        assert_eq!(Filter::parse("warn,,oracle_guide=DEBUG").level_for("oracle_guide"), LevelFilter::Debug);
         assert_eq!(Filter::parse("nonsense=loud").level_for("nonsense"), LevelFilter::Error);
     }
 
@@ -417,7 +417,7 @@ mod tests {
         let path = logger.attach_dir(&dir).expect("attach");
         assert_eq!(path, dir.join(LOG_FILE));
         record(log::Level::Warn, "wgpu_hal::vulkan", "a real warning");
-        record(log::Level::Debug, "oracle-guide", "below info");
+        record(log::Level::Debug, "oracle_guide", "below info");
         let text = read(&path);
         assert!(text.contains(" INFO  [") && text.contains("oracle_guide::prefs: settings directory\n"), "{text}");
         assert!(text.contains("wgpu_hal::vulkan: a real warning\n"), "{text}");
