@@ -1,5 +1,5 @@
 //! Ukrainian interface translations; publishing terms are reviewed in context.
-//! Common phrases are adapted from the MIT OR Apache-2.0 ArtCraft sibling catalogs
+//! Common phrases are adapted from the MIT OR Apache-2.0 sibling catalogs
 //! (VectorCraft, PhotoCraft, WordCraft and DeckCraft); see ASSETS.md for pinned sources.
 pub(super) const TABLE: &[(&str, &str)] = &[
     ("Brand", "Бренд"),
@@ -566,8 +566,8 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Sample Color (Eyedropper)", "Узяти колір (піпетка)"),
     ("Apply Condition", "Застосувати умову"),
     ("Apply Parent to Pages…", "Застосувати шаблон до сторінок…"),
-    ("ArtCraft App Page…", "Сторінка програми ArtCraft…"),
-    ("ArtCraft Website…", "Вебсайт ArtCraft…"),
+    ("Oracle App Page…", "Сторінка програми Oracle…"),
+    ("Oracle Website…", "Вебсайт Oracle…"),
     ("Attributes", "Атрибути"),
     ("Bevel and Emboss", "Скіс і рельєф"),
     ("Buttons", "Кнопки"),
@@ -694,7 +694,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Insert Variable", "Вставити змінну"),
     ("Inspect Document", "Перевірити документ"),
     ("Interface Color Theme", "Колірна тема інтерфейсу"),
-    ("Join the ArtCraft Discord…", "Приєднатися до Discord ArtCraft…"),
+    ("Oracle Suite…", "Oracle Suite…"),
     ("Last Object Below", "Останній об’єкт нижче"),
     ("Library Contents", "Вміст бібліотеки"),
     ("Library Items", "Елементи бібліотеки"),
@@ -999,7 +999,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Hyphens and Dashes", "Дефіси та тире"),
     ("Interactive", "Інтерактивність"),
     ("Invert", "Інвертувати"),
-    ("Join the ArtCraft community", "Приєднатися до спільноти ArtCraft"),
+    ("Join the Oracle community", "Приєднатися до спільноти Oracle"),
     ("Keyboard Increments", "Кроки переміщення клавішами"),
     ("Liquid guides", "Напрямні гнучкого макета"),
     ("Markers", "Маркери"),
@@ -1035,7 +1035,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Page Numbering", "Нумерація сторінок"),
     ("Page layout for print and screen — fast, open and scriptable.", "Верстка для друку й екрана — швидка, відкрита, зі сценаріями."),
     ("Page · PPI", "Сторінка · PPI"),
-    ("Part of the ArtCraft suite of open creative tools.", "Частина набору відкритих творчих інструментів ArtCraft."),
+    ("Part of the Oracle suite of open creative tools.", "Частина набору відкритих творчих інструментів Oracle."),
     ("Pasteboard Options", "Параметри монтажного столу"),
     ("Paths", "Контури"),
     ("Place the insertion point in a table, or create one.", "Установіть курсор у таблиці або створіть її."),
@@ -1090,7 +1090,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("[No Group]", "[Без групи]"),
     ("[None]", "[Немає]"),
     ("[None] — choose a colour on the ramp.", "[Немає] — виберіть колір на шкалі."),
-    ("discord.gg/artcraft — help, feedback and show-and-tell", "discord.gg/artcraft — допомога, відгуки та обмін роботами"),
+    ("https://github.com/Marvingxx/oracle-suite — help, feedback and show-and-tell", "https://github.com/Marvingxx/oracle-suite — допомога, відгуки та обмін роботами"),
     ("⌥-click clears overrides", "⌥-клацання скидає перевизначення"),
     ("Alt-click clears overrides", "Alt-клацання скидає перевизначення"),
     ("Apply \"{name}\", Clear Overrides", "Застосувати «{name}», скинути перевизначення"),
@@ -1528,7 +1528,6 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("H&J Violations", "Порушення переносів і вирівнювання"),
     ("Include Bleed", "Включати виліт"),
     ("Include Stroke Weight", "Враховувати товщину обведення"),
-    ("Join our Discord", "Приєднуйтесь до нашого Discord"),
     ("Keep Violations", "Порушення правил утримання рядків"),
     ("Overprint [Black] Swatch at 100%", "Накладання зразка [Чорний] на 100%"),
     ("Printer's Marks", "Друкарські позначки"),

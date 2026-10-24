@@ -44,4 +44,4 @@ A PDF with one page is placed without this dialog.
 
 ## If a file cannot be placed
 
-Oracle Brand Guide shows an alert when a file cannot be opened or placed. Ask in [Discord](https://discord.gg/artcraft) or see [Report a problem](../troubleshooting/get-help.md).
+Oracle Brand Guide shows an alert when a file cannot be opened or placed. See [Report a problem](../troubleshooting/get-help.md).

@@ -1,13 +1,13 @@
 # Oracle Brand Guide
 
-Fork d'ArtCraft DesignCraft 0.11 (MIT OR Apache-2.0, `NOTICE` conservé), renommé et adapté pour la
-suite Oracle : mise en page, pages maîtresses, styles, liens, nuances, PDF avec fonds perdus — et
+L'outil de mise en page et de chartes de la suite Oracle, issu de [DesignCraft](https://github.com/storytold/designcraft)
+0.11 (storytold, MIT OR Apache-2.0, `NOTICE` conservé) : mise en page, pages maîtresses, styles, liens, nuances, PDF avec fonds perdus — et
 des **guides de marque liés à un projet Oracle Brand Kit**. Local, sans compte, sans IA.
 
 ## Ce qui change par rapport à DesignCraft
 
 - Nom, identifiants, extension `.oracle-guide`, liens GitHub (Marvingxx) ; accent rouge Oracle
-  (#d31c3b) ; plus de boutons Discord ni de liens getartcraft.com (`tools/brand_oracle_guide.py`).
+  (#d31c3b) ; liens vers la suite Oracle (`tools/brand_oracle_guide.py`).
 - `crates/engine/src/cmd/brand.rs` : les commandes `brand.*`, et le lien `settings.brand` du document.
 - `crates/ui-egui/src/panels/brand.rs` : le panneau **Marque** (Fenêtre › Marque, colonne des panneaux).
 

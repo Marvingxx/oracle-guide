@@ -11,8 +11,6 @@ use crate::theme::{Tokens, semibold};
 
 /// Oracle red (#d31c3b), the mark's colour (`docs/brand/oracle-mark.svg`).
 pub const BRAND: Color32 = Color32::from_rgb(0xd3, 0x1c, 0x3b);
-/// Discord's brand colour, used for the "Join our Discord" buttons (colour only; no Discord artwork).
-pub const DISCORD: Color32 = Color32::from_rgb(0x58, 0x65, 0xf2);
 
 /// The Oracle mark (viewBox 0 0 66.94 66.94), from `docs/brand/oracle-mark.svg`: a disc with a
 /// four-pointed star cut out of it, drawn over a white disc so the star reads on any background.
@@ -65,38 +63,6 @@ pub fn paint_mark(ui: &egui::Ui, rect: Rect, color: Color32) {
     let side = rect.width().min(rect.height());
     let r = Rect::from_center_size(rect.center(), vec2(side, side));
     ui.painter().image(tex.id(), r, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
-}
-
-/// A speech-bubble glyph (drawn in code) for Discord buttons.
-pub fn paint_chat_icon(p: &egui::Painter, c: egui::Pos2, s: f32, color: Color32) {
-    let body = Rect::from_center_size(c - vec2(0.0, s * 0.06), vec2(s, s * 0.72));
-    p.rect_filled(body, s * 0.24, color);
-    let tail = vec![
-        pos2(body.left() + s * 0.22, body.bottom() - 1.0),
-        pos2(body.left() + s * 0.12, body.bottom() + s * 0.24),
-        pos2(body.left() + s * 0.44, body.bottom() - 1.0),
-    ];
-    p.add(egui::Shape::convex_polygon(tail, color, Stroke::NONE));
-    let eye = s * 0.09;
-    let bg = if color.r() as u32 + color.g() as u32 + color.b() as u32 > 380 { DISCORD } else { Color32::WHITE };
-    p.circle_filled(body.center() - vec2(s * 0.18, 0.0), eye, bg);
-    p.circle_filled(body.center() + vec2(s * 0.18, 0.0), eye, bg);
-}
-
-/// The big "Join our Discord" button. Returns true when clicked.
-pub fn discord_button(ui: &mut egui::Ui, label: &str, size: egui::Vec2) -> bool {
-    let (r, resp) = ui.allocate_exact_size(size, Sense::click());
-    let resp = resp.on_hover_text(links::DISCORD).on_hover_cursor(egui::CursorIcon::PointingHand);
-    let fill = if resp.hovered() { Color32::from_rgb(0x47, 0x52, 0xc4) } else { DISCORD };
-    ui.painter().rect_filled(r, size.y / 2.0, fill);
-    let icon = size.y * 0.5;
-    let font = semibold((size.y * 0.42).max(11.0));
-    let galley = crate::rtl::plain(ui.ctx(), label, font, Color32::WHITE);
-    let total = icon + 8.0 + galley.size().x;
-    let x0 = r.center().x - total / 2.0;
-    paint_chat_icon(ui.painter(), pos2(x0 + icon / 2.0, r.center().y), icon, Color32::WHITE);
-    ui.painter().galley(pos2(x0 + icon + 8.0, r.center().y - galley.size().y / 2.0), galley, Color32::WHITE);
-    resp.clicked()
 }
 
 /// A text link that opens `url`. Returns true when clicked.
@@ -175,7 +141,7 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
             ));
             ui.label(crate::rtl::widget(
                 ui,
-                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Part of the Oracle suite, forked from ArtCraft's DesignCraft."))
+                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Part of the Oracle suite."))
                     .size(12.0)
                     .color(t.text_dim),
             ));

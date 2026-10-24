@@ -1,7 +1,7 @@
 //! Original Czech interface translations, written from the meaning of the English source
 //! labels using common Czech desktop-publishing and typography vocabulary (clean-room: no other
 //! product's localization was used). Phrases shared with the MIT OR Apache-2.0 Czech catalogs of
-//! the ArtCraft siblings (VectorCraft, PhotoCraft) are kept identical; see ASSETS.md for sources.
+//! the sibling apps (VectorCraft, PhotoCraft) are kept identical; see ASSETS.md for sources.
 pub(super) const TABLE: &[(&str, &str)] = &[
     ("Brand", "Značka"),
     ("File", "Soubor"),
@@ -435,8 +435,8 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Sample Color (Eyedropper)", "Vzorkovat barvu (kapátko)"),
     ("Apply Condition", "Použít podmínku"),
     ("Apply Parent to Pages…", "Použít vzor na stránky…"),
-    ("ArtCraft App Page…", "Stránka aplikace ArtCraft…"),
-    ("ArtCraft Website…", "Web ArtCraft…"),
+    ("Oracle App Page…", "Stránka aplikace Oracle…"),
+    ("Oracle Website…", "Web Oracle…"),
     ("Attributes", "Atributy"),
     ("Bevel and Emboss", "Úkos a reliéf"),
     ("Buttons", "Tlačítka"),
@@ -563,7 +563,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Insert Variable", "Vložit proměnnou"),
     ("Inspect Document", "Prozkoumat dokument"),
     ("Interface Color Theme", "Barevný motiv rozhraní"),
-    ("Join the ArtCraft Discord…", "Připojit se k Discordu ArtCraft…"),
+    ("Oracle Suite…", "Oracle Suite…"),
     ("Last Object Below", "Poslední objekt pod"),
     ("Library Contents", "Obsah knihovny"),
     ("Library Items", "Položky knihovny"),
@@ -866,7 +866,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Hyphens and Dashes", "Spojovníky a pomlčky"),
     ("Interactive", "Interaktivní"),
     ("Invert", "Invertovat"),
-    ("Join the ArtCraft community", "Připojte se ke komunitě ArtCraft"),
+    ("Join the Oracle community", "Připojte se ke komunitě Oracle"),
     ("Keyboard Increments", "Kroky klávesnice"),
     ("Liquid guides", "Pružná vodítka"),
     ("Markers", "Značky"),
@@ -902,7 +902,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Page Numbering", "Číslování stránek"),
     ("Page layout for print and screen — fast, open and scriptable.", "Sazba stránek pro tisk i obrazovku — rychlá, otevřená a skriptovatelná."),
     ("Page · PPI", "Stránka · PPI"),
-    ("Part of the ArtCraft suite of open creative tools.", "Součást ArtCraft, sady otevřených kreativních nástrojů."),
+    ("Part of the Oracle suite of open creative tools.", "Součást Oracle, sady otevřených kreativních nástrojů."),
     ("Pasteboard Options", "Možnosti montážní plochy"),
     ("Paths", "Cesty"),
     ("Place the insertion point in a table, or create one.", "Umístěte textový kurzor do tabulky nebo nějakou vytvořte."),
@@ -954,7 +954,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("[No Group]", "[Bez skupiny]"),
     ("[None]", "[Žádný]"),
     ("[None] — choose a colour on the ramp.", "[Žádný] — vyberte barvu na spektru."),
-    ("discord.gg/artcraft — help, feedback and show-and-tell", "discord.gg/artcraft — pomoc, zpětná vazba a ukázky prací"),
+    ("https://github.com/Marvingxx/oracle-suite — help, feedback and show-and-tell", "https://github.com/Marvingxx/oracle-suite — pomoc, zpětná vazba a ukázky prací"),
     ("⌥-click clears overrides", "⌥-kliknutí zruší přepsání"),
     ("Alt-click clears overrides", "Alt-kliknutí zruší přepsání"),
     ("Apply \"{name}\", Clear Overrides", "Použít „{name}“, zrušit přepsání"),
@@ -1358,7 +1358,6 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("H&J Violations", "Porušení dělení a zarovnání"),
     ("Include Bleed", "Zahrnout spadávku"),
     ("Include Stroke Weight", "Zahrnout tloušťku tahu"),
-    ("Join our Discord", "Připojte se k našemu Discordu"),
     ("Keep Violations", "Porušení svázání řádků"),
     ("Overprint [Black] Swatch at 100%", "Přetiskovat vzorek [černá] při 100 %"),
     ("Printer's Marks", "Tiskové značky"),
@@ -1539,8 +1538,8 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     // special characters, colour profiles and other labels the code passes to `tr`.
     ("Anchored Object Options", "Možnosti ukotveného objektu"),
     ("Apply Parent to Pages", "Použít vzor na stránky"),
-    ("ArtCraft App Page", "Stránka aplikace ArtCraft"),
-    ("ArtCraft Website", "Web ArtCraft"),
+    ("Oracle App Page", "Stránka aplikace Oracle"),
+    ("Oracle Website", "Web Oracle"),
     ("Check Spelling", "Zkontrolovat pravopis"),
     ("Corner Options", "Možnosti rohů"),
     ("Create Guides", "Vytvořit vodítka"),
@@ -1568,7 +1567,7 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Insert Cross-Reference", "Vložit křížový odkaz"),
     ("Insert Math Expression", "Vložit matematický výraz"),
     ("Insert Pages", "Vložit stránky"),
-    ("Join the ArtCraft Discord", "Připojit se k Discordu ArtCraft"),
+    ("Oracle Suite", "Oracle Suite"),
     ("Load DTD", "Načíst DTD"),
     ("Load Swatches", "Načíst vzorník"),
     ("Margins and Columns", "Okraje a sloupce"),

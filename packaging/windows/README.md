@@ -1,7 +1,7 @@
 # Windows installer UI
 
 `installer-ui.wxs` is generated from the shared `craft-installer` crate in
-[craft-libs](https://github.com/storytold/craft-libs/tree/main/crates/installer).
+[craft-libs](https://github.com/Marvingxx/craft-libs/tree/main/crates/installer).
 `package.ps1` compiles it with this app's package source. The common UI provides progress,
 repair/remove, and explicit install/uninstall/repair success, cancellation and failure screens.
 

@@ -31,7 +31,7 @@ pub fn run(root: &Path) -> Result<(), String> {
 
 fn validate(metadata: &Value) -> Result<(), String> {
     let packages = metadata.get("packages").and_then(Value::as_array).ok_or("cargo metadata has no packages")?;
-    let source = format!("git+https://github.com/storytold/craft-libs?rev={REV}#{REV}");
+    let source = format!("git+https://github.com/Marvingxx/craft-libs?rev={REV}#{REV}");
     for (name, version) in PACKAGES {
         let matching: Vec<_> = packages.iter().filter(|p| p.get("name").and_then(Value::as_str) == Some(name)).collect();
         let [package] = matching.as_slice() else {
@@ -60,7 +60,7 @@ mod tests {
 
     fn metadata() -> Value {
         json!({"packages": PACKAGES.iter().map(|(name, version)| json!({"id":name,"name":name,"version":version,
-            "source":format!("git+https://github.com/storytold/craft-libs?rev={REV}#{REV}")})).collect::<Vec<_>>(), "resolve": {"nodes": [{"id": "craft-pdf", "features": ["read", "interpret", "raster", "write", "write-pdf"]}]}})
+            "source":format!("git+https://github.com/Marvingxx/craft-libs?rev={REV}#{REV}")})).collect::<Vec<_>>(), "resolve": {"nodes": [{"id": "craft-pdf", "features": ["read", "interpret", "raster", "write", "write-pdf"]}]}})
     }
 
     #[test]
@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn rejects_facade_revision_drift_and_malformed_metadata() {
         let mut m = metadata();
-        m["packages"][0]["source"] = json!("git+https://github.com/storytold/craft-libs?branch=main#other");
+        m["packages"][0]["source"] = json!("git+https://github.com/Marvingxx/craft-libs?branch=main#other");
         assert!(validate(&m).is_err());
         assert!(validate(&json!({})).is_err());
     }

@@ -15,7 +15,7 @@
 //! oracle-guide-cli perf [--pages N] [--frames N] [--chars N] [--images N] [--runs N] [--strict]  # budgets on a synthetic stress document
 //! oracle-guide-cli bench FILE [--runs N]  # the same measurements on one document
 //! oracle-guide-cli validate-pdf FILE.pdf    # run the built-in PDF/X-4 conformance checks
-//! oracle-guide-cli links                   # Discord, website, app page and GitHub links
+//! oracle-guide-cli links                   # Oracle Suite, website, app page and GitHub links
 //! oracle-guide-cli --version               # print the version
 //! ```
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
@@ -125,7 +125,7 @@ fn main() -> ExitCode {
         Some("validate-pdf") => report(validate_pdf(args.get(1).map(String::as_str))),
         Some("links") => {
             use oracle_guide_engine::links::*;
-            outln!("Discord   {DISCORD}\nWebsite   {WEBSITE}\nApp page  {APP_PAGE}\nGitHub    {GITHUB}\nIssues    {ISSUES}");
+            outln!("Suite     {DISCORD}\nWebsite   {WEBSITE}\nApp page  {APP_PAGE}\nGitHub    {GITHUB}\nIssues    {ISSUES}");
             ExitCode::SUCCESS
         }
         // Asking for help is not an error: it goes to stdout and succeeds. An unknown command

@@ -283,12 +283,12 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
         "{on?: bool, at?: [x, y] (points from the canvas's top-left)} — the Contextual Task Bar stays where it is (or at `at`) instead of following the selection; with neither, toggles",
     ),
     ("window.taskBarReset", "Reset Bar Position", None, "{} — the Contextual Task Bar follows the selection again, under it"),
-    ("help.discord", "Join the ArtCraft Discord…", None, "{} — opens https://discord.gg/artcraft in the browser"),
+    ("help.discord", "Oracle Suite…", None, "{} — opens Oracle Suite (https://github.com/Marvingxx/oracle-suite) in the browser"),
     ("help.appPage", "Oracle Brand Guide Website…", None, "{} — opens https://github.com/Marvingxx/oracle-guide"),
     ("help.github", "Oracle Brand Guide on GitHub…", None, "{} — opens https://github.com/Marvingxx/oracle-guide"),
     ("help.issues", "Report an Issue…", None, "{} — opens the GitHub issue tracker"),
-    ("help.website", "ArtCraft Website…", None, "{} — opens https://getartcraft.com"),
-    ("help.app", "ArtCraft App Page…", None, "{app} — opens https://getartcraft.com/apps/{app} (e.g. photocraft)"),
+    ("help.website", "Oracle Website…", None, "{} — opens https://github.com/Marvingxx"),
+    ("help.app", "Oracle App Page…", None, "{app} — opens https://github.com/Marvingxx/{app} (e.g. oracle-edit)"),
     (
         "help.about",
         "About Oracle Brand Guide",
@@ -1831,11 +1831,11 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
         }
         "help.app" => match p.get("app").and_then(Value::as_str) {
             Some(slug) if !slug.is_empty() && slug.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') => {
-                let url = format!("{}/apps/{slug}", oracle_guide_engine::links::WEBSITE);
+                let url = format!("https://github.com/Marvingxx/{slug}");
                 app.ui.pending_urls.push(url.clone());
                 Ok(json!({"url": url}))
             }
-            _ => Err("help.app: give `app` (e.g. \"photocraft\")".into()),
+            _ => Err("help.app: give `app` (e.g. \"oracle-edit\")".into()),
         },
         h if h.starts_with("help.") && oracle_guide_engine::links::get(&h[5..]).is_some() => {
             let url = oracle_guide_engine::links::get(&h[5..]).unwrap_or_default().to_string();
@@ -2314,7 +2314,7 @@ pub enum AppMenuItem {
 /// The macOS application menu. Settings… is `app.preferences`, which `native_menu_tree` leaves out of Edit.
 pub const MAC_APP_MENU: &[AppMenuItem] = &[
     AppMenuItem::Cmd { id: "dc-about", label: "About Oracle Brand Guide", command: "help.about" },
-    AppMenuItem::Cmd { id: "dc-discord", label: "Join the ArtCraft Discord…", command: "help.discord" },
+    AppMenuItem::Cmd { id: "dc-discord", label: "Oracle Suite…", command: "help.discord" },
     AppMenuItem::Sep,
     AppMenuItem::Cmd { id: "dc-settings", label: "Settings…", command: "app.preferences" },
     AppMenuItem::Language,

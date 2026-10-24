@@ -4,7 +4,7 @@ description: Oracle Brand Guide is a free, open-source page layout app for print
 verified: 0.7.1
 ---
 
-Oracle Brand Guide is a page layout and publishing app. It is an open-source alternative to Adobe InDesign, built from scratch by the ArtCraft team. If you know InDesign's tools, menus and panels, you will find them here.
+Oracle Brand Guide is a page layout and publishing app. It is an open-source alternative to Adobe InDesign, built from scratch. If you know InDesign's tools, menus and panels, you will find them here.
 
 It has spreads and parent pages, text frames that thread from one to the next, paragraph and character styles, swatches and text wrap. It opens and saves InDesign Markup (IDML) files and exports PDF, PNG and EPUB. It is free, with no subscription, licence server or telemetry. The project is in pre-alpha, so expect gaps.
 
@@ -18,4 +18,4 @@ It has spreads and parent pages, text frames that thread from one to the next, p
 
 ## Get help
 
-Ask in [Discord](https://discord.gg/artcraft) or open an issue in the [issue tracker](https://github.com/Marvingxx/oracle-guide/issues). Say which version and which system you use.
+Open an issue in the [issue tracker](https://github.com/Marvingxx/oracle-guide/issues). Say which version and which system you use.

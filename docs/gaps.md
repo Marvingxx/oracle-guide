@@ -41,7 +41,7 @@ Kind: **F** feature · **U** UI/UX · **T** typography · **FF** file format · 
 
 ### 2. INDD opening isn't measured on real files (FF)
 - **Missing:** a real-file corpus test of opening `.indd` and `.indt`. They open through
-  [storytold/indd-utils](https://github.com/storytold/indd-utils), which converts them to IDML in
+  [storytold/indd-utils](https://github.com/Marvingxx/indd-utils), which converts them to IDML in
   memory for the IDML importer, but Oracle Brand Guide's own tests use synthetic bytes only. INDB and
   INDL are still not read.
 - **Evidence:** #21, #114 (PR #98 proposed another converter). indd-utils reports 96.9% of

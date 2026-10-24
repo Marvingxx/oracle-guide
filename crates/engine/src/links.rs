@@ -2,13 +2,13 @@
 
 use serde_json::{Value, json};
 
-/// The app's slug on getartcraft.com and GitHub.
+/// The app's slug on GitHub.
 pub const APP: &str = "oracle-guide";
-/// No community server: the repository's discussions are the place.
-pub const DISCORD: &str = "https://github.com/Marvingxx/oracle-guide";
+/// Oracle Suite: the launcher of every Oracle app (Help ▸ Oracle Suite).
+pub const DISCORD: &str = "https://github.com/Marvingxx/oracle-suite";
 /// The project's home.
 pub const WEBSITE: &str = "https://github.com/Marvingxx/oracle-guide";
-/// Oracle Brand Guide's page on the ArtCraft website.
+/// Oracle Brand Guide's home page.
 pub const APP_PAGE: &str = "https://github.com/Marvingxx/oracle-guide";
 /// Oracle Brand Guide's source repository.
 pub const GITHUB: &str = "https://github.com/Marvingxx/oracle-guide";

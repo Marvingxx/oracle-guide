@@ -136,7 +136,7 @@ impl Server {
                     "capabilities": {"tools": {}, "resources": {}},
                     "serverInfo": {"name": "oracle-guide", "title": "Oracle Brand Guide", "version": env!("CARGO_PKG_VERSION"), "websiteUrl": oracle_guide_engine::links::APP_PAGE},
                     "instructions": format!(
-                        "{INSTRUCTIONS} Backend: {}. Community: {} (Discord), {} (app page), {} (source). The `app.links` command returns these links.",
+                        "{INSTRUCTIONS} Backend: {}. Links: {} (Oracle Suite), {} (app page), {} (source). The `app.links` command returns these links.",
                         self.backend.describe(),
                         oracle_guide_engine::links::DISCORD,
                         oracle_guide_engine::links::APP_PAGE,

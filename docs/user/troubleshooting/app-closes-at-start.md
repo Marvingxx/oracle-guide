@@ -31,4 +31,4 @@ Oracle Brand Guide keeps its record of failed backends in a file called `gpu.jso
 
 ## Still stuck?
 
-Send the log. See [Report a problem](get-help.md) for where it is. Or ask in [Discord](https://discord.gg/artcraft).
+Send the log. See [Report a problem](get-help.md) for where it is.

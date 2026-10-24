@@ -1,11 +1,11 @@
 ---
 title: Install Oracle Brand Guide
-description: Download Oracle Brand Guide 0.7.1 for Windows 11, macOS or Linux, or install it from ArtCraft Launcher.
+description: Download Oracle Brand Guide 0.7.1 for Windows 11, macOS or Linux, or install it from Oracle Suite.
 order: 20
 verified: 0.7.1
 ---
 
-Download the file for your system from the [latest release](https://github.com/Marvingxx/oracle-guide/releases/latest) and install it. In the file names, `<version>` stands for the version number, for example `0.7.1`. The release also has `SHA256SUMS.txt`, which lists a checksum for every file. The [Oracle Brand Guide page on getartcraft.com](https://github.com/Marvingxx/oracle-guide) links to the download as well.
+Download the file for your system from the [latest release](https://github.com/Marvingxx/oracle-guide/releases/latest) and install it. In the file names, `<version>` stands for the version number, for example `0.7.1`. The release also has `SHA256SUMS.txt`, which lists a checksum for every file. The [Oracle Brand Guide page on GitHub](https://github.com/Marvingxx/oracle-guide) links to the download as well.
 
 ## Windows 11
 
@@ -37,9 +37,9 @@ Pick one file from the release. Replace `x86_64` with `aarch64` on ARM.
 
 For RISC-V there is a `.deb`, an `.rpm` and a tarball, named with `riscv64` in place of `x86_64`. There is no AppImage or Flatpak for RISC-V. The RISC-V build needs glibc 2.39 or newer (Ubuntu 24.04 or newer). A FreeBSD build (`oracle-guide-<version>-freebsd-x86_64.tar.gz`) is on the release page too.
 
-## Install with ArtCraft Launcher
+## Install with Oracle Suite
 
-ArtCraft Launcher lists Oracle Brand Guide and can install and update it for you. See [ArtCraft Launcher](https://getartcraft.com/docs/craft-launcher) for how it works.
+Oracle Suite lists Oracle Brand Guide and can install and update it for you. See [Oracle Suite](https://github.com/Marvingxx/oracle-suite) for how it works.
 
 ## First run
 

@@ -19,7 +19,7 @@ score below).
 
 | Format | Ext | InDesign | Oracle Brand Guide read | Oracle Brand Guide write | Fidelity / tests | Weight |
 |---|---|---|---|---|---|---|
-| InDesign document | `.indd` | read/write (native) | ✓ (converted to IDML in memory by [storytold/indd-utils](https://github.com/storytold/indd-utils), then the IDML importer; #21, #114) | ✗ | Converter warnings join the open result; unreadable files are open errors. Synthetic-bytes tests only; indd-utils reports 96.9% of IDML values reproduced on ~650 pairs. No real-file corpus test | 30% |
+| InDesign document | `.indd` | read/write (native) | ✓ (converted to IDML in memory by [storytold/indd-utils](https://github.com/Marvingxx/indd-utils), then the IDML importer; #21, #114) | ✗ | Converter warnings join the open result; unreadable files are open errors. Synthetic-bytes tests only; indd-utils reports 96.9% of IDML values reproduced on ~650 pairs. No real-file corpus test | 30% |
 | InDesign template | `.indt` | read/write | ✓ (as `.indd`) | ✗ | As `.indd` | 2% |
 | InDesign Markup | `.idml` | read/write | ✓ | ✓ | Synthetic fixtures in `crates/idml/src/tests.rs` (51 tests); exported files verified by opening in InDesign 2026 by hand; indd-utils' 98-document run imports 811 spreads / 2,866 stories / 5,812 items. Open: #193, #338, #339, #340, #211. No real-file corpus test | 20% |
 | Oracle Brand Guide native | `.oracle-guide` | — | ✓ | ✓ | zip + JSON, versioned; round-trip tests. Asset loading and compaction index by content hash, then confirm byte equality; equal-sized distinct files fall into separate search buckets (#727). Separate links, MIME types and PDF pages retain their identity | — |
