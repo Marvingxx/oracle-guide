@@ -2954,7 +2954,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "arboard",
  "eframe",
@@ -2976,7 +2976,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-cli"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "oracle-layout-color",
  "oracle-layout-compose",
@@ -2992,7 +2992,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-color"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "craft-cms",
  "kurbo 0.13.1",
@@ -3004,7 +3004,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-compose"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "fancy-regex",
  "hypher",
@@ -3024,7 +3024,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-doc"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "chrono",
  "oracle-layout-color",
@@ -3037,7 +3037,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-engine"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "caseless",
  "craft-atomic",
@@ -3078,7 +3078,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-epub"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "chrono",
  "oracle-layout-color",
@@ -3088,7 +3088,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-fonts"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "core-text",
  "harfrust 0.13.3",
@@ -3101,7 +3101,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-format"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "oracle-layout-doc",
  "oracle-layout-images",
@@ -3113,7 +3113,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-geom"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "flo_curves",
  "kurbo 0.13.1",
@@ -3126,7 +3126,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-idml"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "log",
  "oracle-layout-color",
@@ -3141,7 +3141,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-images"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "craft-cms",
  "image",
@@ -3156,7 +3156,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-mcp"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "image",
  "log",
@@ -3169,7 +3169,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-pdf"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "chrono",
  "craft-pdf",
@@ -3192,7 +3192,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-pptx"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "chrono",
  "image",
@@ -3210,7 +3210,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-render"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "craft-pdf",
  "image",
@@ -3229,7 +3229,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-textimport"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "oracle-layout-doc",
  "quick-xml",
@@ -3238,7 +3238,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-tools"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "oracle-layout-color",
  "oracle-layout-compose",
@@ -3250,7 +3250,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-ui-egui"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "craft-ui",
  "egui",
@@ -3281,7 +3281,7 @@ dependencies = [
 
 [[package]]
 name = "oracle-layout-web"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "eframe",
  "egui",
@@ -6028,7 +6028,7 @@ checksum = "9440ea3e5aeabb0ac63af70daf835274065238cdd0cec83418f417eae38bacee"
 
 [[package]]
 name = "xtask"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "serde_json",
 ]
