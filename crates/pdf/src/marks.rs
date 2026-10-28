@@ -2,7 +2,7 @@
 //! corners, and a page-information line. All marks use `[Registration]` (every plate).
 
 use craft_pdf::write::backend as krilla;
-use oracle_guide_geom::{BezPath, Point};
+use oracle_layout_geom::{BezPath, Point};
 use krilla::num::NormalizedF32;
 use krilla::paint::{LineCap, LineJoin, Stroke};
 use krilla::surface::Surface;

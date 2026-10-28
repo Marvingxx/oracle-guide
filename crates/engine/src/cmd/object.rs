@@ -4,12 +4,12 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use oracle_guide_color::BlendMode;
-use oracle_guide_doc::{
+use oracle_layout_color::BlendMode;
+use oracle_layout_doc::{
     AssetId, Content, Document, Effects, Fill, Item, ItemId, ItemLoc, ParaFormat, Selection, Shape, SpreadRef, Story, StoryId, Stroke, TextFrame,
     TextFrameOptions, TextSel,
 };
-use oracle_guide_geom::{Affine, Point, Rect, Vec2, shapes};
+use oracle_layout_geom::{Affine, Point, Rect, Vec2, shapes};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, bad, bool_or, cmd, f64_or, has_doc, has_selection, ok, point_param, rect_param, spread_param, str_param, targets};
@@ -17,7 +17,7 @@ use crate::{Result, Session};
 
 /// `name` must be a swatch of the document: an unknown name would paint nothing. The error names
 /// the swatch it was probably meant to be (`Paper` → `[Paper]`, a different case).
-pub(crate) fn known_swatch(doc: &oracle_guide_doc::Document, name: &str, cmd: &str, key: &str) -> Result<()> {
+pub(crate) fn known_swatch(doc: &oracle_layout_doc::Document, name: &str, cmd: &str, key: &str) -> Result<()> {
     if doc.swatch(name).is_some() {
         return Ok(());
     }
@@ -248,7 +248,7 @@ pub fn specs() -> Vec<CommandSpec> {
             has_doc,
             |s, p| {
                 if nothing_targeted(s, p)? {
-                    return set_new_object(s, |c| *c = oracle_guide_doc::NewObjectColors::default());
+                    return set_new_object(s, |c| *c = oracle_layout_doc::NewObjectColors::default());
                 }
                 has_editable_selection(s).map_err(|e| bad("object.defaultFillStroke", e))?;
                 edit_unlocked(s, p, default_fill_stroke)
@@ -262,7 +262,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "{swatch?, tint?, weight?, align?: center|inside|outside, type?: {kind: solid|dashed|dotted|thickThin|thinThick|thinThin|thickThick|thinThickThin|thickThinThick|wavy|hashed|stripes|style, pattern?: [dash, gap, …] (dashed: required, points), bands?: [[start, width], …] (stripes: required, fractions of stroke weight), name?: string (style: required, document stroke style name)} (other kinds take no extra fields; unknown type fields are errors), cap?: butt|round|projecting, join?: miter|round|bevel, miterLimit?, start?, end?: none|simple|simpleWide|triangle|triangleWide|barbed|curved|circle|circleSolid|square|squareSolid|bar, gapSwatch?, gapTint?, gapOverprint?: bool, ids?}",
             has_doc,
             |s, p| {
-                let kind: Option<oracle_guide_doc::StrokeType> = p
+                let kind: Option<oracle_layout_doc::StrokeType> = p
                     .get("type")
                     .map(|v| {
                         if let Some(fields) = v.as_object() {
@@ -749,7 +749,7 @@ pub fn specs() -> Vec<CommandSpec> {
                     }
                 }
                 let sel: Vec<ItemId> = ids.iter().filter_map(Value::as_u64).map(ItemId).collect();
-                s.doc_mut()?.selection = oracle_guide_doc::Selection::items(sel);
+                s.doc_mut()?.selection = oracle_layout_doc::Selection::items(sel);
                 Ok(json!({"ids": ids}))
             }
         ),
@@ -941,7 +941,7 @@ pub(crate) fn nothing_targeted(s: &Session, p: &Value) -> Result<bool> {
 }
 
 /// Change the colours new shapes are drawn with (one undo step).
-pub(crate) fn set_new_object(s: &mut Session, f: impl FnOnce(&mut oracle_guide_doc::NewObjectColors)) -> Result<Value> {
+pub(crate) fn set_new_object(s: &mut Session, f: impl FnOnce(&mut oracle_layout_doc::NewObjectColors)) -> Result<Value> {
     s.edit(|d, _| {
         f(&mut d.settings.new_object);
         let c = &d.settings.new_object;
@@ -951,9 +951,9 @@ pub(crate) fn set_new_object(s: &mut Session, f: impl FnOnce(&mut oracle_guide_d
 
 /// A new shape's fill and stroke: the document's colours for new objects (a swatch deleted
 /// since leaves the shape's own).
-fn new_object_colors(d: &oracle_guide_doc::Document, it: &mut Item) {
+fn new_object_colors(d: &oracle_layout_doc::Document, it: &mut Item) {
     let c = &d.settings.new_object;
-    let known = |sw: &str| sw == oracle_guide_color::swatch::NONE || d.swatches.iter().any(|w| w.name == sw);
+    let known = |sw: &str| sw == oracle_layout_color::swatch::NONE || d.swatches.iter().any(|w| w.name == sw);
     if known(&c.fill) {
         it.fill = Fill { swatch: c.fill.clone(), tint: c.fill_tint, ..it.fill.clone() };
     }
@@ -1018,7 +1018,7 @@ fn frame_create(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// A polygon (or, with a star inset, a star with `sides` points) fitted to `r`.
-pub(crate) fn polygon_in(r: Rect, sides: u32, inset: f64) -> oracle_guide_geom::PathData {
+pub(crate) fn polygon_in(r: Rect, sides: u32, inset: f64) -> oracle_layout_geom::PathData {
     let c = r.center();
     let mut p =
         if inset > 0.0 { shapes::star(Point::ZERO, 1.0, (1.0 - inset).max(0.0), sides, 0.0) } else { shapes::polygon(Point::ZERO, 1.0, sides, 0.0) };
@@ -1091,13 +1091,13 @@ fn renumber(dst: &mut Document, src: &Document, it: &mut Item, stories: &mut Has
                     let mut st = src.story(tf.story).cloned().unwrap_or_else(|| Story::new(n));
                     st.id = n;
                     let mut assets = HashMap::new();
-                    for a in oracle_guide_doc::story_asset_refs(&st) {
+                    for a in oracle_layout_doc::story_asset_refs(&st) {
                         let na = adopt_or_dangle(dst, src, a);
                         if na != a {
                             assets.insert(a, na);
                         }
                     }
-                    oracle_guide_doc::remap_story_assets(&mut st, &assets);
+                    oracle_layout_doc::remap_story_assets(&mut st, &assets);
                     st.frames.clear();
                     dst.stories.insert(n, Arc::new(st));
                     stories.insert(tf.story, n);
@@ -1157,7 +1157,7 @@ fn transform_move(s: &mut Session, p: &Value) -> Result<Value> {
             }
             // A nested item moves in its container's space.
             let v = d.find(*id).map_or(Vec2::new(dx, dy), |l| linear_inverse(d.parent_xf(&l), Vec2::new(dx, dy)));
-            let it = d.item_mut(*id).ok_or(oracle_guide_doc::DocError::NoItem(*id))?;
+            let it = d.item_mut(*id).ok_or(oracle_layout_doc::DocError::NoItem(*id))?;
             if it.locked {
                 continue;
             }
@@ -1192,9 +1192,9 @@ fn move_content(s: &mut Session, ids: &[ItemId], d: Vec2) -> Result<Value> {
     s.edit(|doc, _| {
         let mut moved = Vec::new();
         for id in ids {
-            let loc = doc.find(*id).ok_or(oracle_guide_doc::DocError::NoItem(*id))?;
+            let loc = doc.find(*id).ok_or(oracle_layout_doc::DocError::NoItem(*id))?;
             let parent = doc.parent_xf(&loc);
-            let it = doc.item_mut(*id).ok_or(oracle_guide_doc::DocError::NoItem(*id))?;
+            let it = doc.item_mut(*id).ok_or(oracle_layout_doc::DocError::NoItem(*id))?;
             if it.locked {
                 continue;
             }
@@ -1232,7 +1232,7 @@ fn transform_resize(s: &mut Session, p: &Value) -> Result<Value> {
     let strokes = s.prefs.scale_strokes;
     s.edit(|d, _| {
         for id in &ids {
-            let it = d.item_mut(*id).ok_or(oracle_guide_doc::DocError::NoItem(*id))?;
+            let it = d.item_mut(*id).ok_or(oracle_layout_doc::DocError::NoItem(*id))?;
             if it.locked {
                 continue;
             }
@@ -1271,10 +1271,10 @@ fn resize_container(it: &mut Item, m: Affine) {
     let after = it.inner_bounds();
     if let Some(f) = it.flex.as_mut() {
         if (after.width() - before.width()).abs() > 1e-6 {
-            f.width = oracle_guide_doc::FlexSize::Fixed;
+            f.width = oracle_layout_doc::FlexSize::Fixed;
         }
         if (after.height() - before.height()).abs() > 1e-6 {
-            f.height = oracle_guide_doc::FlexSize::Fixed;
+            f.height = oracle_layout_doc::FlexSize::Fixed;
         }
     }
 }
@@ -1393,8 +1393,8 @@ fn scale_text_frame(d: &mut Document, id: ItemId, m: Affine, k: f64, strokes: bo
         st.format_chars(r, |f| {
             let o = &mut f.over;
             o.size = Some(cp.size * sy);
-            if let oracle_guide_doc::Leading::Points(v) = cp.leading {
-                o.leading = Some(oracle_guide_doc::Leading::Points(v * sy));
+            if let oracle_layout_doc::Leading::Points(v) = cp.leading {
+                o.leading = Some(oracle_layout_doc::Leading::Points(v * sy));
             }
             if cp.baseline_shift != 0.0 {
                 o.baseline_shift = Some(cp.baseline_shift * sy);
@@ -1488,7 +1488,7 @@ fn apply_about_ref(s: &mut Session, p: &Value, a: Affine) -> Result<Value> {
     let ids = targets(s, p)?;
     let rf = p.get("ref").and_then(Value::as_u64).unwrap_or(4).min(8) as usize;
     s.edit(|d, _| {
-        let c = oracle_guide_geom::reference_point(union_bounds(d, &ids), rf);
+        let c = oracle_layout_geom::reference_point(union_bounds(d, &ids), rf);
         let m = Affine::translate(c.to_vec2()) * a * Affine::translate(-c.to_vec2());
         for id in &ids {
             if let Some(it) = d.item_mut(*id) {
@@ -1506,7 +1506,7 @@ fn transform_rotate(s: &mut Session, p: &Value) -> Result<Value> {
 
 /// The transform an item's panel values are measured from: its own (relative to its container)
 /// or, with Transformations are Totals, the whole chain to the pasteboard.
-fn measured_xf(d: &oracle_guide_doc::Document, id: ItemId, totals: bool) -> Option<(Affine, Affine)> {
+fn measured_xf(d: &oracle_layout_doc::Document, id: ItemId, totals: bool) -> Option<(Affine, Affine)> {
     let loc = d.find(id)?;
     let it = d.item_at(&loc)?;
     let parent = if totals { d.parent_xf(&loc) } else { Affine::IDENTITY };
@@ -1514,7 +1514,7 @@ fn measured_xf(d: &oracle_guide_doc::Document, id: ItemId, totals: bool) -> Opti
 }
 
 fn values_json(m: Affine) -> Value {
-    let v = oracle_guide_geom::decompose::decompose(m);
+    let v = oracle_layout_geom::decompose::decompose(m);
     let r = |x: f64| (x * 1e4).round() / 1e4;
     json!({"scaleX": r(v.scale_x * 100.0), "scaleY": r(v.scale_y * 100.0), "rotation": r(v.rotation), "shear": r(v.shear)})
 }
@@ -1564,9 +1564,9 @@ fn transform_values(s: &mut Session, p: &Value, ids: &[ItemId], rf: usize) -> Re
             let Some(it) = d.item(*id) else { continue };
             // The reference point, on the pasteboard, then in the measuring space.
             let full = d.find(*id).map_or(Affine::IDENTITY, |l| d.parent_xf(&l));
-            let spread_a = oracle_guide_geom::reference_point((full * it.xf).transform_rect_bbox(it.inner_bounds()), rf);
+            let spread_a = oracle_layout_geom::reference_point((full * it.xf).transform_rect_bbox(it.inner_bounds()), rf);
             let a = if totals { spread_a } else { full.inverse() * spread_a };
-            let v = oracle_guide_geom::decompose::decompose(cur);
+            let v = oracle_layout_geom::decompose::decompose(cur);
             let mut t = v;
             if let Some(r) = rot {
                 t.rotation = r;
@@ -1578,10 +1578,10 @@ fn transform_values(s: &mut Session, p: &Value, ids: &[ItemId], rf: usize) -> Re
                 let c = m.as_coeffs();
                 Affine::new([c[0], c[1], c[2], c[3], 0.0, 0.0])
             };
-            let delta = oracle_guide_geom::decompose::compose(&t) * lin(cur).inverse();
+            let delta = oracle_layout_geom::decompose::compose(&t) * lin(cur).inverse();
             // Δ in measuring space about `a`, brought into the item's container space.
             let m = parent.inverse() * Affine::translate(a.to_vec2()) * delta * Affine::translate(-a.to_vec2()) * parent;
-            let it = d.item_mut(*id).ok_or(oracle_guide_doc::DocError::NoItem(*id))?;
+            let it = d.item_mut(*id).ok_or(oracle_layout_doc::DocError::NoItem(*id))?;
             it.xf = m * it.xf;
             // Scale: relative to what is shown (frames show 100% — their scale lives in the geometry).
             if sx.is_some() || sy.is_some() {
@@ -1625,7 +1625,7 @@ fn transform_set(s: &mut Session, p: &Value) -> Result<Value> {
         let pad = (geom.x0 - from.x0, geom.y0 - from.y0, from.x1 - geom.x1, from.y1 - geom.y1);
         let w = f64_or(p, "width", from.width()).max(0.01);
         let h = f64_or(p, "height", from.height()).max(0.01);
-        let anchor = oracle_guide_geom::reference_point(from, rf);
+        let anchor = oracle_layout_geom::reference_point(from, rf);
         // New rect keeping the reference point fixed, then moved so the ref point lands on x/y.
         let fx = [0.0, 0.5, 1.0][rf % 3];
         let fy = [0.0, 0.5, 1.0][(rf / 3).min(2)];
@@ -1702,8 +1702,8 @@ fn transform_content(s: &mut Session, p: &Value, ids: &[ItemId]) -> Result<Value
                 Affine::new([c[0], c[1], c[2], c[3], 0.0, 0.0])
             };
             if rot.is_some() || shear.is_some() || sx.is_some() || sy.is_some() {
-                let a = oracle_guide_geom::reference_point(cur.transform_rect_bbox(rect), rf).to_vec2();
-                let v = oracle_guide_geom::decompose::decompose(cur);
+                let a = oracle_layout_geom::reference_point(cur.transform_rect_bbox(rect), rf).to_vec2();
+                let v = oracle_layout_geom::decompose::decompose(cur);
                 let mut t = v;
                 if let Some(r) = rot {
                     t.rotation = r;
@@ -1717,7 +1717,7 @@ fn transform_content(s: &mut Session, p: &Value, ids: &[ItemId]) -> Result<Value
                 if let Some(y) = sy {
                     t.scale_y = y / 100.0;
                 }
-                let delta = oracle_guide_geom::decompose::compose(&t) * lin(cur).inverse();
+                let delta = oracle_layout_geom::decompose::compose(&t) * lin(cur).inverse();
                 cur = Affine::translate(a) * delta * Affine::translate(-a) * cur;
             }
             let mut gx = q.inverse() * cur;
@@ -1735,7 +1735,7 @@ fn transform_content(s: &mut Session, p: &Value, ids: &[ItemId]) -> Result<Value
             // Position and size: the graphic's bounds on the page.
             if x.is_some() || y.is_some() || w.is_some() || h.is_some() {
                 let b = (frame * gx).transform_rect_bbox(rect);
-                let a = oracle_guide_geom::reference_point(b, rf);
+                let a = oracle_layout_geom::reference_point(b, rf);
                 let (fx, fy) = (w.map_or(1.0, |w| w / b.width().max(1e-9)), h.map_or(1.0, |h| h / b.height().max(1e-9)));
                 // x/y are measured from the rulers' zero point, as for a frame.
                 let o = d.ruler_origin(loc.spread, b.center().x).unwrap_or(Point::ORIGIN);
@@ -1839,7 +1839,7 @@ fn reorder(s: &mut Session, p: &Value) -> Result<Value> {
     let above = opt_u64(p, C, "above")?.map(ItemId);
     let below = opt_u64(p, C, "below")?.map(ItemId);
     let index = opt_u64(p, C, "index")?;
-    let layer = opt_u64(p, C, "layer")?.map(oracle_guide_doc::LayerId);
+    let layer = opt_u64(p, C, "layer")?.map(oracle_layout_doc::LayerId);
     if [above.is_some(), below.is_some(), index.is_some()].into_iter().filter(|b| *b).count() > 1 {
         return Err(bad(C, "give only one of above, below and index"));
     }
@@ -1861,7 +1861,7 @@ fn reorder(s: &mut Session, p: &Value) -> Result<Value> {
         }
         let in_group = !parent.is_empty();
         let group_layer = if in_group {
-            let g = d.item_at(&oracle_guide_doc::ItemLoc { spread: loc.spread, path: parent.clone() }).ok_or_else(|| no_object(first))?;
+            let g = d.item_at(&oracle_layout_doc::ItemLoc { spread: loc.spread, path: parent.clone() }).ok_or_else(|| no_object(first))?;
             if !g.states.is_empty() {
                 return Err(bad(C, "the states of a multi-state object are reordered in the Object States panel"));
             }
@@ -1942,7 +1942,7 @@ fn reorder(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// Sets the layer of `it` and its group members (nesting is bounded).
-fn set_layer_deep(it: &mut Item, l: oracle_guide_doc::LayerId, depth: usize) {
+fn set_layer_deep(it: &mut Item, l: oracle_layout_doc::LayerId, depth: usize) {
     it.layer = l;
     if depth < 64
         && let Some(kids) = it.children_mut()
@@ -1956,7 +1956,7 @@ fn set_layer_deep(it: &mut Item, l: oracle_guide_doc::LayerId, depth: usize) {
 /// `object.setLayer`: moves the objects, or the top-level groups of group members, to a layer.
 fn set_layer(s: &mut Session, p: &Value) -> Result<Value> {
     const C: &str = "object.setLayer";
-    let l = oracle_guide_doc::LayerId(p.get("layer").and_then(Value::as_u64).ok_or_else(|| bad(C, "missing layer"))?);
+    let l = oracle_layout_doc::LayerId(p.get("layer").and_then(Value::as_u64).ok_or_else(|| bad(C, "missing layer"))?);
     let ids = targets(s, p)?;
     s.edit(|d, _| {
         if d.layer(l).is_none() {
@@ -2045,7 +2045,7 @@ fn group(s: &mut Session, p: &Value) -> Result<Value> {
         }
         kids.reverse();
         let gid = ItemId(d.alloc());
-        let mut g = Item::new(gid, layer, Shape::Group, oracle_guide_geom::PathData::default());
+        let mut g = Item::new(gid, layer, Shape::Group, oracle_layout_geom::PathData::default());
         let at = (front + 1).saturating_sub(kids.len());
         g.content = Content::Group { items: kids };
         let siblings = siblings_mut(d, plan.spread, &plan.parent).ok_or_else(missing)?;
@@ -2087,7 +2087,7 @@ fn ungroup(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 fn text_wrap(s: &mut Session, p: &Value) -> Result<Value> {
-    use oracle_guide_doc::{ContourType, WrapMode, WrapSide};
+    use oracle_layout_doc::{ContourType, WrapMode, WrapSide};
     let side: Option<WrapSide> = match p.get("side") {
         Some(v) => Some(serde_json::from_value(v.clone()).map_err(|_| bad("object.textWrap", "unknown side"))?),
         None => None,
@@ -2148,7 +2148,7 @@ fn text_wrap(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 fn corner_options(s: &mut Session, p: &Value) -> Result<Value> {
-    use oracle_guide_geom::corners::{Corner, CornerOptions, CornerShape};
+    use oracle_layout_geom::corners::{Corner, CornerOptions, CornerShape};
     let opts = match p.get("corners") {
         Some(v) => {
             let corners: [Corner; 4] =
@@ -2169,7 +2169,7 @@ fn corner_options(s: &mut Session, p: &Value) -> Result<Value> {
 /// `object.matchAttributes`: the selected objects (or `ids`) take `from`'s appearance.
 pub(super) fn match_attributes(s: &mut Session, p: &Value) -> Result<Value> {
     let from = super::id_param(p, "from").ok_or_else(|| bad("object.matchAttributes", "missing from"))?;
-    let src = s.doc()?.doc.item(from).cloned().ok_or(oracle_guide_doc::DocError::NoItem(from))?;
+    let src = s.doc()?.doc.item(from).cloned().ok_or(oracle_layout_doc::DocError::NoItem(from))?;
     set_flag(
         s,
         p,
@@ -2201,7 +2201,7 @@ fn merge_json(base: &mut Value, patch: &Value) {
 }
 
 /// Keep effect values in their ranges: opacities 0–1, sizes and distances ≥ 0, percentages 0–100.
-fn sanitize_effects(e: &mut oracle_guide_doc::Effects) -> Result<()> {
+fn sanitize_effects(e: &mut oracle_layout_doc::Effects) -> Result<()> {
     const ID: &str = "object.effects";
     let len = |v: &mut f64| -> Result<()> {
         if !v.is_finite() {
@@ -2303,7 +2303,7 @@ fn effects_all(s: &mut Session, p: &Value) -> Result<Value> {
             if let Some(patch) = &patch {
                 let mut cur = serde_json::to_value(&it.effects).map_err(|e| bad(ID, e.to_string()))?;
                 merge_json(&mut cur, patch);
-                let mut fx: oracle_guide_doc::Effects = serde_json::from_value(cur).map_err(|e| bad(ID, format!("effects: {e}")))?;
+                let mut fx: oracle_layout_doc::Effects = serde_json::from_value(cur).map_err(|e| bad(ID, format!("effects: {e}")))?;
                 sanitize_effects(&mut fx)?;
                 it.effects = fx;
             }
@@ -2341,7 +2341,7 @@ fn unlocked(d: &Document, it: &Item) -> bool {
 
 /// Refuses a path edit on `id` when it, a group it sits in, or its layer is locked.
 pub(super) fn path_editable(d: &Document, id: ItemId, cmd: &str) -> Result<()> {
-    let loc = d.find(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+    let loc = d.find(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
     let mut items = d.spread(loc.spread).map(|sp| &sp.items[..]).unwrap_or_default();
     for &i in &loc.path {
         let Some(it) = items.get(i) else { break };
@@ -2382,7 +2382,7 @@ fn edit_unlocked(s: &mut Session, p: &Value, f: impl Fn(&mut Item)) -> Result<Va
 
 /// A stroke that gets a colour needs a weight to show it.
 fn visible_weight(st: &mut Stroke) {
-    if st.swatch != oracle_guide_color::swatch::NONE && st.weight <= 0.0 {
+    if st.swatch != oracle_layout_color::swatch::NONE && st.weight <= 0.0 {
         st.weight = Stroke::default().weight;
     }
 }
@@ -2396,8 +2396,8 @@ fn swap_fill_stroke(it: &mut Item) {
 }
 
 fn default_fill_stroke(it: &mut Item) {
-    it.fill = Fill { swatch: oracle_guide_color::swatch::NONE.into(), tint: 1.0, ..it.fill.clone() };
-    it.stroke.swatch = oracle_guide_color::swatch::BLACK.into();
+    it.fill = Fill { swatch: oracle_layout_color::swatch::NONE.into(), tint: 1.0, ..it.fill.clone() };
+    it.stroke.swatch = oracle_layout_color::swatch::BLACK.into();
     it.stroke.tint = 1.0;
     visible_weight(&mut it.stroke);
 }
@@ -2597,7 +2597,7 @@ fn text_frame_options(s: &mut Session, p: &Value) -> Result<Value> {
             }
             // Fixed Width columns set the frame's width: n columns, the gutters between them and
             // the left and right insets.
-            let fixed_width = o.columns_kind == oracle_guide_doc::ColumnsKind::FixedWidth && o.column_width > 0.0;
+            let fixed_width = o.columns_kind == oracle_layout_doc::ColumnsKind::FixedWidth && o.column_width > 0.0;
             let width = f64::from(o.columns.max(1)) * o.column_width + f64::from(o.columns.max(1) - 1) * o.gutter + o.inset[1] + o.inset[3];
             if fixed_width
                 && ["columnsKind", "columnWidth", "columns", "gutter", "inset"].iter().any(|k| p.get(*k).is_some())
@@ -2617,7 +2617,7 @@ fn text_frame_options(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// The gap at `p` on spread `sr`: (vertical gap?, edge a, edge b, ids ending at a, ids starting at b).
-pub(crate) fn find_gap(d: &Document, sr: oracle_guide_doc::SpreadRef, p: Point) -> Option<(bool, f64, f64, Vec<ItemId>, Vec<ItemId>)> {
+pub(crate) fn find_gap(d: &Document, sr: oracle_layout_doc::SpreadRef, p: Point) -> Option<(bool, f64, f64, Vec<ItemId>, Vec<ItemId>)> {
     let sp = d.spread(sr)?;
     let page = sp.page_at_x(p.x).and_then(|i| sp.pages.get(i)).map(|pg| pg.bounds())?;
     let items: Vec<(ItemId, Rect)> = sp
@@ -2702,17 +2702,17 @@ fn clipping_path(s: &mut Session, p: &Value) -> Result<Value> {
     let threshold = p.get("threshold").and_then(Value::as_f64).unwrap_or(25.0).clamp(0.0, 255.0);
     let tol = p.get("tolerance").and_then(Value::as_f64).unwrap_or(2.0).max(0.1);
     // Trace each graphic (outside the edit: decoding is the slow part).
-    let mut paths: Vec<(ItemId, oracle_guide_geom::PathData)> = Vec::new();
+    let mut paths: Vec<(ItemId, oracle_layout_geom::PathData)> = Vec::new();
     {
         let d = &s.doc()?.doc;
         for id in &ids {
             let Some(it) = d.item(*id) else { continue };
             let Some(g) = it.graphic() else { continue };
             let Some(asset) = d.assets.get(&g.asset) else { continue };
-            let Some(px) = oracle_guide_render::decode_pixmap_page(&asset.data, asset.page) else { continue };
+            let Some(px) = oracle_layout_render::decode_pixmap_page(&asset.data, asset.page) else { continue };
             // A placed PDF cropped to a box: trace that box, which graphic space spans.
-            let px = match oracle_guide_render::shown_box(asset) {
-                Some(frac) => oracle_guide_render::crop_pixmap(&px, frac).unwrap_or(px),
+            let px = match oracle_layout_render::shown_box(asset) {
+                Some(frac) => oracle_layout_render::crop_pixmap(&px, frac).unwrap_or(px),
                 None => px,
             };
             let (pw, ph) = (px.width() as usize, px.height() as usize);
@@ -2734,7 +2734,7 @@ fn clipping_path(s: &mut Session, p: &Value) -> Result<Value> {
                 })
                 .collect();
             // The tolerance is in image pixels; the grid cells are `step` pixels.
-            let rings = oracle_guide_geom::trace::trace(&mask, w, h, tol / step, 4.0);
+            let rings = oracle_layout_geom::trace::trace(&mask, w, h, tol / step, 4.0);
             if rings.is_empty() {
                 return Err(bad(ID, "nothing to trace (the image is empty at this threshold)"));
             }
@@ -2743,10 +2743,10 @@ fn clipping_path(s: &mut Session, p: &Value) -> Result<Value> {
                 .into_iter()
                 .map(|r| {
                     let pts: Vec<Point> = r.into_iter().map(|q| g.xf * Point::new(q.x * sx, q.y * sy)).collect();
-                    oracle_guide_geom::path::SubPath::polyline(&pts, true)
+                    oracle_layout_geom::path::SubPath::polyline(&pts, true)
                 })
                 .collect();
-            paths.push((*id, oracle_guide_geom::PathData::new(subpaths)));
+            paths.push((*id, oracle_layout_geom::PathData::new(subpaths)));
         }
     }
     if paths.is_empty() {
@@ -2760,7 +2760,7 @@ fn clipping_path(s: &mut Session, p: &Value) -> Result<Value> {
                 it.shape = Shape::Path;
                 it.corners = Default::default();
                 if let Content::Graphic(g) = &mut it.content {
-                    g.auto_fit = oracle_guide_doc::Fitting::None;
+                    g.auto_fit = oracle_layout_doc::Fitting::None;
                 }
             }
         }
@@ -2825,8 +2825,8 @@ fn clipping_path_options(s: &mut Session, p: &Value) -> Result<Value> {
     })
 }
 
-fn fitting_mode(s: &str) -> Option<oracle_guide_doc::Fitting> {
-    use oracle_guide_doc::Fitting as F;
+fn fitting_mode(s: &str) -> Option<oracle_layout_doc::Fitting> {
+    use oracle_layout_doc::Fitting as F;
     Some(match s {
         "none" => F::None,
         "fillProportionally" => F::FillProportionally,
@@ -2868,11 +2868,11 @@ fn fitting_options(s: &mut Session, p: &Value) -> Result<Value> {
             let mode = fitting.unwrap_or(g.auto_fit);
             if let Some(a) = auto {
                 g.auto_fit = if a {
-                    if mode == oracle_guide_doc::Fitting::None { oracle_guide_doc::Fitting::FillProportionally } else { mode }
+                    if mode == oracle_layout_doc::Fitting::None { oracle_layout_doc::Fitting::FillProportionally } else { mode }
                 } else {
-                    oracle_guide_doc::Fitting::None
+                    oracle_layout_doc::Fitting::None
                 };
-            } else if fitting.is_some() && g.auto_fit != oracle_guide_doc::Fitting::None {
+            } else if fitting.is_some() && g.auto_fit != oracle_layout_doc::Fitting::None {
                 g.auto_fit = mode;
             }
             if let Some(xf) = g.fitted(r, mode) {
@@ -2927,7 +2927,7 @@ fn fit(s: &mut Session, p: &Value) -> Result<Value> {
                 continue;
             }
             let m = fitting_mode(&mode)
-                .filter(|m| *m != oracle_guide_doc::Fitting::None)
+                .filter(|m| *m != oracle_layout_doc::Fitting::None)
                 .ok_or_else(|| bad("object.fit", format!("unknown mode `{mode}`")))?;
             if let Some(xf) = g.fitted(r, m) {
                 g.xf = xf;
@@ -2945,7 +2945,7 @@ fn fit(s: &mut Session, p: &Value) -> Result<Value> {
 fn fitted_text_frame(d: &Document, id: ItemId, height: bool, width: bool) -> Result<Option<Rect>> {
     let Some(it) = d.item(id) else { return Ok(None) };
     let Some(tf) = it.text_frame() else { return Ok(None) };
-    if tf.options.auto_size != oracle_guide_doc::AutoSize::Off {
+    if tf.options.auto_size != oracle_layout_doc::AutoSize::Off {
         return Ok(None);
     }
     if d.frame_vertical(it) || tf.options.path.is_some() {
@@ -2963,7 +2963,7 @@ fn fitted_text_frame(d: &Document, id: ItemId, height: bool, width: bool) -> Res
     // Keep trial layouts out of the session cache. Search with the actual columns and frame
     // options: measuring a very tall frame collapses columns and includes vertical alignment's
     // extra space. A fitting trial must compose all the text, regardless of its justification.
-    let cache = oracle_guide_compose::Cache::new();
+    let cache = oracle_layout_compose::Cache::new();
     let mut trial = d.clone();
     let mut compose = |rect| {
         if let Some(it) = trial.item_mut(id) {
@@ -3000,7 +3000,7 @@ fn fit_text_height(
     mut rect: Rect,
     id: ItemId,
     inset_bottom: f64,
-    compose: &mut impl FnMut(Rect) -> Arc<oracle_guide_compose::ComposedStory>,
+    compose: &mut impl FnMut(Rect) -> Arc<oracle_layout_compose::ComposedStory>,
 ) -> Result<Rect> {
     let mut low = 1.0;
     let limit = 20_000.0;
@@ -3045,11 +3045,11 @@ pub(crate) trait RemoveKeep {
 /// Detach an item without touching story threads (moving between spreads, grouping).
 impl RemoveKeep for Document {
     fn remove_item_keep_story(&mut self, id: ItemId) -> Result<Item> {
-        let loc = self.find(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let loc = self.find(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         if loc.path.len() != 1 {
             return Err(bad("object", "nested items can't be detached"));
         }
-        let sp = self.spread_mut(loc.spread).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let sp = self.spread_mut(loc.spread).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         Ok(Arc::unwrap_or_clone(sp.items.remove(loc.path[0])))
     }
 }
@@ -3152,7 +3152,7 @@ fn distribute(s: &mut Session, p: &Value) -> Result<Value> {
     })
 }
 
-fn anchor_from(v: &Value) -> Option<oracle_guide_geom::Anchor> {
+fn anchor_from(v: &Value) -> Option<oracle_layout_geom::Anchor> {
     let pt = |k: &str| -> Option<Point> {
         let a = v.get(k)?.as_array()?;
         Some(Point::new(a.first()?.as_f64()?, a.get(1)?.as_f64()?))
@@ -3161,16 +3161,16 @@ fn anchor_from(v: &Value) -> Option<oracle_guide_geom::Anchor> {
     let h_in = pt("in").unwrap_or(p);
     let h_out = pt("out").unwrap_or(p);
     let smooth = (h_in - p).hypot() > 1e-9 || (h_out - p).hypot() > 1e-9;
-    Some(oracle_guide_geom::Anchor {
+    Some(oracle_layout_geom::Anchor {
         p,
         h_in,
         h_out,
-        kind: if smooth { oracle_guide_geom::AnchorKind::Smooth } else { oracle_guide_geom::AnchorKind::Corner },
+        kind: if smooth { oracle_layout_geom::AnchorKind::Smooth } else { oracle_layout_geom::AnchorKind::Corner },
     })
 }
 
 fn path_create(s: &mut Session, p: &Value) -> Result<Value> {
-    let anchors: Vec<oracle_guide_geom::Anchor> =
+    let anchors: Vec<oracle_layout_geom::Anchor> =
         p.get("anchors").and_then(Value::as_array).map(|a| a.iter().filter_map(anchor_from).collect()).unwrap_or_default();
     if anchors.len() < 2 {
         return Err(bad("path.create", "a path needs at least two anchors"));
@@ -3181,7 +3181,7 @@ fn path_create(s: &mut Session, p: &Value) -> Result<Value> {
     s.edit(|d, sel| {
         let id = ItemId(d.alloc());
         let shape = if anchors.len() == 2 && !closed { Shape::GraphicLine } else { Shape::Path };
-        let mut it = Item::new(id, lid, shape, oracle_guide_geom::PathData::single(oracle_guide_geom::SubPath::new(anchors, closed)));
+        let mut it = Item::new(id, lid, shape, oracle_layout_geom::PathData::single(oracle_layout_geom::SubPath::new(anchors, closed)));
         it.stroke = Stroke::default();
         new_object_colors(d, &mut it);
         d.insert_item(sr, it, None)?;
@@ -3202,9 +3202,9 @@ fn path_append(s: &mut Session, p: &Value) -> Result<Value> {
     };
     s.edit(|d, _| {
         path_editable(d, id, "path.appendAnchor")?;
-        let loc = d.find(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let loc = d.find(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         let inv = (d.parent_xf(&loc) * d.item_at(&loc).map(|i| i.xf).unwrap_or_default()).inverse();
-        let it = d.item_mut(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let it = d.item_mut(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         let sp = match subpath {
             Some(i) => {
                 usize::try_from(i).ok().and_then(|i| it.path.subpaths.get_mut(i)).ok_or_else(|| bad("path.appendAnchor", "no such subpath"))?
@@ -3242,9 +3242,9 @@ fn path_set_anchor(s: &mut Session, p: &Value) -> Result<Value> {
     let which = p.get("anchor").cloned().unwrap_or(Value::Null);
     s.edit(|d, _| {
         path_editable(d, id, ID)?;
-        let loc = d.find(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let loc = d.find(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         let inv = (d.parent_xf(&loc) * d.item_at(&loc).map(|i| i.xf).unwrap_or_default()).inverse();
-        let it = d.item_mut(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let it = d.item_mut(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         let sp = match subpath {
             Some(i) => usize::try_from(i).ok().and_then(|i| it.path.subpaths.get_mut(i)),
             None => it.path.subpaths.last_mut(),
@@ -3272,7 +3272,7 @@ fn path_set_anchor(s: &mut Session, p: &Value) -> Result<Value> {
         if new_in.is_some() && new_out.is_some() {
             let (i, o) = (a.h_in - a.p, a.h_out - a.p);
             let collinear = (i.x * o.y - i.y * o.x).abs() <= 1e-6 * i.hypot().max(1.0) * o.hypot().max(1.0) && i.dot(o) <= 0.0;
-            a.kind = if collinear { oracle_guide_geom::AnchorKind::Smooth } else { oracle_guide_geom::AnchorKind::Corner };
+            a.kind = if collinear { oracle_layout_geom::AnchorKind::Smooth } else { oracle_layout_geom::AnchorKind::Corner };
         }
         ok()
     })
@@ -3321,7 +3321,7 @@ fn path_close(s: &mut Session, p: &Value) -> Result<Value> {
     let only = p.get("subpath").and_then(Value::as_u64).map(|i| usize::try_from(i).unwrap_or(usize::MAX));
     s.edit(|d, _| {
         path_editable(d, id, "path.close")?;
-        let it = d.item_mut(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let it = d.item_mut(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         if only.is_some_and(|i| i >= it.path.subpaths.len()) {
             return Err(bad("path.close", "no such subpath"));
         }
@@ -3344,24 +3344,24 @@ fn path_move_anchors(s: &mut Session, p: &Value) -> Result<Value> {
     let handle = str_param(p, "handle").map(str::to_string);
     s.edit(|d, _| {
         path_editable(d, id, "path.moveAnchors")?;
-        let loc = d.find(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let loc = d.find(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         let m = d.parent_xf(&loc) * d.item_at(&loc).map(|i| i.xf).unwrap_or_default();
         // Spread-space delta → inner-space delta (linear part only).
         let inv = m.inverse();
         let dv = (inv * Point::new(d0.x, d0.y)) - (inv * Point::ZERO);
-        let it = d.item_mut(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+        let it = d.item_mut(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
         for (si, ai) in &which {
             let Some(a) = it.path.anchor_mut(*si, *ai) else { continue };
             match handle.as_deref() {
                 Some("in") => {
                     a.h_in += dv;
-                    if a.kind == oracle_guide_geom::AnchorKind::Smooth {
+                    if a.kind == oracle_layout_geom::AnchorKind::Smooth {
                         a.h_out = a.p - (a.h_in - a.p);
                     }
                 }
                 Some("out") => {
                     a.h_out += dv;
-                    if a.kind == oracle_guide_geom::AnchorKind::Smooth {
+                    if a.kind == oracle_layout_geom::AnchorKind::Smooth {
                         a.h_in = a.p - (a.h_out - a.p);
                     }
                 }
@@ -3686,7 +3686,7 @@ mod step_repeat_tests {
         s.execute("object.fill", &json!({"swatch": "[Paper]"})).unwrap();
         assert_eq!(s.doc().unwrap().doc.settings.new_object.fill, "[Paper]");
         s.execute("object.defaultFillStroke", &json!({})).unwrap();
-        assert_eq!(s.doc().unwrap().doc.settings.new_object, oracle_guide_doc::NewObjectColors::default());
+        assert_eq!(s.doc().unwrap().doc.settings.new_object, oracle_layout_doc::NewObjectColors::default());
         // One undo step each.
         s.execute("edit.undo", &json!({})).unwrap();
         assert_eq!(s.doc().unwrap().doc.settings.new_object.fill, "[Paper]");
@@ -3822,7 +3822,7 @@ mod scale_tests {
         (ItemId(r["id"].as_u64().unwrap()), StoryId(r["story"].as_u64().unwrap()))
     }
 
-    fn props_at(s: &Session, story: StoryId, pos: usize) -> (oracle_guide_doc::ParaProps, oracle_guide_doc::CharProps) {
+    fn props_at(s: &Session, story: StoryId, pos: usize) -> (oracle_layout_doc::ParaProps, oracle_layout_doc::CharProps) {
         let d = &s.doc().unwrap().doc;
         let st = d.story(story).unwrap();
         let (pp, base) = d.styles.resolve_para(&st.paras[st.para_at(pos)]);
@@ -3846,7 +3846,7 @@ mod scale_tests {
         let (pp, cp) = props_at(&s, story, 0);
         assert_eq!(
             (cp.size, cp.leading, cp.baseline_shift, cp.tracking, cp.h_scale),
-            (40.0, oracle_guide_doc::Leading::Points(48.0), 4.0, -50.0, 1.0)
+            (40.0, oracle_layout_doc::Leading::Points(48.0), 4.0, -50.0, 1.0)
         );
         assert_eq!((pp.left_indent, pp.space_after), (8.0, 12.0));
         // The second paragraph's size came from the paragraph style: it is set too.
@@ -3937,7 +3937,7 @@ mod gradient_tests {
 
     #[test]
     fn swatches_dropped_on_stops_keep_their_cmyk() {
-        use oracle_guide_color::Color;
+        use oracle_layout_color::Color;
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
         let r = s.execute("frame.create", &json!({"rect": [100, 100, 300, 200]})).unwrap();
@@ -3954,7 +3954,7 @@ mod gradient_tests {
             )
             .unwrap();
         let d = &s.doc().unwrap().doc;
-        let g = oracle_guide_color::swatch::resolve_gradient(&d.swatches, r["swatch"].as_str().unwrap()).unwrap();
+        let g = oracle_layout_color::swatch::resolve_gradient(&d.swatches, r["swatch"].as_str().unwrap()).unwrap();
         assert_eq!(d.item(id).unwrap().fill.swatch, r["swatch"].as_str().unwrap());
         assert_eq!(g.stops[0].color, Color::cmyk(0.0, 1.0, 0.0, 0.0));
         assert_eq!(g.stops[1].color, Color::cmyk(1.0, 0.0, 0.0, 0.0));
@@ -4124,8 +4124,8 @@ mod attributes_tests {
         let it = s.doc().unwrap().doc.item(ItemId(a)).unwrap().clone();
         assert!(it.fill.overprint && it.stroke.gap_overprint && it.nonprinting && !it.stroke.overprint);
         // IDML keeps them.
-        let bytes = oracle_guide_idml::export_idml(&s.doc().unwrap().doc);
-        let back = oracle_guide_idml::import_idml(&bytes).unwrap();
+        let bytes = oracle_layout_idml::export_idml(&s.doc().unwrap().doc);
+        let back = oracle_layout_idml::import_idml(&bytes).unwrap();
         let it = back.spreads.iter().flat_map(|sp| sp.items.iter()).find(|i| i.fill.overprint).expect("overprint fill survives");
         assert!(it.stroke.gap_overprint);
     }
@@ -4145,9 +4145,9 @@ mod fitting_tests {
         s.execute("object.fill", &json!({"swatch": "[Black]", "ids": [k]})).unwrap();
         let d = s.doc().unwrap().doc.clone();
         let plate = |p: u8| {
-            let mut rr = oracle_guide_render::Renderer::new();
+            let mut rr = oracle_layout_render::Renderer::new();
             rr.threads = 0;
-            rr.render_page(&d, &s.cache, 0, 1.0, false, &oracle_guide_render::RenderOptions { plate: Some(p), ..Default::default() }).unwrap()
+            rr.render_page(&d, &s.cache, 0, 1.0, false, &oracle_layout_render::RenderOptions { plate: Some(p), ..Default::default() }).unwrap()
         };
         let (cyan, black) = (plate(0), plate(3));
         // Cyan ink only on the cyan frame; black ink only on the black one (no rich-black guess).
@@ -4164,7 +4164,7 @@ mod fitting_tests {
         s.execute("object.fill", &json!({"swatch": "C=100 M=0 Y=0 K=0", "ids": [id]})).unwrap();
         let shot = |s: &Session| {
             let d = s.doc().unwrap().doc.clone();
-            let mut rr = oracle_guide_render::Renderer::new();
+            let mut rr = oracle_layout_render::Renderer::new();
             rr.threads = 0;
             rr.render_page(&d, &s.cache, 0, 1.0, false, &Default::default()).unwrap()
         };
@@ -4238,7 +4238,7 @@ mod fitting_tests {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
         // A 40×20 pt image placed into a 200×200 frame.
-        let png = oracle_guide_render::Rendered { width: 40, height: 20, pixels: vec![200; 40 * 20 * 4] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 40, height: 20, pixels: vec![200; 40 * 20 * 4] }.to_png();
         let f = s.execute("frame.create", &json!({"rect": [100, 100, 300, 300]})).unwrap()["id"].as_u64().unwrap();
         s.execute("file.place", &json!({"base64": super::super::file::base64_encode(&png), "name": "a.png", "frame": f})).unwrap();
         let content = |s: &Session| {
@@ -4260,9 +4260,9 @@ mod fitting_tests {
         let c = content(&s);
         assert!((c.width() - 400.0).abs() < 1e-6, "fills the wider frame: {c:?}");
         // IDML keeps the options.
-        let back = oracle_guide_idml::import_idml(&oracle_guide_idml::export_idml(&s.doc().unwrap().doc)).unwrap();
+        let back = oracle_layout_idml::import_idml(&oracle_layout_idml::export_idml(&s.doc().unwrap().doc)).unwrap();
         let g = back.spreads.iter().flat_map(|sp| sp.items.iter()).find_map(|i| i.graphic().cloned()).unwrap();
-        assert_eq!(g.auto_fit, oracle_guide_doc::Fitting::FillProportionally);
+        assert_eq!(g.auto_fit, oracle_layout_doc::Fitting::FillProportionally);
     }
 }
 
@@ -4303,7 +4303,7 @@ mod clipping_tests {
                 }
             }
         }
-        let png = oracle_guide_render::Rendered { width: 40, height: 40, pixels: px }.to_png();
+        let png = oracle_layout_render::Rendered { width: 40, height: 40, pixels: px }.to_png();
         let f = s.execute("frame.create", &json!({"rect": [100, 100, 140, 140]})).unwrap()["id"].as_u64().unwrap();
         s.execute("file.place", &json!({"base64": super::super::file::base64_encode(&png), "name": "disc.png", "frame": f})).unwrap();
         s.execute("object.clippingPath", &json!({"ids": [f], "tolerance": 0.5})).unwrap();
@@ -4319,19 +4319,19 @@ mod clipping_tests {
     fn clipping_path_options_report_invert_and_remove_the_clip() {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
-        let png = oracle_guide_render::Rendered { width: 4, height: 4, pixels: vec![255; 64] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 4, height: 4, pixels: vec![255; 64] }.to_png();
         let f = s.execute("frame.create", &json!({"rect": [100, 100, 140, 140]})).unwrap()["id"].as_u64().unwrap();
         s.execute("file.place", &json!({"base64": super::super::file::base64_encode(&png), "name": "white.png", "frame": f})).unwrap();
         let get = |s: &mut Session| s.execute("object.clippingPathOptions", &json!({"ids": [f]})).unwrap()["items"][0].clone();
         assert_eq!(get(&mut s)["type"], "none");
         // As an imported file would carry it.
-        let triangle = oracle_guide_geom::PathData::single(oracle_guide_geom::path::SubPath::polyline(
+        let triangle = oracle_layout_geom::PathData::single(oracle_layout_geom::path::SubPath::polyline(
             &[Point::new(0.0, 4.0), Point::new(2.0, 0.0), Point::new(4.0, 4.0)],
             true,
         ));
         s.edit(|d, _| {
             if let Some(Content::Graphic(g)) = d.item_mut(ItemId(f)).map(|it| &mut it.content) {
-                g.clip = Some(Arc::new(oracle_guide_doc::ClippingPath::new(oracle_guide_doc::ClippingKind::PhotoshopPath, triangle)));
+                g.clip = Some(Arc::new(oracle_layout_doc::ClippingPath::new(oracle_layout_doc::ClippingKind::PhotoshopPath, triangle)));
             }
             Ok(json!({}))
         })
@@ -4378,7 +4378,7 @@ mod line_end_tests {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
         let r = s.execute("frame.create", &json!({"rect": [36, 36, 300, 300], "content": "text", "text": "One\rTwo\r\nThree"})).unwrap();
-        let sid = oracle_guide_doc::StoryId(r["story"].as_u64().unwrap());
+        let sid = oracle_layout_doc::StoryId(r["story"].as_u64().unwrap());
         let story = |s: &Session| s.doc().unwrap().doc.story(sid).unwrap().clone();
         assert_eq!(story(&s).text, "One\nTwo\nThree");
         assert_eq!(story(&s).paras.len(), 3);
@@ -4407,7 +4407,7 @@ mod line_end_tests {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
         let r = s.execute("frame.create", &json!({"rect": [36, 36, 300, 300], "content": "text", "text": "One\u{B}Two"})).unwrap();
-        let sid = oracle_guide_doc::StoryId(r["story"].as_u64().unwrap());
+        let sid = oracle_layout_doc::StoryId(r["story"].as_u64().unwrap());
         let story = |s: &Session| s.doc().unwrap().doc.story(sid).unwrap().clone();
         assert_eq!((story(&s).text.as_str(), story(&s).paras.len()), ("One\u{2028}Two", 1));
         s.execute("text.insert", &json!({"text": "\u{B}Three", "raw": true})).unwrap();
@@ -4501,7 +4501,7 @@ mod column_rule_tests {
 
 #[cfg(test)]
 mod blend_mode_tests {
-    use oracle_guide_color::BlendMode;
+    use oracle_layout_color::BlendMode;
 
     use super::*;
 
@@ -4673,7 +4673,7 @@ mod content_move_tests {
     fn placed() -> (Session, ItemId) {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
-        let png = oracle_guide_render::Rendered { width: 40, height: 20, pixels: vec![200; 40 * 20 * 4] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 40, height: 20, pixels: vec![200; 40 * 20 * 4] }.to_png();
         let f = s.execute("frame.create", &json!({"rect": [100, 100, 300, 300], "content": "graphic"})).unwrap()["id"].as_u64().unwrap();
         s.execute("place.load", &json!({"base64": super::super::base64_encode(&png)})).unwrap();
         s.execute("place.drop", &json!({"frame": f})).unwrap();
@@ -4897,8 +4897,8 @@ mod stroke_type_tests {
         ] {
             let result = s.execute("object.stroke", &json!({"ids": [id], "type": kind})).unwrap();
             assert_eq!(result["changed"], 1);
-            let item = s.doc().unwrap().doc.item(oracle_guide_doc::ItemId(id)).unwrap();
-            assert_eq!(item.stroke.kind, serde_json::from_value::<oracle_guide_doc::StrokeType>(kind).unwrap());
+            let item = s.doc().unwrap().doc.item(oracle_layout_doc::ItemId(id)).unwrap();
+            assert_eq!(item.stroke.kind, serde_json::from_value::<oracle_layout_doc::StrokeType>(kind).unwrap());
         }
     }
 }
@@ -4951,7 +4951,7 @@ mod copy_ids_tests {
         assert_eq!(ids(&s.execute("transform.move", &json!({"dx": 5, "dy": 0, "ids": [a], "content": true})).unwrap()), [a]);
         let r = s.execute("transform.move", &json!({"dx": 100, "dy": 0, "copy": true, "ids": [a]})).unwrap();
         let copy = ids(&r);
-        assert!(copy.len() == 1 && copy[0] != a && s.doc().unwrap().doc.item(oracle_guide_doc::ItemId(copy[0])).is_some(), "{r}");
+        assert!(copy.len() == 1 && copy[0] != a && s.doc().unwrap().doc.item(oracle_layout_doc::ItemId(copy[0])).is_some(), "{r}");
         assert_eq!(selected(&s), copy);
         // Edit › Duplicate.
         let r = s.execute("edit.duplicate", &json!({})).unwrap();
@@ -4961,7 +4961,7 @@ mod copy_ids_tests {
         // Step and Repeat: every copy.
         let r = s.execute("edit.stepAndRepeat", &json!({"count": 3, "dx": 0, "dy": 60, "ids": [a]})).unwrap();
         assert_eq!((r["created"].as_u64(), ids(&r).len()), (Some(3), 3), "{r}");
-        assert!(ids(&r).iter().all(|i| s.doc().unwrap().doc.item(oracle_guide_doc::ItemId(*i)).is_some()));
+        assert!(ids(&r).iter().all(|i| s.doc().unwrap().doc.item(oracle_layout_doc::ItemId(*i)).is_some()));
     }
 }
 
@@ -4980,7 +4980,7 @@ mod tint_alone_tests {
         s.execute("object.stroke", &json!({"swatch": "[None]", "ids": [a, b]})).unwrap();
         // Fill tint on both: each keeps its swatch.
         s.execute("object.fill", &json!({"tint": 0.25, "ids": [a, b]})).unwrap();
-        let item = |s: &crate::Session, id: u64| s.doc().unwrap().doc.item(oracle_guide_doc::ItemId(id)).unwrap().clone();
+        let item = |s: &crate::Session, id: u64| s.doc().unwrap().doc.item(oracle_layout_doc::ItemId(id)).unwrap().clone();
         assert_eq!((item(&s, a).fill.swatch.as_str(), item(&s, a).fill.tint), ("[Black]", 0.25));
         assert_eq!((item(&s, b).fill.swatch.as_str(), item(&s, b).fill.tint), ("C=100 M=0 Y=0 K=0", 0.25));
         // A swatch alone is 100%.
@@ -5004,7 +5004,7 @@ mod content_transform_tests {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
         let f = s.execute("frame.create", &json!({"rect": [100, 100, 300, 300], "content": "graphic"})).unwrap()["id"].as_u64().unwrap();
-        let png = oracle_guide_render::Rendered { width: 200, height: 100, pixels: vec![200u8; 200 * 100 * 4] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 200, height: 100, pixels: vec![200u8; 200 * 100 * 4] }.to_png();
         s.execute("file.place", &json!({"base64": crate::cmd::file::base64_encode(&png), "name": "a.png", "frame": f})).unwrap();
         s.execute("transform.rotate", &json!({"ids": [f], "angle": -45})).unwrap();
         s.execute("selection.set", &json!({"ids": [f], "content": true})).unwrap();
@@ -5016,12 +5016,12 @@ mod content_transform_tests {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
         let f = s.execute("frame.create", &json!({"rect": [100, 100, 200, 200], "content": "graphic"})).unwrap()["id"].as_u64().unwrap();
-        let png = oracle_guide_render::Rendered { width: 200, height: 100, pixels: vec![200u8; 200 * 100 * 4] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 200, height: 100, pixels: vec![200u8; 200 * 100 * 4] }.to_png();
         s.execute("file.place", &json!({"base64": crate::cmd::file::base64_encode(&png), "name": "a.png", "frame": f})).unwrap();
         let bounds = |s: &Session| {
-            let it = s.doc().unwrap().doc.item(oracle_guide_doc::ItemId(f)).unwrap().clone();
+            let it = s.doc().unwrap().doc.item(oracle_layout_doc::ItemId(f)).unwrap().clone();
             let g = it.graphic().unwrap().clone();
-            (it.bounds(), (it.xf * g.xf).transform_rect_bbox(oracle_guide_geom::Rect::new(0.0, 0.0, g.size.0, g.size.1)))
+            (it.bounds(), (it.xf * g.xf).transform_rect_bbox(oracle_layout_geom::Rect::new(0.0, 0.0, g.size.0, g.size.1)))
         };
         let (frame0, _) = bounds(&s);
         // The handles' drag: the image to (20, 40)–(420, 240), one undo step; the frame stays.
@@ -5083,18 +5083,18 @@ mod content_transform_tests {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
         let f = s.execute("frame.create", &json!({"rect": [100, 100, 300, 300], "content": "graphic"})).unwrap()["id"].as_u64().unwrap();
-        let png = oracle_guide_render::Rendered { width: 200, height: 100, pixels: vec![200u8; 200 * 100 * 4] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 200, height: 100, pixels: vec![200u8; 200 * 100 * 4] }.to_png();
         s.execute("file.place", &json!({"base64": crate::cmd::file::base64_encode(&png), "name": "a.png", "frame": f})).unwrap();
         s.execute("view.zeroPoint", &json!({"at": [72, 36]})).unwrap();
         s.execute("selection.set", &json!({"ids": [f], "content": true})).unwrap();
         s.execute("transform.set", &json!({"x": 10, "y": 20, "ref": 0})).unwrap();
         // The graphic's top-left, measured from the zero point (what the Transform fields show).
         let d = &s.doc().unwrap().doc;
-        let id = oracle_guide_doc::ItemId(f);
+        let id = oracle_layout_doc::ItemId(f);
         let loc = d.find(id).unwrap();
         let it = d.item(id).unwrap();
         let g = it.graphic().unwrap();
-        let b = (d.parent_xf(&loc) * it.xf * g.xf).transform_rect_bbox(oracle_guide_geom::Rect::new(0.0, 0.0, g.size.0, g.size.1));
+        let b = (d.parent_xf(&loc) * it.xf * g.xf).transform_rect_bbox(oracle_layout_geom::Rect::new(0.0, 0.0, g.size.0, g.size.1));
         let o = d.ruler_origin(loc.spread, b.center().x).unwrap();
         assert!(o.x > 0.0 && o.y > 0.0, "the zero point moved: {o:?}");
         assert!((b.x0 - o.x - 10.0).abs() < 1e-6 && (b.y0 - o.y - 20.0).abs() < 1e-6, "{b:?} from {o:?}");
@@ -5178,7 +5178,7 @@ mod fit_text_frame_tests {
 
     #[test]
     fn fitting_text_keeps_columns_and_vertical_justification() {
-        use oracle_guide_doc::VerticalJustification::{Bottom, Center, Justify, Top};
+        use oracle_layout_doc::VerticalJustification::{Bottom, Center, Justify, Top};
         for columns in [1, 2] {
             for justification in [Top, Bottom, Center, Justify] {
                 let mut s = Session::new();
@@ -5212,7 +5212,7 @@ mod fit_text_frame_tests {
                 s.execute("file.new", &json!({})).unwrap();
                 let id = frame(&mut s, [100.0, 100.0, 500.0, 300.0], "Fit me");
                 if graphic {
-                    let png = oracle_guide_render::Rendered { width: 40, height: 20, pixels: vec![200; 40 * 20 * 4] }.to_png();
+                    let png = oracle_layout_render::Rendered { width: 40, height: 20, pixels: vec![200; 40 * 20 * 4] }.to_png();
                     s.execute("file.place", &json!({"base64": super::super::file::base64_encode(&png), "name": "test.png", "frame": id.0})).unwrap();
                     let it = Arc::make_mut(&mut s.doc_mut().unwrap().doc).item_mut(id).unwrap();
                     let Content::Graphic(g) = &mut it.content else { panic!("graphic") };
@@ -5286,8 +5286,8 @@ mod spread_target_tests {
 
 #[cfg(test)]
 mod path_edit_tests {
-    use oracle_guide_doc::ItemId;
-    use oracle_guide_geom::Point;
+    use oracle_layout_doc::ItemId;
+    use oracle_layout_geom::Point;
     use serde_json::json;
 
     fn session_with_path() -> (crate::Session, u64) {
@@ -5304,7 +5304,7 @@ mod path_edit_tests {
         (s, id)
     }
 
-    fn anchors(s: &crate::Session, id: u64) -> Vec<oracle_guide_geom::Anchor> {
+    fn anchors(s: &crate::Session, id: u64) -> Vec<oracle_layout_geom::Anchor> {
         let d = &s.doc().unwrap().doc;
         let it = d.item(ItemId(id)).unwrap();
         let xf = d.parent_xf(&d.find(ItemId(id)).unwrap()) * it.xf;
@@ -5334,7 +5334,7 @@ mod path_edit_tests {
         // Direction lines on the last anchor: collinear and opposite make it smooth.
         s.execute("path.setAnchor", &json!({"id": id, "anchor": "last", "in": [380, 230], "out": [420, 270]})).unwrap();
         let last = *anchors(&s, id).last().unwrap();
-        assert_eq!((last.h_in, last.h_out, last.kind), (Point::new(380.0, 230.0), Point::new(420.0, 270.0), oracle_guide_geom::AnchorKind::Smooth));
+        assert_eq!((last.h_in, last.h_out, last.kind), (Point::new(380.0, 230.0), Point::new(420.0, 270.0), oracle_layout_geom::AnchorKind::Smooth));
         s.execute("path.setAnchor", &json!({"id": id, "anchor": 0, "p": [90, 110]})).unwrap();
         assert_eq!(anchors(&s, id)[0].p, Point::new(90.0, 110.0));
         assert!(s.execute("path.setAnchor", &json!({"id": id, "anchor": 9, "p": [0, 0]})).is_err());
@@ -5412,7 +5412,7 @@ mod path_edit_tests {
 
 #[cfg(test)]
 mod effects_command_tests {
-    use oracle_guide_doc::ItemId;
+    use oracle_layout_doc::ItemId;
     use serde_json::json;
 
     #[test]
@@ -5436,7 +5436,7 @@ mod effects_command_tests {
         let e = &it.effects;
         assert!(e.inner_shadow.on && e.inner_shadow.angle == 120.0 && e.inner_shadow.size == 7.0);
         assert!(e.drop_shadow.on && e.drop_shadow.distance == 10.0 && e.drop_shadow.size == 9.0, "untouched fields stay");
-        assert_eq!((e.feather, it.opacity, it.blend), (4.0, 0.5, oracle_guide_color::BlendMode::Multiply));
+        assert_eq!((e.feather, it.opacity, it.blend), (4.0, 0.5, oracle_layout_color::BlendMode::Multiply));
         // Out of range values are kept in range; garbage changes nothing.
         s.execute("object.effects", &json!({"ids": [id], "effects": {"outerGlow": {"on": true, "opacity": 3, "spread": 400, "size": -5}}})).unwrap();
         let og = s.doc().unwrap().doc.item(ItemId(id)).unwrap().effects.outer_glow.clone();
@@ -5526,13 +5526,13 @@ mod glow_feather_options_tests {
             &json!({"ids": [id], "effects": {"innerGlow": {"on": true, "mode": "Multiply", "technique": "precise"}, "feather": 4.5, "featherOptions": {"choke": 140, "corners": "sharp"}}}),
         )
         .unwrap();
-        let e = s.doc().unwrap().doc.item(oracle_guide_doc::ItemId(id)).unwrap().effects.clone();
-        assert_eq!((e.inner_glow.mode, e.inner_glow.technique), (oracle_guide_color::BlendMode::Multiply, oracle_guide_doc::GlowTechnique::Precise));
-        assert_eq!((e.feather_options.choke, e.feather_options.corners), (100.0, oracle_guide_doc::FeatherCorners::Sharp), "choke is a percentage");
+        let e = s.doc().unwrap().doc.item(oracle_layout_doc::ItemId(id)).unwrap().effects.clone();
+        assert_eq!((e.inner_glow.mode, e.inner_glow.technique), (oracle_layout_color::BlendMode::Multiply, oracle_layout_doc::GlowTechnique::Precise));
+        assert_eq!((e.feather_options.choke, e.feather_options.corners), (100.0, oracle_layout_doc::FeatherCorners::Sharp), "choke is a percentage");
         // InDesign's defaults: Screen and Softer; Diffused corners, no choke.
-        let d = oracle_guide_doc::Effects::default();
-        assert_eq!((d.inner_glow.mode, d.inner_glow.technique), (oracle_guide_color::BlendMode::Screen, oracle_guide_doc::GlowTechnique::Softer));
-        assert_eq!((d.feather_options.choke, d.feather_options.corners), (0.0, oracle_guide_doc::FeatherCorners::Diffused));
+        let d = oracle_layout_doc::Effects::default();
+        assert_eq!((d.inner_glow.mode, d.inner_glow.technique), (oracle_layout_color::BlendMode::Screen, oracle_layout_doc::GlowTechnique::Softer));
+        assert_eq!((d.feather_options.choke, d.feather_options.corners), (0.0, oracle_layout_doc::FeatherCorners::Diffused));
     }
 }
 

@@ -15,7 +15,7 @@
   timestamp server, ...). Optional overrides: WINDOWS_TIMESTAMP_URL, SIGNTOOL (path to signtool.exe).
 
 .EXAMPLE
-  pwsh packaging/windows/sign.ps1 dist/oracle-guide.exe dist/OracleGuide.msi
+  pwsh packaging/windows/sign.ps1 dist/oracle-layout.exe dist/OracleLayout.msi
 #>
 param(
   [Parameter(Mandatory = $true, ValueFromRemainingArguments = $true)]
@@ -55,8 +55,8 @@ if (-not $haveCert -and -not $haveAzure) {
 }
 
 $script:SignTool = Find-SignTool
-$common = @('sign', '/v', '/fd', 'SHA256', '/td', 'SHA256', '/d', 'Oracle Brand Guide', '/du', 'https://github.com/Marvingxx/oracle-guide')
-$tmp = Join-Path ([IO.Path]::GetTempPath()) "oracle-guide-sign-$([IO.Path]::GetRandomFileName())"
+$common = @('sign', '/v', '/fd', 'SHA256', '/td', 'SHA256', '/d', 'Oracle Layout', '/du', 'https://github.com/Marvingxx/oracle-guide')
+$tmp = Join-Path ([IO.Path]::GetTempPath()) "oracle-layout-sign-$([IO.Path]::GetRandomFileName())"
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {

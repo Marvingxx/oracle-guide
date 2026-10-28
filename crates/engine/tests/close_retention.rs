@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use oracle_guide_doc::StoryId;
-use oracle_guide_engine::Session;
+use oracle_layout_doc::StoryId;
+use oracle_layout_engine::Session;
 use serde_json::json;
 
 fn text_document(s: &mut Session, title: &str) -> StoryId {

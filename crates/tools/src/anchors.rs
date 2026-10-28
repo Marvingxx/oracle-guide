@@ -1,8 +1,8 @@
 //! Add Anchor Point (=), Delete Anchor Point (-) and Convert Direction Point (Shift+C): they act on
 //! the selected paths, or the path under the pointer when nothing is selected.
 
-use oracle_guide_doc::ItemId;
-use oracle_guide_geom::Point;
+use oracle_layout_doc::ItemId;
+use oracle_layout_geom::Point;
 use serde_json::json;
 
 use crate::select::anchor_at_in;

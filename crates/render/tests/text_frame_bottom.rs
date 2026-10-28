@@ -1,9 +1,9 @@
 //! Bottom-baseline fitting must preserve the visible descenders below the text frame.
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::build::NewDocument;
-use oracle_guide_doc::{Document, FirstBaseline, ParaFormat, SpreadRef};
-use oracle_guide_geom::{Affine, Rect};
-use oracle_guide_render::{Placed, RenderOptions, Rendered, Renderer};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::build::NewDocument;
+use oracle_layout_doc::{Document, FirstBaseline, ParaFormat, SpreadRef};
+use oracle_layout_geom::{Affine, Rect};
+use oracle_layout_render::{Placed, RenderOptions, Rendered, Renderer};
 
 fn text_image(height: f64) -> Rendered {
     let mut d = Document::new(&NewDocument { width: 160.0, height: 100.0, facing_pages: false, ..Default::default() });

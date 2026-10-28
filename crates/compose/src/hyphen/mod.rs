@@ -76,14 +76,14 @@ pub enum Lang {
 }
 
 impl Lang {
-    /// The hyphenator for a language name or locale code (see [`oracle_guide_doc::language_tag`]).
+    /// The hyphenator for a language name or locale code (see [`oracle_layout_doc::language_tag`]).
     /// None when the language has no bundled hyphenation.
     pub fn for_language(language: &str) -> Option<Lang> {
         if language.starts_with("English") {
             return Some(Lang::English);
         }
-        let tag = oracle_guide_doc::language_tag(language)?;
-        let sub = oracle_guide_doc::language_subtag(tag);
+        let tag = oracle_layout_doc::language_tag(language)?;
+        let sub = oracle_layout_doc::language_subtag(tag);
         if sub == "en" {
             return Some(Lang::English);
         }

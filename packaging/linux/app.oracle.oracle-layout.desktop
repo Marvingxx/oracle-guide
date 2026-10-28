@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Oracle Layout
+GenericName=Page Layout
+Comment=Lay out magazines, books and print documents
+Exec=oracle-layout %F
+TryExec=oracle-layout
+Icon=app.oracle.oracle-layout
+Terminal=false
+StartupNotify=true
+StartupWMClass=app.oracle.oracle-layout
+Categories=Graphics;Publishing;
+MimeType=application/x-oracle-layout;application/vnd.adobe.indesign-idml-package;
+Keywords=layout;page;desktop publishing;dtp;magazine;book;indesign;idml;typesetting;

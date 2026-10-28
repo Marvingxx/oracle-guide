@@ -1,4 +1,4 @@
-//! Oracle Brand Guide's icon set, drawn in code (original artwork; no external icon assets).
+//! Oracle Layout's icon set, drawn in code (original artwork; no external icon assets).
 //!
 //! Icons are designed on a 20×20 grid and scaled to the target rect.
 

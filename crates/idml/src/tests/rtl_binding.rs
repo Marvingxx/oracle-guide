@@ -1,4 +1,4 @@
-use oracle_guide_doc::PageSide::{self, Left, Right};
+use oracle_layout_doc::PageSide::{self, Left, Right};
 
 use super::*;
 

@@ -34,7 +34,7 @@ const ASSET_EXT: &[&str] = &[
     "idml",
     "aco",
     "abr",
-    "oracle-guide",
+    "oracle-layout",
     "mp4",
     "wav",
     "mp3",

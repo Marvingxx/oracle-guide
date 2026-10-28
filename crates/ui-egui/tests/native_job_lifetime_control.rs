@@ -3,11 +3,11 @@
 
 use std::sync::Arc;
 
-use oracle_guide_doc::StoryId;
-use oracle_guide_engine::Session;
-use oracle_guide_geom::Affine;
-use oracle_guide_render::RenderOptions;
-use oracle_guide_ui_egui::render_worker::Job;
+use oracle_layout_doc::StoryId;
+use oracle_layout_engine::Session;
+use oracle_layout_geom::Affine;
+use oracle_layout_render::RenderOptions;
+use oracle_layout_ui_egui::render_worker::Job;
 use serde_json::json;
 
 #[test]

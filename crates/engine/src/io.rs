@@ -179,10 +179,10 @@ pub fn read_dir(path: impl AsRef<Path>) -> std::io::Result<std::fs::ReadDir> {
 }
 
 /// Whether `path` is a document another Oracle app draws for this one (an `.oracle-vector` logo, a
-/// `.oracle-edit` image). A Brand Guide's own `.oracle-guide` isn't: it is placed as a page of objects.
+/// `.oracle-edit` image). A Layout document (`.oracle-layout`) isn't: it is placed as a page of objects.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn is_oracle_drawing(path: &Path) -> bool {
-    oracle_suite_link::oracle_format(path).is_some_and(|f| f.app != oracle_suite_link::App::Guide)
+    oracle_suite_link::oracle_format(path).is_some_and(|f| f.app != oracle_suite_link::App::Layout)
 }
 
 /// What another Oracle app's document is placed as: SVG when it draws as SVG (it stays vector),

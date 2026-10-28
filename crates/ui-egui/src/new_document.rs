@@ -3,10 +3,10 @@
 //! other. Every value lives in the dialog's fields, so the control channel sets them
 //! (`ui.dialog.set`) like a user would; `confirm` turns them into `file.new`.
 
-use oracle_guide_doc::Intent;
-use oracle_guide_doc::build::{NewDocument, PRESETS};
-use oracle_guide_geom::units::{PT_PER_MM, parse_measure};
-use oracle_guide_geom::{Unit, format_measure};
+use oracle_layout_doc::Intent;
+use oracle_layout_doc::build::{NewDocument, PRESETS};
+use oracle_layout_geom::units::{PT_PER_MM, parse_measure};
+use oracle_layout_geom::{Unit, format_measure};
 use egui::{Align, Align2, Color32, FontId, Layout, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 use serde_json::{Map, Value, json};
 
@@ -878,7 +878,7 @@ mod tests {
     use super::*;
 
     fn app() -> DesignApp {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("app.newDocumentDialog", json!({})).unwrap();
         app
     }
@@ -1061,7 +1061,7 @@ mod tests {
     /// popup open.
     fn window_with_preset_popup() -> egui_kittest::Harness<'static, crate::test_window::Window> {
         use egui_kittest::kittest::Queryable as _;
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("app.newDocumentDialog", json!({})).unwrap();
         let mut h = crate::test_window::open(app, vec2(1440.0, 900.0));
         // The dialog takes a couple of frames to settle where it opens.
@@ -1130,8 +1130,8 @@ mod tests {
     }
 
     /// Documents A and B with A active, and the New Document window open over them.
-    fn two_documents() -> (DesignApp, egui::Context, oracle_guide_engine::DocState) {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+    fn two_documents() -> (DesignApp, egui::Context, oracle_layout_engine::DocState) {
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"title": "A"})).unwrap();
         app.run("file.new", json!({"title": "B"})).unwrap();
         app.session.set_active(0);
@@ -1226,7 +1226,7 @@ mod tests {
 
     #[test]
     fn create_keeps_the_previewed_document_with_the_final_settings() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"title": "A"})).unwrap();
         app.run("app.newDocumentDialog", json!({})).unwrap();
         let ctx = context();

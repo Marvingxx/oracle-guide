@@ -11,9 +11,9 @@
 
 use std::sync::Arc;
 
-use oracle_guide_compose::{ComposeOptions, ComposedStory, FrameSpec, compose, frame_specs};
-use oracle_guide_doc::{AutoSize, Document, Item, ItemId, StoryId};
-use oracle_guide_geom::{Affine, Rect, shapes};
+use oracle_layout_compose::{ComposeOptions, ComposedStory, FrameSpec, compose, frame_specs};
+use oracle_layout_doc::{AutoSize, Document, Item, ItemId, StoryId};
+use oracle_layout_geom::{Affine, Rect, shapes};
 
 /// Auto-size reference points, row-major from top-left (`TextFrameOptions::auto_size_ref`).
 pub const REFERENCES: [&str; 9] =

@@ -11,7 +11,7 @@
 
 use std::sync::Arc;
 
-use oracle_guide_color::{Color, cms::Cms};
+use oracle_layout_color::{Color, cms::Cms};
 use image::RgbaImage;
 
 pub use craft_cms::{Builtin, ColorSpace, Intent, Profile, Transform, TransformOptions};
@@ -50,7 +50,7 @@ impl DisplayColour {
     /// The active colour settings (Edit → Color Settings): working CMYK space, intent and black
     /// point compensation.
     pub fn active() -> Self {
-        Self::of(&oracle_guide_color::cms::active())
+        Self::of(&oracle_layout_color::cms::active())
     }
 
     pub fn of(cms: &Cms) -> Self {

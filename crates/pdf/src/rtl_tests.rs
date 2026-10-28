@@ -2,10 +2,10 @@
 //! their letters, ActualText never spans more than a cluster, and glyphs stay where composition
 //! put them.
 
-use oracle_guide_compose::{Cache, ComposeOptions, compose_story};
-use oracle_guide_doc::build::NewDocument;
-use oracle_guide_doc::{Align, Document, ParaAttrs, ParaFormat, SpreadRef, TextDirection};
-use oracle_guide_geom::Rect;
+use oracle_layout_compose::{Cache, ComposeOptions, compose_story};
+use oracle_layout_doc::build::NewDocument;
+use oracle_layout_doc::{Align, Document, ParaAttrs, ParaFormat, SpreadRef, TextDirection};
+use oracle_layout_geom::Rect;
 
 use crate::tests::extract_text;
 use crate::*;
@@ -22,13 +22,13 @@ fn hebrew_font() {
     let mut map: Vec<(char, char)> = letters.iter().zip('A'..).map(|(h, l)| (*h, l)).collect();
     map.extend(points.iter().copied().zip(accents));
     map.extend(" &abcdef".chars().map(|c| (c, c)));
-    oracle_guide_fonts::FontDb::global().add_font(oracle_guide_fonts::testing::font_mapping(HEBREW, &map).expect("font"));
+    oracle_layout_fonts::FontDb::global().add_font(oracle_layout_fonts::testing::font_mapping(HEBREW, &map).expect("font"));
 }
 
 /// A stand-in Arabic font with a tatweel, so justification inserts kashidas.
 fn arabic_font() {
     let map = [('ب', 'b'), ('س', 's'), ('م', 'm'), ('ا', 'a'), ('ل', 'l'), ('ه', 'h'), ('\u{640}', '_'), (' ', ' ')];
-    oracle_guide_fonts::FontDb::global().add_font(oracle_guide_fonts::testing::font_mapping(ARABIC, &map).expect("font"));
+    oracle_layout_fonts::FontDb::global().add_font(oracle_layout_fonts::testing::font_mapping(ARABIC, &map).expect("font"));
 }
 
 /// One frame of `text` in `family` with paragraph attributes `para`.
@@ -155,7 +155,7 @@ fn kashidas_extract_as_no_text() {
     let d = doc(text, ARABIC, Rect::new(36.0, 36.0, 186.0, 300.0), para);
     let sid = *d.stories.keys().next().unwrap();
     let cs = compose_story(&d, sid, &ComposeOptions::default());
-    let kashida = |g: &oracle_guide_compose::PlacedGlyph| g.len == 0 && g.gid == g.face.glyph_for('\u{640}');
+    let kashida = |g: &oracle_layout_compose::PlacedGlyph| g.len == 0 && g.gid == g.face.glyph_for('\u{640}');
     assert!(cs.frames[0].lines.iter().any(|l| l.glyphs.iter().any(kashida)), "justification inserts kashidas");
     let bytes = export_pdf(&d, &Cache::new(), &PdfOptions::default()).unwrap();
     let words: Vec<String> = extract_text(&bytes)[0].split([' ', '\u{FFFD}']).filter(|w| !w.is_empty()).map(str::to_string).collect();
@@ -168,7 +168,7 @@ fn kashidas_extract_as_no_text() {
 fn arabic_ligatures_extract_their_letters() {
     // Lam-alef in a system font with Arabic (skipped without one).
     let text = "لا سلام";
-    let mut d = doc(text, oracle_guide_fonts::DEFAULT_FAMILY, Rect::new(36.0, 36.0, 576.0, 300.0), rtl());
+    let mut d = doc(text, oracle_layout_fonts::DEFAULT_FAMILY, Rect::new(36.0, 36.0, 576.0, 300.0), rtl());
     d.settings.glyph_fallback = true;
     let sid = *d.stories.keys().next().unwrap();
     let cs = compose_story(&d, sid, &ComposeOptions::default());
@@ -211,7 +211,7 @@ fn right_to_left_lines_carry_actual_text_only_on_their_clusters() {
     // Hebrew (skipped without one): krilla gives such clusters an ActualText span of their own,
     // which must not nest in another (poppler drops the text before a nested one).
     let lines = ["سيّد الكلّ مُحَمَّد", "ישראל אַבְרָהָם יִצְחָק"];
-    let mut d = doc(&lines.join("\n"), oracle_guide_fonts::DEFAULT_FAMILY, Rect::new(36.0, 36.0, 576.0, 300.0), rtl());
+    let mut d = doc(&lines.join("\n"), oracle_layout_fonts::DEFAULT_FAMILY, Rect::new(36.0, 36.0, 576.0, 300.0), rtl());
     d.settings.glyph_fallback = true;
     let sid = *d.stories.keys().next().unwrap();
     let cs = compose_story(&d, sid, &ComposeOptions::default());

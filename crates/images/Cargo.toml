@@ -1,16 +1,16 @@
 [package]
-name = "oracle-guide-images"
+name = "oracle-layout-images"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide placed-graphic decoding: raster formats (PNG, JPEG, GIF, WebP, TIFF, BMP, PSD) and SVG"
+description = "Oracle Layout placed-graphic decoding: raster formats (PNG, JPEG, GIF, WebP, TIFF, BMP, PSD) and SVG"
 
 [lints]
 workspace = true
 
 [dependencies]
-oracle-guide-color = { workspace = true }
-oracle-guide-fonts = { workspace = true }
+oracle-layout-color = { workspace = true }
+oracle-layout-fonts = { workspace = true }
 image = { workspace = true }
 tiff = { workspace = true }
 resvg = { workspace = true }
@@ -20,4 +20,4 @@ zune-core = { version = "0.5", default-features = false }
 zune-jpeg = "0.5"
 
 [dev-dependencies]
-oracle-guide-fonts = { workspace = true, features = ["testing"] }
+oracle-layout-fonts = { workspace = true, features = ["testing"] }

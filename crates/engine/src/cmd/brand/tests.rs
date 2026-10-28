@@ -7,7 +7,7 @@ use crate::Session;
 const LOGO: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" width="400" height="160" viewBox="0 0 400 160"><rect width="200" height="160" fill="#C82029"/><rect x="200" width="200" height="160" fill="#1D1D1B"/></svg>"##;
 
 fn png(path: &Path, shade: u8) {
-    std::fs::write(path, oracle_guide_render::Rendered { width: 160, height: 100, pixels: vec![shade; 160 * 100 * 4] }.to_png()).unwrap();
+    std::fs::write(path, oracle_layout_render::Rendered { width: 160, height: 100, pixels: vec![shade; 160 * 100 * 4] }.to_png()).unwrap();
 }
 
 /// A Brand Kit project as Oracle Brand Kit and Mockup Studio write it.
@@ -59,23 +59,23 @@ fn var(s: &Session, name: &str) -> String {
     let d = &s.doc().unwrap().doc;
     let i = d.variable(name).unwrap_or_else(|| panic!("no variable {name}"));
     match &d.text_variables[i].kind {
-        oracle_guide_doc::vars::VarKind::Custom { text } => text.clone(),
+        oracle_layout_doc::vars::VarKind::Custom { text } => text.clone(),
         _ => panic!("not custom"),
     }
 }
 
 fn swatch_hex(s: &Session, name: &str) -> Option<String> {
     s.doc().unwrap().doc.swatches.iter().find(|w| w.name == name).and_then(|w| match &w.value {
-        oracle_guide_color::SwatchValue::Color { color, .. } => Some(color.to_hex()),
+        oracle_layout_color::SwatchValue::Color { color, .. } => Some(color.to_hex()),
         _ => None,
     })
 }
 
 fn link_of(s: &Session, frame: u64) -> String {
     let d = &s.doc().unwrap().doc;
-    let it = d.item(oracle_guide_doc::ItemId(frame)).unwrap();
+    let it = d.item(oracle_layout_doc::ItemId(frame)).unwrap();
     match &it.content {
-        oracle_guide_doc::Content::Graphic(g) => d.assets[&g.asset].link.clone().unwrap(),
+        oracle_layout_doc::Content::Graphic(g) => d.assets[&g.asset].link.clone().unwrap(),
         _ => panic!("no graphic"),
     }
 }
@@ -164,7 +164,7 @@ fn a_guide_follows_its_brand_only_when_asked() {
     assert!(link_of(&s, logo).ends_with("symbole.svg"));
 
     // Saved, moved with its brand, reopened: the link is found again by its relative path.
-    let guide = root.join("Guide").join("guide.oracle-guide");
+    let guide = root.join("Guide").join("guide.oracle-layout");
     std::fs::create_dir_all(guide.parent().unwrap()).unwrap();
     s.execute("file.save", &json!({"path": guide.display().to_string()})).unwrap();
     s.execute("brand.sync", &json!({})).unwrap();
@@ -173,7 +173,7 @@ fn a_guide_follows_its_brand_only_when_asked() {
     let _ = std::fs::remove_dir_all(&moved);
     std::fs::rename(&root, &moved).unwrap();
     let mut s2 = Session::new();
-    s2.execute("file.open", &json!({"path": moved.join("Guide/guide.oracle-guide").display().to_string()})).unwrap();
+    s2.execute("file.open", &json!({"path": moved.join("Guide/guide.oracle-layout").display().to_string()})).unwrap();
     let st = s2.execute("brand.status", &json!({})).unwrap();
     assert_eq!(st["linked"], true);
     assert!(st["path"].as_str().unwrap().starts_with(&moved.display().to_string()), "{st}");
@@ -268,10 +268,10 @@ fn an_eight_page_guide_exports_a_readable_pdf_and_follows_the_brand() {
     let issues: Vec<&Value> = print["warnings"].as_array().unwrap().iter().filter(|w| w.as_str().is_some_and(|w| w.starts_with("PDF/X-4"))).collect();
     assert!(issues.is_empty(), "{issues:?}");
     let bytes = super::super::base64_decode(print["base64"].as_str().unwrap());
-    assert!(oracle_guide_pdf::check_pdfx4(&bytes).is_empty());
+    assert!(oracle_layout_pdf::check_pdfx4(&bytes).is_empty());
 
     // Saved, closed, reopened: same pages, same links, same text.
-    let file = root.join("Charte.oracle-guide");
+    let file = root.join("Charte.oracle-layout");
     s.execute("file.save", &json!({"path": file.display().to_string()})).unwrap();
     let mut s2 = Session::new();
     s2.execute("file.open", &json!({"path": file.display().to_string()})).unwrap();
@@ -326,7 +326,7 @@ fn a_guide_reused_as_a_template_for_another_brand() {
 
     assert!(link_of(&s, logo).ends_with("logo.svg") && link_of(&s, logo).contains("Autre Marque"), "{}", link_of(&s, logo));
     let d = &s.doc().unwrap().doc;
-    assert_eq!(d.item(oracle_guide_doc::ItemId(logo)).unwrap().label, "oracle:logo:x1@primaryLogo");
+    assert_eq!(d.item(oracle_layout_doc::ItemId(logo)).unwrap().label, "oracle:logo:x1@primaryLogo");
     // The palette's first two cases now show the new colours, under the new names.
     let fills: Vec<String> = d.spreads[1].items.iter().filter(|i| i.label == super::PALETTE_LABEL && i.text_frame().is_none()).map(|i| i.fill.swatch.clone()).collect();
     assert_eq!(&fills[..2], ["Vert forêt", "Sable"]);
@@ -368,4 +368,74 @@ fn pdf_images(bytes: &[u8]) -> Vec<usize> {
             c.0
         })
         .collect()
+}
+
+/// The labels on a page's items.
+fn labels_on(s: &Session, page: usize) -> Vec<String> {
+    s.doc().unwrap().doc.spreads.get(page).map(|sp| sp.items.iter().map(|it| it.label.clone()).collect()).unwrap_or_default()
+}
+
+#[test]
+fn a_whole_guide_is_generated_from_the_brand_with_its_grids() {
+    let root = std::env::temp_dir().join(format!("og-brand-gen-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    let brand = brand_project(&root);
+    let mut s = Session::new();
+    let r = s.execute("brand.generateGuide", &json!({"path": brand.display().to_string()})).unwrap();
+    // Every section has material in the fixture.
+    assert_eq!(r["pages"], 13, "{r}");
+    assert_eq!(s.doc().unwrap().doc.page_count(), 13);
+    assert!(r["warnings"].as_array().unwrap().is_empty(), "{r}");
+    let sections: Vec<&str> = r["sections"].as_array().unwrap().iter().filter_map(Value::as_str).collect();
+    let page = |name: &str| sections.iter().position(|x| *x == name).unwrap();
+    // The cover carries the primary logo, linked to the Brand Kit.
+    assert!(labels_on(&s, page("cover")).iter().any(|l| l == "oracle:logo:logo-a@primaryLogo"));
+    // Grids drawn from the logo's outlines, written into the project and placed linked.
+    assert!(labels_on(&s, page("construction")).iter().any(|l| l.starts_with("oracle:grid:") && l.ends_with("@construction")));
+    assert!(labels_on(&s, page("clearspace")).iter().any(|l| l.ends_with("@clearspace")));
+    assert_eq!(labels_on(&s, page("lockups")).iter().filter(|l| l.contains("@lockup")).count(), 2);
+    assert!(brand.join("Grilles").join("logo-a-construction.svg").is_file());
+    assert!(labels_on(&s, page("colors")).iter().any(|l| l == "oracle:palette"));
+    assert!(labels_on(&s, page("typography")).iter().any(|l| l == "oracle:type"));
+    // The generated document follows the brand like a hand-made one: nothing to sync.
+    let status = s.execute("brand.status", &json!({})).unwrap();
+    assert!(status["changes"].as_array().unwrap().is_empty(), "{status}");
+    // Only some sections, and an unknown one refused.
+    let mut s2 = Session::new();
+    let r2 = s2.execute("brand.generateGuide", &json!({"path": brand.display().to_string(), "sections": ["cover", "colors"]})).unwrap();
+    assert_eq!(r2["pages"], 2);
+    assert!(Session::new().execute("brand.generateGuide", &json!({"path": brand.display().to_string(), "sections": ["poster"]})).is_err());
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
+fn a_presentation_has_a_section_per_concept_and_a_bento_board() {
+    let root = std::env::temp_dir().join(format!("og-brand-pres-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    let brand = brand_project(&root);
+    let mut s = Session::new();
+    let r = s
+        .execute("brand.generatePresentation", &json!({"path": brand.display().to_string(), "studio": {"name": "Atelier Test", "contact": "bonjour@exemple.fr"}}))
+        .unwrap();
+    // Cover + 2 concepts × 6 + closing page.
+    assert_eq!(r["pages"], 14, "{r}");
+    assert_eq!(r["concepts"], json!(["logo-a", "logo-b"]));
+    // Each concept's bento board: five tiles, the first holding its logo.
+    for board in [6, 12] {
+        let labels = labels_on(&s, board);
+        assert_eq!(labels.iter().filter(|l| *l == "oracle:bento" || l.starts_with("oracle:logo:")).count(), 5, "{labels:?}");
+    }
+    assert!(s.execute("brand.generatePresentation", &json!({"path": brand.display().to_string(), "concepts": ["nope"]})).is_err());
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
+fn a_bento_drawn_again_replaces_the_previous_one() {
+    let mut s = Session::new();
+    s.execute("file.new", &json!({"preset": "A4", "pages": 1, "facingPages": false})).unwrap();
+    let a = s.execute("brand.bento", &json!({"spread": 0, "rect": [40, 40, 540, 400], "params": {"style": "random", "sections": 7}})).unwrap();
+    assert_eq!(a["ids"].as_array().unwrap().len(), 7);
+    s.execute("brand.bento", &json!({"spread": 0, "rect": [40, 40, 540, 400], "params": {"style": "brick", "sections": 5, "seed": 3}})).unwrap();
+    assert_eq!(labels_on(&s, 0).iter().filter(|l| *l == "oracle:bento").count(), 5);
+    assert!(s.execute("brand.bento", &json!({"spread": 0, "rect": [40, 40, 10, 10]})).is_err());
 }

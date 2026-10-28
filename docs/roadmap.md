@@ -1,4 +1,15 @@
-# Oracle Brand Guide roadmap (detail)
+# Oracle Layout roadmap (detail)
+
+## Oracle suite integration - local status, 2026-10-24
+
+| Local task | Source status | Delivery remaining |
+|---|---|---|
+| Brand Guide to Vector: native document, linked first-page PNG; create an artboard in an empty Vector session | Implemented; verification recorded in the integration report | New packages and installed two-app acceptance |
+
+Evidence and validation scope: [Guide to Vector report](../../docs/audit-2026-10-24/guide-vector.md).
+This local update does not change the upstream assessment snapshot below.
+
+Local revision: 2026-10-24 - Oracle suite exchange; source changes, not packaged or installed.
 
 > **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-13 · **Change:** minor (.indd and .indt open through indd-utils; text threads by hand; the gate waits on the Primary Text Frame page fixes) · **Target:** Adobe InDesign 2026 (21.6)
 
@@ -9,7 +20,7 @@ Opus 5.5 agent-hours (calibration in target-app-parity.md). Driving the app from
 
 ## Alpha gate
 
-InDesign's core workflows: what a layout professional does with it every day. Oracle Brand Guide is
+InDesign's core workflows: what a layout professional does with it every day. Oracle Layout is
 alpha only when every one works end to end on macOS (its main platform) and the work saves and
 reopens. **Gate result (2026-10-10): fails, so the stage is pre-alpha.** Rows marked "no" are the
 alpha checklist; the partial rows don't block the workflow on macOS (there is a working path)
@@ -17,7 +28,7 @@ but are next in line.
 
 | Core workflow | Works end to end? | Evidence | Hours to pass |
 |---|---|---|---|
-| Set up a document (size, margins, columns, parent pages, page numbers, sections); save and reopen | yes | New Document, Document Setup, parent pages and overrides, Numbering & Section Options; `.oracle-guide` round-trip tests; recovery | 0 |
+| Set up a document (size, margins, columns, parent pages, page numbers, sections); save and reopen | yes | New Document, Document Setup, parent pages and overrides, Numbering & Section Options; `.oracle-layout` round-trip tests; recovery | 0 |
 | Flow a long story across frames and pages: thread, unthread, autoflow | **no** | threading by hand works (ports, loaded text cursor, `text.thread`/`text.unthread`/`text.removeFromThread`); Primary Text Frame autoflow adds pages users can't delete (#165) | 5–7 |
 | Format text with paragraph and character styles | partial (not blocking) | Paragraph/Character Style Options, Quick Apply, based-on, nested/GREP styles work; style edit/delete from the panel reported (#169); formatting set at a caret is discarded (#289) | 6–12 |
 | Place, crop and fit images; wrap text around them | yes | place gun, frame fitting and Fitting Options, content grabber, text wrap, Links panel | 0 |
@@ -46,7 +57,7 @@ In order. Each closes a beta blocker from [gaps.md](gaps.md).
    a metric show what survives. 10–30 h.
 4. **IDML real-file corpus** (gap 3): a pinned corpus, a survival metric, and fixes for #193,
    #338, #339, #340. 60–100 h.
-5. **Composition oracle** (gap 4): synthetic stories set in InDesign 2026 vs Oracle Brand Guide;
+5. **Composition oracle** (gap 4): synthetic stories set in InDesign 2026 vs Oracle Layout;
    optical kerning; the overset rule. 80–140 h.
 6. **Start on any GPU; find every installed font** (gaps 5, 6). 25–50 h.
 

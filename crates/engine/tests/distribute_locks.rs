@@ -1,9 +1,9 @@
 //! Distribution preserves explicit item locks without changing reference/spacing calculations.
 use std::sync::Arc;
 
-use oracle_guide_doc::ItemId;
-use oracle_guide_engine::Session;
-use oracle_guide_geom::Affine;
+use oracle_layout_doc::ItemId;
+use oracle_layout_engine::Session;
+use oracle_layout_geom::Affine;
 use serde_json::{Value, json};
 
 const STARTS: [f64; 4] = [10.0, 70.0, 150.0, 310.0];

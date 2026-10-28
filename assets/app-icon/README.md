@@ -1,4 +1,4 @@
-# Oracle Brand Guide app icon
+# Oracle Layout app icon
 
 The Oracle app tile, like every Oracle app: a rounded square in the app's colour (`#1d1d1b`) with the
 Oracle four-pointed star and the letters "Bg".

@@ -30,7 +30,7 @@ impl Class {
     }
 }
 
-/// The layering table. Names are package names without the `oracle-guide-`
+/// The layering table. Names are package names without the `oracle-layout-`
 /// prefix.
 pub const TABLE: &[(&str, Class)] = &[
     ("geom", Class::Layer(0)),
@@ -52,7 +52,7 @@ pub const TABLE: &[(&str, Class)] = &[
     ("mcp", Class::Layer(6)),
     ("testkit", Class::Testkit),
     // L7 apps and tooling
-    ("oracle-guide", Class::Exempt),
+    ("oracle-layout", Class::Exempt),
     ("cli", Class::Exempt),
     ("web", Class::Exempt),
     ("xtask", Class::Exempt),
@@ -80,7 +80,7 @@ pub const UI_CRATES: &[&str] = &["craft-ui", "egui", "eframe", "winit", "egui_ki
 pub const UI_MIN_LAYER: u8 = 6;
 
 pub fn short_name(pkg: &str) -> &str {
-    pkg.strip_prefix("oracle-guide-").unwrap_or(pkg)
+    pkg.strip_prefix("oracle-layout-").unwrap_or(pkg)
 }
 
 pub fn classify(pkg: &str) -> Option<Class> {
@@ -138,7 +138,7 @@ impl std::fmt::Display for Violation {
                 write!(f, "{krate}: standalone crate must not depend on workspace crate {dep}")
             }
             Violation::TestkitAsNormalDep { krate } => {
-                write!(f, "{krate}: oracle-guide-testkit may only be a dev-dependency")
+                write!(f, "{krate}: oracle-layout-testkit may only be a dev-dependency")
             }
             Violation::UiBelowL6 { krate, dep, layer } => {
                 write!(f, "{krate} (L{layer}) depends on UI crate `{dep}`; UI toolkits are only allowed in L6+")
@@ -245,76 +245,76 @@ mod tests {
     #[test]
     fn clean_downward_graph_passes() {
         let g = [
-            c("oracle-guide-geom", &[("kurbo", Normal, false)]),
-            c("oracle-guide-doc", &[("oracle-guide-geom", Normal, true)]),
-            c("oracle-guide-engine", &[("oracle-guide-doc", Normal, true), ("oracle-guide-testkit", Dev, true)]),
-            c("oracle-guide-ui-egui", &[("oracle-guide-engine", Normal, true), ("egui", Normal, false)]),
-            c("oracle-guide-cli", &[("oracle-guide-ui-egui", Normal, true)]),
+            c("oracle-layout-geom", &[("kurbo", Normal, false)]),
+            c("oracle-layout-doc", &[("oracle-layout-geom", Normal, true)]),
+            c("oracle-layout-engine", &[("oracle-layout-doc", Normal, true), ("oracle-layout-testkit", Dev, true)]),
+            c("oracle-layout-ui-egui", &[("oracle-layout-engine", Normal, true), ("egui", Normal, false)]),
+            c("oracle-layout-cli", &[("oracle-layout-ui-egui", Normal, true)]),
         ];
         assert!(check(&g).is_empty(), "{:?}", check(&g));
     }
 
     #[test]
     fn upward_dependency_flagged() {
-        let v = check(&[c("oracle-guide-doc", &[("oracle-guide-engine", Normal, true)])]);
+        let v = check(&[c("oracle-layout-doc", &[("oracle-layout-engine", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 1, to: 5, .. }]));
     }
 
     #[test]
     fn sideways_dependency_flagged() {
-        let v = check(&[c("oracle-guide-compose", &[("oracle-guide-images", Normal, true)])]);
+        let v = check(&[c("oracle-layout-compose", &[("oracle-layout-images", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 2, to: 2, .. }]));
     }
 
     #[test]
     fn l0_foundation_chain_allowed_one_way() {
-        assert!(check(&[c("oracle-guide-color", &[("oracle-guide-geom", Normal, true)])]).is_empty());
-        let v = check(&[c("oracle-guide-geom", &[("oracle-guide-color", Normal, true)])]);
+        assert!(check(&[c("oracle-layout-color", &[("oracle-layout-geom", Normal, true)])]).is_empty());
+        let v = check(&[c("oracle-layout-geom", &[("oracle-layout-color", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 0, to: 0, .. }]));
     }
 
     #[test]
     fn self_dev_dependency_ignored() {
-        assert!(check(&[c("oracle-guide-doc", &[("oracle-guide-doc", Dev, true)])]).is_empty());
+        assert!(check(&[c("oracle-layout-doc", &[("oracle-layout-doc", Dev, true)])]).is_empty());
     }
 
     #[test]
     fn upward_dev_dependency_flagged() {
-        let v = check(&[c("oracle-guide-geom", &[("oracle-guide-doc", Dev, true)])]);
+        let v = check(&[c("oracle-layout-geom", &[("oracle-layout-doc", Dev, true)])]);
         assert!(matches!(v[..], [Violation::Upward { kind: Dev, .. }]));
     }
 
     #[test]
     fn ui_crates_below_l6_flagged() {
         for dep in ["craft-ui", "egui", "eframe", "winit", "egui_kittest", "rfd", "bevy_ecs", "bevy"] {
-            let v = check(&[c("oracle-guide-engine", &[(dep, Normal, false)])]);
+            let v = check(&[c("oracle-layout-engine", &[(dep, Normal, false)])]);
             assert!(matches!(v[..], [Violation::UiBelowL6 { layer: 5, .. }]), "{dep}");
         }
-        assert!(check(&[c("oracle-guide-engine", &[("egui_extras_not", Normal, false)])]).is_empty());
-        assert!(check(&[c("oracle-guide-mcp", &[("winit", Normal, false)])]).is_empty());
+        assert!(check(&[c("oracle-layout-engine", &[("egui_extras_not", Normal, false)])]).is_empty());
+        assert!(check(&[c("oracle-layout-mcp", &[("winit", Normal, false)])]).is_empty());
     }
 
     #[test]
     fn unregistered_crate_is_error() {
-        let v = check(&[c("oracle-guide-mystery", &[])]);
-        assert!(matches!(&v[..], [Violation::Unregistered { krate }] if krate == "oracle-guide-mystery"));
+        let v = check(&[c("oracle-layout-mystery", &[])]);
+        assert!(matches!(&v[..], [Violation::Unregistered { krate }] if krate == "oracle-layout-mystery"));
         assert!(v[0].to_string().contains("register"));
     }
 
     #[test]
     fn testkit_only_as_dev_dependency() {
-        let v = check(&[c("oracle-guide-render", &[("oracle-guide-testkit", Normal, true)])]);
+        let v = check(&[c("oracle-layout-render", &[("oracle-layout-testkit", Normal, true)])]);
         assert!(matches!(v[..], [Violation::TestkitAsNormalDep { .. }]));
-        assert!(check(&[c("oracle-guide-render", &[("oracle-guide-testkit", Dev, true)])]).is_empty());
+        assert!(check(&[c("oracle-layout-render", &[("oracle-layout-testkit", Dev, true)])]).is_empty());
         // testkit itself may use anything up to L5 but not L6 crates.
-        assert!(check(&[c("oracle-guide-testkit", &[("oracle-guide-engine", Normal, true)])]).is_empty());
-        assert!(!check(&[c("oracle-guide-testkit", &[("oracle-guide-ui-egui", Normal, true)])]).is_empty());
+        assert!(check(&[c("oracle-layout-testkit", &[("oracle-layout-engine", Normal, true)])]).is_empty());
+        assert!(!check(&[c("oracle-layout-testkit", &[("oracle-layout-ui-egui", Normal, true)])]).is_empty());
     }
 
     #[test]
     fn apps_and_xtask_exempt() {
-        for app in ["oracle-guide", "oracle-guide-cli", "oracle-guide-web", "xtask"] {
-            assert!(check(&[c(app, &[("egui", Normal, false), ("oracle-guide-ui-egui", Normal, true)])]).is_empty());
+        for app in ["oracle-layout", "oracle-layout-cli", "oracle-layout-web", "xtask"] {
+            assert!(check(&[c(app, &[("egui", Normal, false), ("oracle-layout-ui-egui", Normal, true)])]).is_empty());
         }
     }
 
@@ -322,17 +322,17 @@ mod tests {
     fn metadata_parsing() {
         let meta: Value = serde_json::from_str(
             r#"{"packages":[
-                {"name":"oracle-guide-doc","dependencies":[
-                    {"name":"oracle-guide-geom","kind":null,"path":"/x/crates/geom"},
+                {"name":"oracle-layout-doc","dependencies":[
+                    {"name":"oracle-layout-geom","kind":null,"path":"/x/crates/geom"},
                     {"name":"serde","kind":null},
                     {"name":"proptest","kind":"dev"}]},
-                {"name":"oracle-guide-geom","dependencies":[]}
+                {"name":"oracle-layout-geom","dependencies":[]}
             ]}"#,
         )
         .unwrap();
         let g = from_metadata(&meta).unwrap();
         assert_eq!(g.len(), 2);
-        let doc = g.iter().find(|c| c.name == "oracle-guide-doc").unwrap();
+        let doc = g.iter().find(|c| c.name == "oracle-layout-doc").unwrap();
         assert!(doc.deps[0].workspace && !doc.deps[1].workspace);
         assert_eq!(doc.deps[2].kind, Dev);
         assert!(check(&g).is_empty());

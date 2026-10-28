@@ -1,18 +1,18 @@
-# Oracle Brand Guide — the desktop app (`oracle-guide`) and the CLI/MCP server (`oracle-guide-cli`), built from this
+# Oracle Layout — the desktop app (`oracle-layout`) and the CLI/MCP server (`oracle-layout-cli`), built from this
 # repository:
 #
-#   nix build          # → ./result/bin/oracle-guide, ./result/bin/oracle-guide-cli
+#   nix build          # → ./result/bin/oracle-layout, ./result/bin/oracle-layout-cli
 #
 # Kept in step with the release workflow (.github/workflows/release.yml) and packaging/:
 #   * `Cargo.lock` drives the dependencies (`cargoLock`), so there is no vendorHash to bump. The
 #     git sources (storytold/craft-libs) are fetched at the revision the lock file pins;
 #   * the desktop file, hicolor icons, MIME types and AppStream metadata are the same files the
-#     .deb/.rpm ship (packaging/linux/), so `apt` and NixOS users see one identical Oracle Brand Guide;
+#     .deb/.rpm ship (packaging/linux/), so `apt` and NixOS users see one identical Oracle Layout;
 #   * `CRAFT_FONTS_DIR` embeds the fonts from storytold/craft-fonts (the `craft-fonts` flake input, pinned to
 #     the revision the release workflow uses); without it everything builds and runs, but some
 #     scripts (e.g. Japanese, Chinese) have no glyphs;
 #   * `doCheck` is off: the test suite needs corpora and a GPU the Nix sandbox cannot provide
-#     (`cargo xtask ci` is the gate). `pkgs.oracle-guide.overrideAttrs { doCheck = true; }` runs it.
+#     (`cargo xtask ci` is the gate). `pkgs.oracle-layout.overrideAttrs { doCheck = true; }` runs it.
 #
 # Everything in the product is pure Rust, so this needs no build system beyond cargo plus the
 # libraries winit/wgpu `dlopen` at run time (see `runtimeLibs`).
@@ -64,7 +64,7 @@ let
   isLinux = stdenv.hostPlatform.isLinux;
 
   # AppStream id: also the desktop file name, and the icon name in share/icons/hicolor.
-  appId = "app.oracle.oracle-guide";
+  appId = "app.oracle.oracle-layout";
 
   # Libraries the binaries open at run time with dlopen(): nothing links them, so no RPATH points at
   # them. winit loads libwayland-client, libxkbcommon(-x11) and the X11 libraries; wgpu loads the
@@ -83,15 +83,15 @@ let
     dbus
   ];
 
-  # The two native binaries. The wasm app (apps/oracle-guide-web) is built by `cargo xtask`, not here.
+  # The two native binaries. The wasm app (apps/oracle-layout-web) is built by `cargo xtask`, not here.
   binaries = [
-    "oracle-guide"
-    "oracle-guide-cli"
+    "oracle-layout"
+    "oracle-layout-cli"
   ];
 
 in
 rustPlatform.buildRustPackage {
-  pname = "oracle-guide";
+  pname = "oracle-layout";
   inherit version;
 
   src = lib.cleanSourceWith {
@@ -116,9 +116,9 @@ rustPlatform.buildRustPackage {
   cargoBuildFlags = [
     "--locked"
     "-p"
-    "oracle-guide"
+    "oracle-layout"
     "-p"
-    "oracle-guide-cli"
+    "oracle-layout-cli"
   ];
 
   doCheck = false;
@@ -164,7 +164,7 @@ rustPlatform.buildRustPackage {
       --subst-var-by DATE ${buildDate}
 
     # Licences for everything embedded in the binaries.
-    doc=$out/share/doc/oracle-guide
+    doc=$out/share/doc/oracle-layout
     for f in README.md LICENSE-MIT LICENSE-APACHE NOTICE ATTRIBUTION.md assets/ATTRIBUTION.md; do
       if [ -f "$f" ]; then install -Dm644 "$f" "$doc/$(basename "$f")"; fi
     done
@@ -196,8 +196,8 @@ rustPlatform.buildRustPackage {
   meta = {
     description = "Page layout and publishing application";
     longDescription = ''
-      Oracle Brand Guide is a page layout and publishing application: multi-page documents, styles,
-      masters, typography and print output. It ships with oracle-guide-cli, a headless command runner
+      Oracle Layout is a page layout and publishing application: multi-page documents, styles,
+      masters, typography and print output. It ships with oracle-layout-cli, a headless command runner
       and MCP server for AI agents.
     '';
     homepage = "https://github.com/Marvingxx/oracle-guide";
@@ -208,6 +208,6 @@ rustPlatform.buildRustPackage {
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
     # `nix run` and the desktop entry both start the GUI.
-    mainProgram = "oracle-guide";
+    mainProgram = "oracle-layout";
   };
 }

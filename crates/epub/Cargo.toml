@@ -1,15 +1,15 @@
 [package]
-name = "oracle-guide-epub"
+name = "oracle-layout-epub"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide EPUB 3 (reflowable) export: stories in reading order, CSS from styles, images"
+description = "Oracle Layout EPUB 3 (reflowable) export: stories in reading order, CSS from styles, images"
 
 [lints]
 workspace = true
 
 [dependencies]
-oracle-guide-doc = { workspace = true }
-oracle-guide-color = { workspace = true }
+oracle-layout-doc = { workspace = true }
+oracle-layout-color = { workspace = true }
 zip = { workspace = true }
 chrono = { workspace = true }

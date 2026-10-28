@@ -3,7 +3,7 @@
 //! caret, and places linked logos, mockup renders and the palette and type blocks. Everything goes
 //! through `brand.*` commands; nothing changes on its own.
 
-use oracle_guide_doc::SpreadRef;
+use oracle_layout_doc::SpreadRef;
 use serde_json::{Value, json};
 
 use crate::DesignApp;
@@ -31,8 +31,10 @@ fn selected_frame(app: &DesignApp) -> Option<u64> {
 fn report(app: &mut DesignApp, r: Result<Value, String>, done: &str) {
     match r {
         Ok(v) => {
-            let warnings: Vec<String> = v["warnings"].as_array().map(|w| w.iter().filter_map(|x| x.as_str().map(str::to_string)).collect()).unwrap_or_default();
-            let missing: Vec<String> = v["missingFonts"].as_array().map(|w| w.iter().filter_map(|x| x.as_str().map(str::to_string)).collect()).unwrap_or_default();
+            let warnings: Vec<String> =
+                v["warnings"].as_array().map(|w| w.iter().filter_map(|x| x.as_str().map(str::to_string)).collect()).unwrap_or_default();
+            let missing: Vec<String> =
+                v["missingFonts"].as_array().map(|w| w.iter().filter_map(|x| x.as_str().map(str::to_string)).collect()).unwrap_or_default();
             if !missing.is_empty() {
                 app.status(format!("{done} — police(s) absente(s) de cet ordinateur : {} (remplacées à l'affichage)", missing.join(", ")));
             } else if warnings.is_empty() {
@@ -131,8 +133,9 @@ pub fn show(app: &mut DesignApp, ui: &mut egui::Ui) {
                 }
             }
         });
-        let picked: Vec<String> = applicable.iter().filter_map(|c| c["key"].as_str()).filter(|k| !skipped.iter().any(|s| s == k)).map(str::to_string).collect();
-        let b = egui::Button::new(egui::RichText::new(format!("Mettre à jour ({})", picked.len())).color(egui::Color32::WHITE)).fill(t.accent_strong);
+        let picked: Vec<String> =
+            applicable.iter().filter_map(|c| c["key"].as_str()).filter(|k| !skipped.iter().any(|s| s == k)).map(str::to_string).collect();
+        let b = egui::Button::new(egui::RichText::new(format!("Mettre à jour ({})", picked.len())).color(t.on_accent())).fill(t.accent_strong);
         if ui.add_enabled(!picked.is_empty(), b).clicked() {
             let r = app.run("brand.sync", json!({"keys": picked}));
             report(app, r, "Guide mis à jour depuis le Brand Kit.");
@@ -141,7 +144,11 @@ pub fn show(app: &mut DesignApp, ui: &mut egui::Ui) {
     }
     ui.data_mut(|d| d.insert_temp(skip_key, skipped));
     for c in infos {
-        ui.label(egui::RichText::new(format!("Attention : {}", c["label"].as_str().unwrap_or_default())).size(11.0).color(egui::Color32::from_rgb(230, 160, 40)));
+        ui.label(
+            egui::RichText::new(format!("Attention : {}", c["label"].as_str().unwrap_or_default()))
+                .size(11.0)
+                .color(egui::Color32::from_rgb(230, 160, 40)),
+        );
     }
     ui.separator();
 
@@ -150,7 +157,11 @@ pub fn show(app: &mut DesignApp, ui: &mut egui::Ui) {
             ui.horizontal(|ui| {
                 ui.label(a["label"].as_str().unwrap_or_default());
                 let ok = a["exists"] == true;
-                if ui.add_enabled(ok, egui::Button::new("Placer").small()).on_hover_text("Dans le cadre sélectionné, sinon au centre de la vue ; lié au fichier du Brand Kit").clicked() {
+                if ui
+                    .add_enabled(ok, egui::Button::new("Placer").small())
+                    .on_hover_text("Dans le cadre sélectionné, sinon au centre de la vue ; lié au fichier du Brand Kit")
+                    .clicked()
+                {
                     place(app, "brand.placeLogo", "asset", a["id"].as_str().unwrap_or_default(), (200.0, 120.0), "Logo placé (lié).");
                 }
                 if !ok {
@@ -187,6 +198,7 @@ pub fn show(app: &mut DesignApp, ui: &mut egui::Ui) {
             }
         });
     });
+    generate(app, ui, &t);
     egui::CollapsingHeader::new("Variables").default_open(false).show(ui, |ui| {
         ui.label(egui::RichText::new("Insérées au curseur de texte ; leur valeur suit la marque.").size(11.0).color(t.text_dim));
         for v in status["variables"].as_array().cloned().unwrap_or_default() {
@@ -206,4 +218,84 @@ fn link(app: &mut DesignApp) {
         let r = app.run("brand.link", json!({"path": path}));
         report(app, r.map(|_| json!({})), "Projet de marque lié : ouvrez « Mettre à jour » pour appliquer ses données.");
     }
+}
+
+/// The studio signing a presentation, and the last bento placed (to shuffle it).
+#[derive(Clone, Default)]
+struct GenState {
+    studio: String,
+    contact: String,
+    bento: Option<(Value, [f64; 4])>,
+    seed: u64,
+}
+
+/// Oracle › Marque › Générer: whole documents (charte, présentation de pistes) and the grids and
+/// bento boards drawn from the brand (`brand.generate*`, `brand.gridGraphic`, `brand.bento`).
+fn generate(app: &mut DesignApp, ui: &mut egui::Ui, t: &Tokens) {
+    let id = egui::Id::new("oracle-brand-generate");
+    let mut st: GenState = ui.ctx().data(|d| d.get_temp(id)).unwrap_or_default();
+    let before = (st.studio.clone(), st.contact.clone(), st.seed, st.bento.is_some());
+    egui::CollapsingHeader::new("Générer").default_open(true).show(ui, |ui| {
+        ui.label(egui::RichText::new("Un nouveau document, lié à la marque, qui la suit ensuite comme les autres.").size(11.0).color(t.text_dim));
+        if ui
+            .button("Charte graphique complète")
+            .on_hover_text("Couverture, logos, fonds, zone de protection, construction, agencements, couleurs, typographies, règles, applications")
+            .clicked()
+        {
+            let r = app.run("brand.generateGuide", json!({}));
+            report(app, r, "Charte générée.");
+        }
+        ui.horizontal(|ui| {
+            ui.label(egui::RichText::new("Studio").size(11.0));
+            ui.add(egui::TextEdit::singleline(&mut st.studio).desired_width(140.0));
+        });
+        ui.horizontal(|ui| {
+            ui.label(egui::RichText::new("Contact").size(11.0));
+            ui.add(egui::TextEdit::singleline(&mut st.contact).desired_width(140.0));
+        });
+        if ui
+            .button("Présentation des pistes")
+            .on_hover_text("Une section par logo (jusqu'à trois) : le logo, sur couleur, construction, zone de protection, planche bento")
+            .clicked()
+        {
+            let r = app.run("brand.generatePresentation", json!({"studio": {"name": st.studio, "contact": st.contact}}));
+            report(app, r, "Présentation générée.");
+        }
+        ui.separator();
+        ui.label(egui::RichText::new("Sur la page, au centre de la vue :").size(11.0).color(t.text_dim));
+        let first_logo = app.run("brand.status", json!({})).ok().and_then(|v| v["assets"].as_array()?.first()?["id"].as_str().map(str::to_string));
+        ui.horizontal_wrapped(|ui| {
+            for (label, kind) in [("Construction", "construction"), ("Zone de protection", "clearspace"), ("Agencement", "lockupHorizontal")] {
+                if ui.add_enabled(first_logo.is_some(), egui::Button::new(label)).clicked()
+                    && let (Some(asset), Some((spread, rect))) = (first_logo.as_deref(), view_rect(app, (420.0, 260.0)))
+                {
+                    let r = app.run("brand.gridGraphic", json!({"asset": asset, "kind": kind, "spread": spread, "rect": rect}));
+                    report(app, r.map(|_| json!({})), "Grille placée (fichier SVG dans le dossier Grilles du projet).");
+                }
+            }
+        });
+        ui.horizontal(|ui| {
+            if ui.button("Bento").on_hover_text("Des blocs image arrondis, aux couleurs de la marque").clicked()
+                && let Some(place) = view_rect(app, (480.0, 320.0))
+            {
+                st.bento = Some(place);
+                st.seed = 0;
+            }
+            if ui.add_enabled(st.bento.is_some(), egui::Button::new("Mélanger")).clicked() {
+                st.seed = st.seed.wrapping_add(1);
+            }
+        });
+    });
+    let after = (st.studio.clone(), st.contact.clone(), st.seed, st.bento.is_some());
+    if (after.2 != before.2 || (after.3 && !before.3))
+        && let Some((spread, rect)) = st.bento.clone()
+    {
+        let style = ["random", "centered", "brick", "simple"][(st.seed % 4) as usize];
+        let r = app.run(
+            "brand.bento",
+            json!({"spread": spread, "rect": rect, "brandColors": true, "params": {"style": style, "sections": 5 + (st.seed % 4) as usize, "radius": 10, "gutter": 10, "seed": st.seed}}),
+        );
+        report(app, r, "Bento placé.");
+    }
+    ui.ctx().data_mut(|d| d.insert_temp(id, st));
 }

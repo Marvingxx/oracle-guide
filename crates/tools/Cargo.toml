@@ -1,17 +1,17 @@
 [package]
-name = "oracle-guide-tools"
+name = "oracle-layout-tools"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide tools: pointer events in, commands and overlays out (Selection, Direct Selection, frames, Type, Hand, Zoom…)"
+description = "Oracle Layout tools: pointer events in, commands and overlays out (Selection, Direct Selection, frames, Type, Hand, Zoom…)"
 
 [lints]
 workspace = true
 
 [dependencies]
-oracle-guide-geom = { workspace = true }
-oracle-guide-color = { workspace = true }
-oracle-guide-doc = { workspace = true }
-oracle-guide-compose = { workspace = true }
+oracle-layout-geom = { workspace = true }
+oracle-layout-color = { workspace = true }
+oracle-layout-doc = { workspace = true }
+oracle-layout-compose = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

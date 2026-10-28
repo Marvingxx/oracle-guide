@@ -48,7 +48,7 @@ pub fn make_pdfx4(pdf: &[u8], title: &str, date: Option<i64>) -> Option<Vec<u8>>
         out.extend_from_slice(b"\nendobj\n");
     };
     // The output profile and the output intent.
-    let intent = oracle_guide_color::cms::active().output_intent().ok()?;
+    let intent = oracle_layout_color::cms::active().output_intent().ok()?;
     let (icc_id, oi_id) = (size, size + 1);
     let mut s = format!("<</N 4/Length {}>>\nstream\n", intent.icc.len()).into_bytes();
     s.extend_from_slice(&intent.icc);
@@ -668,11 +668,11 @@ mod tests {
     use craft_pdf::write::backend as krilla;
     use std::sync::Arc;
 
-    use oracle_guide_color::{Color, Swatch};
-    use oracle_guide_compose::Cache;
-    use oracle_guide_doc::build::NewDocument;
-    use oracle_guide_doc::{Asset, AssetId, Content, Document, Fill, Fitting, Graphic, Item, ItemId, Shape, SpreadRef};
-    use oracle_guide_geom::{Affine, Rect};
+    use oracle_layout_color::{Color, Swatch};
+    use oracle_layout_compose::Cache;
+    use oracle_layout_doc::build::NewDocument;
+    use oracle_layout_doc::{Asset, AssetId, Content, Document, Fill, Fitting, Graphic, Item, ItemId, Shape, SpreadRef};
+    use oracle_layout_geom::{Affine, Rect};
     use hayro_syntax::object::{Name, Object};
     use image::{ExtendedColorType, ImageEncoder};
 
@@ -680,13 +680,13 @@ mod tests {
 
     fn place(d: &mut Document, name: &str, data: Vec<u8>, size: (f64, f64), at: (f64, f64)) {
         let asset = AssetId(d.alloc());
-        let mime = oracle_guide_images::mime(&data).into();
-        let pixels = oracle_guide_images::pixel_size(&data);
+        let mime = oracle_layout_images::mime(&data).into();
+        let pixels = oracle_layout_images::pixel_size(&data);
         d.assets.insert(asset, Arc::new(Asset { id: asset, name: name.into(), mime, data: data.into(), pixels, ..Default::default() }));
         let lid = d.default_layer();
         let id = ItemId(d.alloc());
         let r = Rect::new(at.0, at.1, at.0 + 100.0, at.1 + 50.0);
-        let mut it = Item::new(id, lid, Shape::Rectangle, oracle_guide_geom::shapes::rectangle(r));
+        let mut it = Item::new(id, lid, Shape::Rectangle, oracle_layout_geom::shapes::rectangle(r));
         it.content = Content::Graphic(Graphic {
             asset,
             size,
@@ -703,7 +703,7 @@ mod tests {
 
     fn add_box(d: &mut Document, r: Rect, swatch: &str) {
         let lid = d.default_layer();
-        let mut b = Item::new(ItemId(d.alloc()), lid, Shape::Rectangle, oracle_guide_geom::shapes::rectangle(r));
+        let mut b = Item::new(ItemId(d.alloc()), lid, Shape::Rectangle, oracle_layout_geom::shapes::rectangle(r));
         b.fill = Fill::swatch(swatch);
         d.insert_item(SpreadRef::Doc(0), b, None).unwrap();
     }

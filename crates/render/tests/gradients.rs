@@ -1,12 +1,12 @@
 //! Gradient fills: InDesign stretches a radial gradient with the object's box.
 
-use oracle_guide_color::swatch::{Swatch, SwatchValue};
-use oracle_guide_color::{Color, Gradient, GradientKind, GradientStop};
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::build::NewDocument;
-use oracle_guide_doc::{Document, Fill, Item, ItemId, Shape, SpreadRef};
-use oracle_guide_geom::{Affine, Rect, Vec2, shapes};
-use oracle_guide_render::{Placed, RenderOptions, Rendered, Renderer};
+use oracle_layout_color::swatch::{Swatch, SwatchValue};
+use oracle_layout_color::{Color, Gradient, GradientKind, GradientStop};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::build::NewDocument;
+use oracle_layout_doc::{Document, Fill, Item, ItemId, Shape, SpreadRef};
+use oracle_layout_geom::{Affine, Rect, Vec2, shapes};
+use oracle_layout_render::{Placed, RenderOptions, Rendered, Renderer};
 
 /// A 100×200 rectangle at (50, 20) filled with a black-to-white radial gradient.
 fn portrait(vector: Option<[f64; 4]>) -> Document {

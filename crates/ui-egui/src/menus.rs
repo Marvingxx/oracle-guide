@@ -20,20 +20,46 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
     ("app.openDialog", "Open…", Some("Cmd+O"), "{}"),
     ("app.openRecent", "Open Recent File", None, "{index} — file.openRecent, with an alert when the file can't be opened"),
     ("app.placeDialog", "Place…", Some("Cmd+D"), "{}"),
-    ("app.sendToEdit", "Send to Oracle Edit", None, "{} — the guide placed, linked, in Oracle Edit's open document (Oracle Edit is started if needed)"),
-    ("app.sendToMotion", "Send to Oracle Motion", None, "{} — the guide imported into Oracle Motion's open composition (Oracle Motion is started if needed)"),
-    ("app.addToLibrary", "Add to Oracle Library", None, "{} — the active document, as it is now, into the Oracle Library (its \"Mes créations\" folder)"),
-    ("window.oracleLibrary", "Oracle Library", None, "{} — show or hide the Oracle Library window: the asset folder, searchable, dragged onto the page"),
+    (
+        "app.sendToEdit",
+        "Send to Oracle Edit",
+        None,
+        "{} — the guide placed, linked, in Oracle Edit's open document (Oracle Edit is started if needed)",
+    ),
+    (
+        "app.sendToVector",
+        "Send to Oracle Vector",
+        None,
+        "{} — the guide's first page placed as a linked PNG preview in Oracle Vector (started if needed)",
+    ),
+    (
+        "app.sendToMotion",
+        "Send to Oracle Motion",
+        None,
+        "{} — the guide imported into Oracle Motion's open composition (Oracle Motion is started if needed)",
+    ),
+    (
+        "app.addToLibrary",
+        "Add to Oracle Library",
+        None,
+        "{} — the active document, as it is now, into the Oracle Library (its \"Mes créations\" folder)",
+    ),
+    (
+        "window.oracleLibrary",
+        "Oracle Library",
+        None,
+        "{} — show or hide the Oracle Library window: the asset folder, searchable, dragged onto the page",
+    ),
     ("app.saveDialog", "Save As…", Some("Cmd+Shift+S"), "{}"),
     ("app.save", "Save", Some("Cmd+S"), "{}"),
-    ("app.quit", "Quit Oracle Brand Guide", Some("Cmd+Q"), "{} — close the window; each document with unsaved changes asks first"),
+    ("app.quit", "Quit Oracle Layout", Some("Cmd+Q"), "{} — close the window; each document with unsaved changes asks first"),
     ("app.saveCopyDialog", "Save a Copy…", Some("Cmd+Alt+S"), "{} — choose where to write a copy (the document stays as it is)"),
     ("app.loadSwatches", "Load Swatches…", None, "{} — pick a swatch exchange (.ase) file"),
     (
         "app.loadParagraphStyles",
         "Load Paragraph Styles…",
         None,
-        "{} — pick a document (.oracle-guide or .idml) and choose which of its paragraph styles to load (style.load)",
+        "{} — pick a document (.oracle-layout or .idml) and choose which of its paragraph styles to load (style.load)",
     ),
     ("app.loadCharacterStyles", "Load Character Styles…", None, "{} — the same for its character styles"),
     ("app.loadTextStyles", "Load All Text Styles…", None, "{} — the same for its paragraph and character styles"),
@@ -284,14 +310,14 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
     ),
     ("window.taskBarReset", "Reset Bar Position", None, "{} — the Contextual Task Bar follows the selection again, under it"),
     ("help.discord", "Oracle Suite…", None, "{} — opens Oracle Suite (https://github.com/Marvingxx/oracle-suite) in the browser"),
-    ("help.appPage", "Oracle Brand Guide Website…", None, "{} — opens https://github.com/Marvingxx/oracle-guide"),
-    ("help.github", "Oracle Brand Guide on GitHub…", None, "{} — opens https://github.com/Marvingxx/oracle-guide"),
+    ("help.appPage", "Oracle Layout Website…", None, "{} — opens https://github.com/Marvingxx/oracle-guide"),
+    ("help.github", "Oracle Layout on GitHub…", None, "{} — opens https://github.com/Marvingxx/oracle-guide"),
     ("help.issues", "Report an Issue…", None, "{} — opens the GitHub issue tracker"),
     ("help.website", "Oracle Website…", None, "{} — opens https://github.com/Marvingxx"),
     ("help.app", "Oracle App Page…", None, "{app} — opens https://github.com/Marvingxx/{app} (e.g. oracle-edit)"),
     (
         "help.about",
-        "About Oracle Brand Guide",
+        "About Oracle Layout",
         None,
         "{open?: true, tab?: \"about\"|\"contributors\"|\"models\"} — the About window: splash with community links, contributor and model credits (open: false closes it)",
     ),
@@ -333,6 +359,7 @@ pub const MENUS: &[(&str, &[&str])] = &[
             "ui:app.placeDialog",
             "ui:app.addToLibrary",
             "ui:app.sendToEdit",
+            "ui:app.sendToVector",
             "ui:app.sendToMotion",
             "ui:app.placeWithOptions",
             "-",
@@ -952,7 +979,7 @@ pub const CLASSIC_GROUPS: &[&[&str]] = &[
 ];
 
 /// The Typography preset's available panels in the order observed in InDesign's workspace.
-/// CC Libraries and the separate Story panel have no corresponding Oracle Brand Guide panel.
+/// CC Libraries and the separate Story panel have no corresponding Oracle Layout panel.
 pub const TYPOGRAPHY_GROUPS: &[&[&str]] = &[
     &["pages", "layers", "swatches"],
     &["glyphs", "textWrap"],
@@ -1001,11 +1028,13 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
     };
     Some(match id {
         #[cfg(not(target_arch = "wasm32"))]
-        "window.oracleLibrary" => flag(&mut app.oracle_library.open),
+        "window.oracleLibrary" => crate::panel_docking::open_library(app),
         #[cfg(not(target_arch = "wasm32"))]
         "app.addToLibrary" => crate::library_send::add_active(app).map(|()| Value::Null),
         #[cfg(not(target_arch = "wasm32"))]
         "app.sendToEdit" => crate::send_to::send_active(app, oracle_suite_link::App::Edit),
+        #[cfg(not(target_arch = "wasm32"))]
+        "app.sendToVector" => crate::send_to::send_active(app, oracle_suite_link::App::Vector),
         #[cfg(not(target_arch = "wasm32"))]
         "app.sendToMotion" => crate::send_to::send_active(app, oracle_suite_link::App::Motion),
         "window.minimize" => {
@@ -1081,7 +1110,7 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
             return run_ui(app, "app.saveDialog", p);
         }
         "app.saveDialog" => {
-            let name = app.session.active().map(|d| format!("{}.oracle-guide", d.doc.title)).unwrap_or_default();
+            let name = app.session.active().map(|d| format!("{}.oracle-layout", d.doc.title)).unwrap_or_default();
             if let Some(path) = app.services.pick_save.as_mut().and_then(|f| f(&name)) {
                 return Some(app.run("file.saveAs", json!({"path": path})));
             }
@@ -1092,7 +1121,7 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
             Ok(Value::Null)
         }
         "app.saveCopyDialog" => {
-            let name = app.session.active().map(|d| format!("{} copy.oracle-guide", d.doc.title)).unwrap_or_default();
+            let name = app.session.active().map(|d| format!("{} copy.oracle-layout", d.doc.title)).unwrap_or_default();
             if let Some(path) = app.services.pick_save.as_mut().and_then(|f| f(&name)) {
                 return Some(app.run("file.saveACopy", json!({"path": path})));
             }
@@ -1148,10 +1177,10 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
             let g = app.session.active().and_then(|d| d.selection.items.first().and_then(|id| d.doc.item(*id)).and_then(|it| it.graphic().cloned()));
             let Some(g) = g else { return Some(Err("select a frame with a placed graphic".into())) };
             let fitting = serde_json::to_value(g.auto_fit).unwrap_or(json!("none"));
-            let c = |v: f64| json!(oracle_guide_geom::format_measure(v, oracle_guide_geom::Unit::Points));
+            let c = |v: f64| json!(oracle_layout_geom::format_measure(v, oracle_layout_geom::Unit::Points));
             app.ui.dialog = Some(crate::dialogs::Dialog::new(
                 "fittingOptions",
-                json!({"autoFit": g.auto_fit != oracle_guide_doc::Fitting::None, "fitting": fitting, "align": g.fit_align,
+                json!({"autoFit": g.auto_fit != oracle_layout_doc::Fitting::None, "fitting": fitting, "align": g.fit_align,
                     "cropTop": c(g.crop[0]), "cropLeft": c(g.crop[1]), "cropBottom": c(g.crop[2]), "cropRight": c(g.crop[3])}),
             ));
             Ok(Value::Null)
@@ -1235,7 +1264,7 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
                 Ok(r) => r,
                 Err(e) => return Some(Err(e)),
             };
-            let bytes = oracle_guide_engine::cmd::base64_decode(r["base64"].as_str().unwrap_or_default());
+            let bytes = oracle_layout_engine::cmd::base64_decode(r["base64"].as_str().unwrap_or_default());
             match app.services.write.as_mut() {
                 Some(w) => w(&path, &bytes).map(|_| json!({"path": path, "bytes": bytes.len()})),
                 None => Err("no writer".into()),
@@ -1243,7 +1272,7 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
         }
         "app.storyEditor" => {
             let target = app.session.active().and_then(|st| {
-                let story = p.get("story").and_then(Value::as_u64).map(oracle_guide_doc::StoryId).or_else(|| {
+                let story = p.get("story").and_then(Value::as_u64).map(oracle_layout_doc::StoryId).or_else(|| {
                     st.selection
                         .text
                         .map(|t| t.story)
@@ -1391,10 +1420,10 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
                 f["userWords"] =
                     json!(words.as_array().map(|a| a.iter().filter_map(Value::as_str).collect::<Vec<_>>().join("\n")).unwrap_or_default());
                 let inc = doc["keyboardIncrement"].as_f64().unwrap_or(1.0);
-                f["keyboardIncrement"] = json!(oracle_guide_geom::format_measure(inc, oracle_guide_geom::Unit::Points));
+                f["keyboardIncrement"] = json!(oracle_layout_geom::format_measure(inc, oracle_layout_geom::Unit::Points));
                 f["kerningIncrement"] = json!(format!("{}", doc["kerningIncrement"].as_f64().unwrap_or(20.0)));
                 let units = app.session.active().map(|d| d.doc.settings.horizontal_units).unwrap_or_default();
-                let m = |v: &Value| json!(oracle_guide_geom::format_measure(v.as_f64().unwrap_or(0.0), units));
+                let m = |v: &Value| json!(oracle_layout_geom::format_measure(v.as_f64().unwrap_or(0.0), units));
                 let (bg, g) = (&doc["baselineGrid"], &doc["grid"]);
                 f["bg.start"] = m(&bg["start"]);
                 f["bg.increment"] = m(&bg["increment"]);
@@ -1418,9 +1447,9 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
             f["snap.spacing"] = json!(app.ui.smart_spacing);
             f["snap.zone"] = json!(app.ui.snap_zone);
             f["displayQuality"] = json!(match app.ui.display_quality {
-                oracle_guide_render::DisplayQuality::Fast => "fast",
-                oracle_guide_render::DisplayQuality::Typical => "typical",
-                oracle_guide_render::DisplayQuality::High => "high",
+                oracle_layout_render::DisplayQuality::Fast => "fast",
+                oracle_layout_render::DisplayQuality::Typical => "typical",
+                oracle_layout_render::DisplayQuality::High => "high",
             });
             f["uiScale"] = json!((app.ui.ui_scale * 100.0).round());
             f["richBlack"] = json!(app.ui.rich_black);
@@ -1513,7 +1542,7 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
             flag(&mut app.ui.overprint_preview)
         }
         "view.fastDisplay" | "view.typicalDisplay" | "view.highQualityDisplay" => {
-            use oracle_guide_render::DisplayQuality as Q;
+            use oracle_layout_render::DisplayQuality as Q;
             app.ui.display_quality = match id {
                 "view.fastDisplay" => Q::Fast,
                 "view.typicalDisplay" => Q::Typical,
@@ -1574,11 +1603,11 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
             // Turns the spread in the middle of the view (InDesign's Rotate Spread).
             let angle = p.get("angle").and_then(Value::as_i64).unwrap_or(90);
             let Some(st) = app.session.active() else { return Some(Err("no document".into())) };
-            let layout = oracle_guide_tools::CanvasLayout::new(&st.doc, st.editing_parents);
+            let layout = oracle_layout_tools::CanvasLayout::new(&st.doc, st.editing_parents);
             let Some(slot) = crate::canvas::current_slot(app, &layout).and_then(|i| layout.slots.get(i).copied()) else {
                 return Some(Err("no spread".into()));
             };
-            let oracle_guide_doc::SpreadRef::Doc(si) = slot.spread else { return Some(Err("parent spreads don't turn".into())) };
+            let oracle_layout_doc::SpreadRef::Doc(si) = slot.spread else { return Some(Err("parent spreads don't turn".into())) };
             let r = app.run("layout.rotateSpreadView", json!({"spread": si, "angle": angle}));
             if let Some(rect) = app.canvas_rect {
                 crate::canvas::fit(app, rect, "spread");
@@ -1593,12 +1622,12 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
         }
         "view.proofSetup" => {
             if let Some(t) = p.get("target").and_then(Value::as_str) {
-                let Some(t) = oracle_guide_color::cms::ProofTarget::parse(t) else { return Some(Err(format!("unknown proof target `{t}`"))) };
+                let Some(t) = oracle_layout_color::cms::ProofTarget::parse(t) else { return Some(Err(format!("unknown proof target `{t}`"))) };
                 app.ui.proof_setup.target = t;
                 app.ui.proof_colors = true;
             }
             if let Some(i) = p.get("intent").and_then(Value::as_str) {
-                let Some(i) = oracle_guide_color::cms::Intent::parse(i) else { return Some(Err(format!("unknown intent `{i}`"))) };
+                let Some(i) = oracle_layout_color::cms::Intent::parse(i) else { return Some(Err(format!("unknown intent `{i}`"))) };
                 app.ui.proof_setup.intent = i;
             }
             match p.get("simulatePaper") {
@@ -1695,7 +1724,7 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
         }
         "window.setShortcut" => {
             let Some(cmd) = p.get("id").and_then(Value::as_str) else { return Some(Err("missing id".into())) };
-            if oracle_guide_engine::find_command(cmd).is_none() && ui_label(cmd).is_none() {
+            if oracle_layout_engine::find_command(cmd).is_none() && ui_label(cmd).is_none() {
                 return Some(Err(format!("unknown command `{cmd}`")));
             }
             match p.get("shortcut") {
@@ -1837,8 +1866,8 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
             }
             _ => Err("help.app: give `app` (e.g. \"oracle-edit\")".into()),
         },
-        h if h.starts_with("help.") && oracle_guide_engine::links::get(&h[5..]).is_some() => {
-            let url = oracle_guide_engine::links::get(&h[5..]).unwrap_or_default().to_string();
+        h if h.starts_with("help.") && oracle_layout_engine::links::get(&h[5..]).is_some() => {
+            let url = oracle_layout_engine::links::get(&h[5..]).unwrap_or_default().to_string();
             app.ui.pending_urls.push(url.clone());
             Ok(json!({"url": url}))
         }
@@ -1982,9 +2011,9 @@ fn set_screen_mode(app: &mut DesignApp, mode: ScreenMode) {
 }
 
 fn download_document(app: &mut DesignApp) -> Result<Value, String> {
-    let name = app.session.active().map(|d| format!("{}.oracle-guide", d.doc.title)).ok_or("no document")?;
+    let name = app.session.active().map(|d| format!("{}.oracle-layout", d.doc.title)).ok_or("no document")?;
     let ser = app.run("file.serialize", json!({}))?;
-    let bytes = oracle_guide_engine::cmd::base64_decode(ser["base64"].as_str().unwrap_or_default());
+    let bytes = oracle_layout_engine::cmd::base64_decode(ser["base64"].as_str().unwrap_or_default());
     let download = app.services.download.as_mut().ok_or("no download service")?;
     download(&name, &bytes).map_err(|e| format!("could not download {name}: {e}"))?;
     // Marks the document saved; on the web the engine doesn't touch a file system.
@@ -1995,7 +2024,7 @@ fn export_png(app: &mut DesignApp, p: &Value) -> Result<Value, String> {
     let st = app.session.active().ok_or("no document")?;
     let page = crate::control::page_index(p, crate::canvas::current_page(app).unwrap_or(0), st.doc.page_count())?;
     let scale = p.get("scale").and_then(Value::as_f64).unwrap_or(2.0);
-    let mut r = oracle_guide_render::Renderer::new();
+    let mut r = oracle_layout_render::Renderer::new();
     let img = r
         .render_page(
             &st.doc,
@@ -2003,7 +2032,7 @@ fn export_png(app: &mut DesignApp, p: &Value) -> Result<Value, String> {
             page,
             scale,
             false,
-            &oracle_guide_render::RenderOptions { printing_only: true, rich_black: app.session.prefs.rich_black_output, ..Default::default() },
+            &oracle_layout_render::RenderOptions { printing_only: true, rich_black: app.session.prefs.rich_black_output, ..Default::default() },
         )
         .ok_or("no such page")?;
     let png = img.to_png();
@@ -2034,7 +2063,7 @@ fn export_idml(app: &mut DesignApp, p: &Value) -> Result<Value, String> {
     };
     let Some(path) = path else { return Ok(Value::Null) };
     let r = app.run("file.exportIdml", json!({}))?;
-    let bytes = oracle_guide_engine::cmd::base64_decode(r["base64"].as_str().unwrap_or_default());
+    let bytes = oracle_layout_engine::cmd::base64_decode(r["base64"].as_str().unwrap_or_default());
     match app.services.write.as_mut() {
         Some(w) => w(&path, &bytes).map(|_| json!({"path": path, "bytes": bytes.len()})),
         None => Err("no writer".into()),
@@ -2061,7 +2090,7 @@ fn export_bytes(app: &mut DesignApp, p: &Value, ext: &str, cmd: &str) -> Result<
     let r = app.run(cmd, params)?;
     let bytes = match r["text"].as_str() {
         Some(t) => t.as_bytes().to_vec(),
-        None => oracle_guide_engine::cmd::base64_decode(r["base64"].as_str().unwrap_or_default()),
+        None => oracle_layout_engine::cmd::base64_decode(r["base64"].as_str().unwrap_or_default()),
     };
     match app.services.write.as_mut() {
         Some(w) => w(&path, &bytes).map(|_| json!({"path": path, "bytes": bytes.len()})),
@@ -2091,7 +2120,7 @@ pub(crate) fn export_pdf(app: &mut DesignApp, p: &Value) -> Result<Value, String
         }
     }
     let r = app.run("file.exportPdf", params)?;
-    let bytes = oracle_guide_engine::cmd::base64_decode(r["base64"].as_str().unwrap_or_default());
+    let bytes = oracle_layout_engine::cmd::base64_decode(r["base64"].as_str().unwrap_or_default());
     match app.services.write.as_mut() {
         Some(w) => w(&path, &bytes).map(|_| json!({"path": path, "bytes": bytes.len(), "pages": r["pages"], "warnings": r["warnings"]})),
         None => Err("no writer".into()),
@@ -2128,7 +2157,7 @@ pub fn enabled(app: &DesignApp, id: &str) -> bool {
     if is_window_control(id) {
         return window_control_available(app, id);
     }
-    match oracle_guide_engine::find_command(id) {
+    match oracle_layout_engine::find_command(id) {
         Some(c) => (c.enabled)(&app.session).is_ok(),
         None => true,
     }
@@ -2136,7 +2165,7 @@ pub fn enabled(app: &DesignApp, id: &str) -> bool {
 
 /// The default shortcut of a command.
 pub fn default_shortcut(id: &str) -> Option<&'static str> {
-    oracle_guide_engine::find_command(id).and_then(|c| c.shortcut).or_else(|| ui_label(id).and_then(|(_, s)| s))
+    oracle_layout_engine::find_command(id).and_then(|c| c.shortcut).or_else(|| ui_label(id).and_then(|(_, s)| s))
 }
 
 /// The shortcut in effect for a command (the user's, else the default).
@@ -2154,7 +2183,7 @@ pub fn effective_shortcuts(app: &DesignApp) -> Vec<(String, String)> {
     UI_COMMANDS
         .iter()
         .map(|c| c.0)
-        .chain(oracle_guide_engine::command_specs().iter().map(|c| c.id))
+        .chain(oracle_layout_engine::command_specs().iter().map(|c| c.id))
         .filter_map(|id| shortcut_of(app, id).map(|s| (id.to_string(), s)))
         .collect()
 }
@@ -2205,7 +2234,7 @@ pub enum Item {
 fn cmd_item(id: &str, params: Value) -> Item {
     let (label, shortcut) = match ui_label(id) {
         Some((l, sc)) => (l.to_string(), sc),
-        None => match oracle_guide_engine::find_command(id) {
+        None => match oracle_layout_engine::find_command(id) {
             Some(c) => (c.label.to_string(), c.shortcut),
             None => (id.to_string(), None),
         },
@@ -2313,7 +2342,7 @@ pub enum AppMenuItem {
 
 /// The macOS application menu. Settings… is `app.preferences`, which `native_menu_tree` leaves out of Edit.
 pub const MAC_APP_MENU: &[AppMenuItem] = &[
-    AppMenuItem::Cmd { id: "dc-about", label: "About Oracle Brand Guide", command: "help.about" },
+    AppMenuItem::Cmd { id: "dc-about", label: "About Oracle Layout", command: "help.about" },
     AppMenuItem::Cmd { id: "dc-discord", label: "Oracle Suite…", command: "help.discord" },
     AppMenuItem::Sep,
     AppMenuItem::Cmd { id: "dc-settings", label: "Settings…", command: "app.preferences" },
@@ -2326,7 +2355,7 @@ pub const MAC_APP_MENU: &[AppMenuItem] = &[
     AppMenuItem::ShowAll,
     AppMenuItem::Sep,
     // Not the predefined Quit: it terminates the app at once, past the unsaved-changes prompt.
-    AppMenuItem::Cmd { id: "dc-quit", label: "Quit Oracle Brand Guide", command: "app.quit" },
+    AppMenuItem::Cmd { id: "dc-quit", label: "Quit Oracle Layout", command: "app.quit" },
 ];
 
 /// A label as the macOS menu bar library takes it: it reads "&" as a mnemonic marker and drops
@@ -2379,14 +2408,17 @@ fn without_commands(entries: &mut Vec<Item>, drop: &dyn Fn(&str) -> bool) {
 
 /// Check state of a toggle command (None = not a toggle).
 pub fn checked(app: &DesignApp, id: &str, params: &Value) -> Option<bool> {
+    if id == "window.oracleLibrary" {
+        return Some(app.ui.docking.as_ref().is_some_and(|layout| layout.contains(&"oracleLibrary".to_string())));
+    }
     Some(match id {
         "window.workspace" => params.get("name").and_then(Value::as_str) == Some(app.ui.workspace.as_str()),
         "view.rulers" => app.ui.rulers,
         "view.frameEdges" => app.ui.frame_edges,
         "view.overprintPreview" => app.ui.overprint_preview,
-        "view.fastDisplay" => app.ui.display_quality == oracle_guide_render::DisplayQuality::Fast,
-        "view.typicalDisplay" => app.ui.display_quality == oracle_guide_render::DisplayQuality::Typical,
-        "view.highQualityDisplay" => app.ui.display_quality == oracle_guide_render::DisplayQuality::High,
+        "view.fastDisplay" => app.ui.display_quality == oracle_layout_render::DisplayQuality::Fast,
+        "view.typicalDisplay" => app.ui.display_quality == oracle_layout_render::DisplayQuality::Typical,
+        "view.highQualityDisplay" => app.ui.display_quality == oracle_layout_render::DisplayQuality::High,
         "view.guides" => app.ui.guides,
         "view.lockGuides" => app.ui.guides_locked,
         "view.lockColumnGuides" => app.session.active().is_some_and(|d| d.doc.settings.column_guides_locked),
@@ -2451,6 +2483,9 @@ pub fn checked(app: &DesignApp, id: &str, params: &Value) -> Option<bool> {
 pub fn menu_enabled(app: &DesignApp, id: &str) -> bool {
     if waits_for_ime(app, id) {
         return false;
+    }
+    if matches!(id, "app.sendToEdit" | "app.sendToVector" | "app.sendToMotion") {
+        return app.session.active().is_some();
     }
     if is_window_control(id) {
         return window_control_available(app, id);
@@ -2558,7 +2593,7 @@ fn activate_inner(app: &mut DesignApp, id: &str, params: &Value) {
     }
     if params.is_null()
         && ui_label(id).is_none()
-        && let Some(c) = oracle_guide_engine::find_command(id)
+        && let Some(c) = oracle_layout_engine::find_command(id)
         && !crate::dialogs::command_fields(c.params).is_empty()
         && (c.label.ends_with('…') || crate::dialogs::command_fields(c.params).iter().any(|f| !f.optional))
     {
@@ -2590,9 +2625,9 @@ fn guide_spread(app: &DesignApp) -> Option<Value> {
     let st = app.session.active()?;
     let page = crate::canvas::current_page(app).unwrap_or(0);
     Some(if st.editing_parents {
-        let layout = oracle_guide_tools::CanvasLayout::new(&st.doc, true);
+        let layout = oracle_layout_tools::CanvasLayout::new(&st.doc, true);
         let shown = crate::canvas::current_slot(app, &layout).and_then(|i| layout.slots.get(i)).map(|s| s.spread);
-        json!(shown.unwrap_or(oracle_guide_doc::SpreadRef::Parent(0)))
+        json!(shown.unwrap_or(oracle_layout_doc::SpreadRef::Parent(0)))
     } else {
         json!(st.doc.page_loc(page).map_or(0, |l| l.0))
     })
@@ -2853,7 +2888,7 @@ fn context_entries(app: &DesignApp, kind: ContextMenu) -> Vec<&'static str> {
         ContextMenu::Object => {
             let (graphic, text) = app.session.active().map_or((false, false), |st| {
                 let items = || st.selection.items.iter().filter_map(|i| st.doc.item(*i));
-                (items().any(|it| matches!(it.content, oracle_guide_doc::Content::Graphic(_))), items().any(|it| it.is_text_frame()))
+                (items().any(|it| matches!(it.content, oracle_layout_doc::Content::Graphic(_))), items().any(|it| it.is_text_frame()))
             });
             let mut v = CONTEXT_OBJECT.to_vec();
             if graphic {
@@ -3147,9 +3182,9 @@ pub fn shortcuts(app: &mut DesignApp, ctx: &egui::Context) {
         if !typing && !modifiers.command && !modifiers.alt {
             let name = key.name();
             let sc = if modifiers.shift { format!("Shift+{name}") } else { name.to_string() };
-            if let Some(tool) = oracle_guide_tools::tool_for_shortcut(&sc) {
+            if let Some(tool) = oracle_layout_tools::tool_for_shortcut(&sc) {
                 log::debug!("tool shortcut {sc} -> {tool}");
-                if std::env::var_os("ORACLE_GUIDE_DEBUG_KEYS").is_some() {
+                if std::env::var_os("ORACLE_LAYOUT_DEBUG_KEYS").is_some() {
                     eprintln!("tool shortcut {sc} ({key:?}, {modifiers:?}) -> {tool}");
                 }
                 app.select_tool(tool);
@@ -3222,7 +3257,7 @@ pub struct QuickItem {
 }
 
 /// Quick Apply matches (styles first, as InDesign lists them), at most 14.
-pub fn quick_apply_items(session: &oracle_guide_engine::Session, query: &str, cjk: bool) -> Vec<QuickItem> {
+pub fn quick_apply_items(session: &oracle_layout_engine::Session, query: &str, cjk: bool) -> Vec<QuickItem> {
     let ql = query.to_lowercase();
     let hit = |label: &str, id: &str| quick_match(&ql, &[label, id]);
     let mut out = Vec::new();
@@ -3262,7 +3297,7 @@ pub fn quick_apply_items(session: &oracle_guide_engine::Session, query: &str, cj
 
 /// The commands Quick Apply and the application bar's search find: (id, label, default shortcut).
 fn quick_commands() -> impl Iterator<Item = (&'static str, &'static str, Option<&'static str>)> {
-    oracle_guide_engine::command_specs()
+    oracle_layout_engine::command_specs()
         .iter()
         .filter(|c| !c.menu.is_empty() || c.shortcut.is_some())
         .map(|c| (c.id, c.label, c.shortcut))
@@ -3297,6 +3332,56 @@ pub fn command_search(app: &DesignApp, query: &str) -> Vec<QuickItem> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[cfg(not(target_arch = "wasm32"))]
+    fn send_to_vector_is_a_translated_file_command_requiring_a_document() {
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
+        let id = "app.sendToVector";
+        assert!(menu_ids("File").contains(&id));
+        let label = ui_label(id).unwrap().0;
+        assert_eq!(crate::i18n::tr("fr", label), "Envoyer vers Oracle Vector");
+        assert!(!menu_enabled(&app, id));
+        assert!(run_ui(&mut app, id, &json!({})).unwrap().is_err());
+        app.session.execute("file.new", &json!({})).unwrap();
+        assert!(menu_enabled(&app, id));
+    }
+
+    #[test]
+    #[cfg(not(target_arch = "wasm32"))]
+    fn send_to_vector_is_drawn_in_the_french_file_menu() {
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
+        app.ui.language = "fr".into();
+        app.session.execute("file.new", &json!({})).unwrap();
+        let items = menu_tree().into_iter().find(|(name, _)| *name == "File").unwrap().1;
+        let ctx = egui::Context::default();
+        let mut output = ctx.run_ui(
+            egui::RawInput { screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(600.0, 4000.0))), ..Default::default() },
+            |ui| {
+                menu_items(&mut app, ui, &items, "File");
+            },
+        );
+        fn contains(shape: &egui::Shape) -> bool {
+            match shape {
+                egui::Shape::Text(t) => t.galley.text().contains("Envoyer vers Oracle Vector"),
+                egui::Shape::Vec(shapes) => shapes.iter().any(contains),
+                _ => false,
+            }
+        }
+        assert!(output.shapes.iter().any(|s| contains(&s.shape)));
+        output.textures_delta.clear();
+        // Optional offscreen evidence, using the same widgets as the actual File menu.
+        if let Some(path) = std::env::var_os("ORACLE_LAYOUT_MENU_SHOT") {
+            let mut harness = egui_kittest::Harness::builder().with_size(egui::vec2(600.0, 1600.0)).wgpu().build_ui_state(
+                |ui, (app, items): &mut (DesignApp, Vec<Item>)| {
+                    menu_items(app, ui, items, "File");
+                },
+                (app, items),
+            );
+            harness.step();
+            harness.render().unwrap().save(path).unwrap();
+        }
+    }
 
     /// The entries (command ids) of a menu bar menu, submenus included.
     fn menu_ids(title: &str) -> Vec<&'static str> {
@@ -3346,7 +3431,7 @@ mod tests {
     /// A command's menu path names the menu entries that really hold it.
     #[test]
     fn define_lists_command_path_matches_the_type_menu() {
-        let spec = oracle_guide_engine::command_specs().iter().find(|c| c.id == "list.define").expect("list.define is a command");
+        let spec = oracle_layout_engine::command_specs().iter().find(|c| c.id == "list.define").expect("list.define is a command");
         assert_eq!(spec.menu[0], "Type");
         assert!(submenu_paths("Type").contains(&spec.menu.join("/")), "{:?} is not a Type submenu", spec.menu);
         assert!(menu_ids("Type").contains(&"list.define"));
@@ -3354,7 +3439,7 @@ mod tests {
 
     #[test]
     fn screen_mode_shows_the_current_mode_and_view_submenus_are_translated() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let mode = |app: &DesignApp, m: &str| checked(app, "view.screenMode", &json!({ "mode": m }));
         assert_eq!((mode(&app, "normal"), mode(&app, "preview")), (Some(true), Some(false)));
         app.ui.screen_mode = crate::ScreenMode::Preview;
@@ -3378,7 +3463,7 @@ mod tests {
     /// Exercise the real dropdown, including clipping and wheel input, on a short viewport.
     #[test]
     fn oversized_edit_menu_scrolls_to_preferences() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let ctx = egui::Context::default();
         let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(700.0, 260.0));
         let mut tick = 0;
@@ -3468,7 +3553,7 @@ mod tests {
 
     #[test]
     fn formatting_affects_text_sends_swatches_to_the_text() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         for (name, color) in [("Cyan", "#00ffff"), ("Magenta", "#ff00ff")] {
             let created = app.run("swatch.create", json!({"name": name, "color": color})).unwrap();
@@ -3478,10 +3563,10 @@ mod tests {
         let (fid, sid) = (r["id"].as_u64().unwrap(), r["story"].as_u64().unwrap());
         app.run("selection.set", json!({"ids": [fid]})).unwrap();
         let text_fill = |app: &crate::DesignApp| {
-            let st = app.session.active().unwrap().doc.story(oracle_guide_doc::StoryId(sid)).unwrap().clone();
+            let st = app.session.active().unwrap().doc.story(oracle_layout_doc::StoryId(sid)).unwrap().clone();
             st.char_format_at(2).over.fill.clone()
         };
-        let frame_fill = |app: &crate::DesignApp| app.session.active().unwrap().doc.item(oracle_guide_doc::ItemId(fid)).unwrap().fill.swatch.clone();
+        let frame_fill = |app: &crate::DesignApp| app.session.active().unwrap().doc.item(oracle_layout_doc::ItemId(fid)).unwrap().fill.swatch.clone();
         assert!(!crate::panels::colors_affect_text(&app));
         crate::panels::apply_swatch(&mut app, false, "C=100 M=0 Y=0 K=0", None).unwrap();
         assert_eq!(frame_fill(&app), "C=100 M=0 Y=0 K=0");
@@ -3498,7 +3583,7 @@ mod tests {
     #[test]
     fn transform_menu_items_open_their_dialogs() {
         for id in ["transform.move", "transform.scale", "transform.rotate", "transform.shear"] {
-            let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+            let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
             activate(&mut app, id, &Value::Null);
             let dialog = app.ui.dialog.as_ref().map(|d| d.id.clone());
             assert_eq!(dialog.as_deref(), Some(format!("cmd:{id}").as_str()), "{id} opens its dialog");
@@ -3508,18 +3593,18 @@ mod tests {
     #[test]
     fn pdf_export_menu_item_opens_the_dialog_or_exports() {
         // No params: the menu item opens the options dialog.
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         activate(&mut app, "app.exportPdf", &Value::Null);
         assert_eq!(app.ui.dialog.as_ref().map(|d| d.id.as_str()), Some("pdfExport"));
         // Explicit options: programmatic callers still export directly, opening no dialog.
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         activate(&mut app, "app.exportPdf", &json!({"path": "/tmp/x.pdf"}));
         assert!(app.ui.dialog.is_none());
     }
 
     #[test]
     fn snap_preferences_are_a_command() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let r = run_ui(&mut app, "view.snapPreferences", &json!({"smartSpacing": false, "zone": 8})).unwrap().unwrap();
         assert_eq!(r["smartSpacing"], false);
         assert_eq!(r["alignEdges"], true, "unnamed switches keep their value");
@@ -3531,7 +3616,7 @@ mod tests {
 
     #[test]
     fn custom_shortcuts_override_defaults() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         assert_eq!(shortcut_of(&app, "app.preferences").as_deref(), Some("Cmd+K"));
         let r = run_ui(&mut app, "window.setShortcut", &json!({"id": "app.preferences", "shortcut": "Cmd+Alt+Shift+9"})).unwrap().unwrap();
         assert_eq!(r["shortcut"], "Cmd+Alt+Shift+9");
@@ -3558,7 +3643,7 @@ mod tests {
 
     #[test]
     fn split_window_panes_have_their_own_views() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp| {
@@ -3594,7 +3679,7 @@ mod tests {
     #[test]
     fn split_window_dispatches_text_once_to_the_shared_document() {
         for focus_pane in [0, 1] {
-            let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+            let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
             app.run("file.new", json!({})).unwrap();
             let made = app.run("frame.create", json!({"rect": [36, 36, 300, 200], "content": "text"})).unwrap();
             let story = made["story"].as_u64().unwrap();
@@ -3647,7 +3732,7 @@ mod tests {
 
     #[test]
     fn split_window_click_focus_routes_menu_zoom_but_hover_scroll_stays_local() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         app.run("window.split", json!({"on": true})).unwrap();
         let ctx = egui::Context::default();
@@ -3726,7 +3811,7 @@ mod tests {
             }
         }
 
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         for rect in [[36, 36, 280, 180], [300, 36, 550, 180]] {
             app.run("frame.create", json!({"rect": rect, "content": "unassigned"})).unwrap();
@@ -3757,7 +3842,7 @@ mod tests {
 
     #[test]
     fn show_document_grid_toggles_from_the_grids_and_guides_menu() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let tree = menu_tree();
         let mut items = vec![];
         for (_, entries) in &tree {
@@ -3775,7 +3860,7 @@ mod tests {
 
     #[test]
     fn interface_language_switches_and_validates() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         run_ui(&mut app, "app.language", &json!({"lang": "de"})).unwrap().unwrap();
         assert_eq!(app.ui.language, "de");
         assert_eq!(checked(&app, "app.language", &json!({"lang": "de"})), Some(true));
@@ -3860,7 +3945,7 @@ mod tests {
 
     #[test]
     fn ukrainian_language_is_selectable_persisted_and_keeps_document_data() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"pages": 4, "facingPages": true})).unwrap();
         app.run("frame.create", json!({"rect": [36, 36, 200, 200], "content": "text", "text": "My words · Мої слова"})).unwrap();
         let before = serde_json::to_value(&app.session.doc().unwrap().doc).unwrap();
@@ -3880,7 +3965,7 @@ mod tests {
 
     #[test]
     fn russian_language_is_selectable_persisted_and_keeps_document_data() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"pages": 4, "facingPages": true})).unwrap();
         app.run("frame.create", json!({"rect": [36, 36, 200, 200], "content": "text", "text": "My words · Мои слова"})).unwrap();
         let before = serde_json::to_value(&app.session.doc().unwrap().doc).unwrap();
@@ -3900,7 +3985,7 @@ mod tests {
 
     #[test]
     fn czech_language_is_selectable_persisted_and_keeps_document_data() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"pages": 4, "facingPages": true})).unwrap();
         app.run("frame.create", json!({"rect": [36, 36, 200, 200], "content": "text", "text": "My words · Příliš žluťoučký kůň"})).unwrap();
         let before = serde_json::to_value(&app.session.doc().unwrap().doc).unwrap();
@@ -3921,7 +4006,7 @@ mod tests {
 
     #[test]
     fn polish_language_is_selectable_persisted_and_keeps_document_data() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"pages": 2, "facingPages": true})).unwrap();
         app.run("frame.create", json!({"rect": [36, 36, 200, 200], "content": "text", "text": "Zażółć gęślą jaźń"})).unwrap();
         let before = serde_json::to_value(&app.session.doc().unwrap().doc).unwrap();
@@ -3941,7 +4026,7 @@ mod tests {
 
     #[test]
     fn arabic_dialog_and_language_switch_keep_finite_widget_geometry() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp| {
             for _ in 0..4 {
@@ -3974,7 +4059,7 @@ mod tests {
 
     #[test]
     fn story_direction_is_checked() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         app.session.execute("frame.create", &json!({"rect": [72, 72, 200, 400], "content": "text", "text": "縦", "vertical": true})).unwrap();
         assert_eq!(checked(&app, "type.storyDirection", &json!({"vertical": true})), Some(true));
@@ -3983,7 +4068,7 @@ mod tests {
 
     #[test]
     fn proof_setup_and_colors() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         assert_eq!(checked(&app, "view.proofColors", &Value::Null), Some(false));
         let r = run_ui(&mut app, "view.proofSetup", &json!({"target": "deuteranopia"})).unwrap().unwrap();
         assert_eq!(r["on"], true);
@@ -3997,7 +4082,7 @@ mod tests {
 
     #[test]
     fn lock_guides_and_lock_column_guides_are_checked_in_grids_and_guides() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let view = menu_ids("View");
         assert!(view.contains(&"view.lockGuides") && view.contains(&"view.lockColumnGuides"));
@@ -4019,16 +4104,16 @@ mod tests {
     fn fitting_has_indesigns_shortcuts() {
         // LYH Studio episode 6 (7:00): "Fit Content to Frame (Ctrl + Shift + Alt + C)" fills the
         // photo frames proportionally.
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
-        let png = oracle_guide_render::Rendered { width: 40, height: 20, pixels: vec![200; 40 * 20 * 4] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 40, height: 20, pixels: vec![200; 40 * 20 * 4] }.to_png();
         let f = app.run("frame.create", json!({"rect": [100, 100, 300, 300]})).unwrap()["id"].as_u64().unwrap();
-        app.run("file.place", json!({"base64": oracle_guide_engine::cmd::base64_encode(&png), "name": "a.png", "frame": f})).unwrap();
+        app.run("file.place", json!({"base64": oracle_layout_engine::cmd::base64_encode(&png), "name": "a.png", "frame": f})).unwrap();
         app.run("selection.set", json!({"ids": [f]})).unwrap();
         let width = |app: &crate::DesignApp| {
-            let it = app.session.doc().unwrap().doc.item(oracle_guide_doc::ItemId(f)).unwrap().clone();
-            let oracle_guide_doc::Content::Graphic(g) = &it.content else { panic!("graphic") };
-            it.xf.transform_rect_bbox(g.xf.transform_rect_bbox(oracle_guide_geom::Rect::new(0.0, 0.0, g.size.0, g.size.1))).width()
+            let it = app.session.doc().unwrap().doc.item(oracle_layout_doc::ItemId(f)).unwrap().clone();
+            let oracle_layout_doc::Content::Graphic(g) = &it.content else { panic!("graphic") };
+            it.xf.transform_rect_bbox(g.xf.transform_rect_bbox(oracle_layout_geom::Rect::new(0.0, 0.0, g.size.0, g.size.1))).width()
         };
         for (id, keys) in [
             ("fit.fillFrameProportionally", "Cmd+Alt+Shift+C"),
@@ -4058,7 +4143,7 @@ mod tests {
 
     #[test]
     fn tab_and_presentation_hide_floating_panels_too() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp| {
@@ -4076,7 +4161,7 @@ mod tests {
         };
         // The icon column's flyout (the classic dock) and a floating panel group (the docking layout).
         let flyout = egui::LayerId::new(egui::Order::Foreground, egui::Id::new("panel_flyout"));
-        let group = egui::LayerId::new(egui::Order::Middle, egui::Id::new("oracle-guide-panel-docking").with(("floating", "preflight")));
+        let group = egui::LayerId::new(egui::Order::Middle, egui::Id::new("oracle-layout-panel-docking").with(("floating", "preflight")));
         let shown = |layer: egui::LayerId| ctx.memory(|m| m.areas().is_visible(&layer));
         let toggles = [
             ("window.hidePanels", json!({}), json!({})),
@@ -4109,7 +4194,7 @@ mod tests {
 
     #[test]
     fn tab_hides_panels_and_documents_cycle() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         assert_eq!(shortcut_of(&app, "window.hidePanels").as_deref(), Some("Tab"));
         run_ui(&mut app, "window.hidePanels", &json!({})).unwrap().unwrap();
         assert_eq!(app.ui.hidden_panels, 1);
@@ -4129,7 +4214,7 @@ mod tests {
 
     #[test]
     fn rotate_spread_view() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({"pages": 3})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp| {
@@ -4149,7 +4234,7 @@ mod tests {
         let d = app.session.active().unwrap().doc.clone();
         let turned: Vec<usize> = d.spreads.iter().enumerate().filter(|(_, sp)| sp.pages[0].view_rotation == 1).map(|(i, _)| i).collect();
         assert_eq!(turned.len(), 1);
-        let layout = oracle_guide_tools::CanvasLayout::new(&d, false);
+        let layout = oracle_layout_tools::CanvasLayout::new(&d, false);
         let slot = layout.slots[turned[0]];
         let b = d.spreads[turned[0]].bounds();
         assert!((slot.bounds.width() - b.height()).abs() < 1e-6 && (slot.bounds.height() - b.width()).abs() < 1e-6);
@@ -4161,7 +4246,7 @@ mod tests {
 
     #[test]
     fn hand_tool_hold_starts_power_zoom() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp, t: f64, events: Vec<egui::Event>| {
@@ -4204,7 +4289,7 @@ mod tests {
 
     #[test]
     fn middle_drag_pans_with_any_tool() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp, events: Vec<egui::Event>| {
@@ -4241,7 +4326,7 @@ mod tests {
 
     #[test]
     fn layout_menu_goes_through_pages_and_spreads_with_their_shortcuts() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({"pages": 7, "facingPages": true})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp, events: Vec<egui::Event>| {
@@ -4265,7 +4350,7 @@ mod tests {
         let page = |app: &crate::DesignApp| crate::canvas::current_page(app).unwrap();
         let spread = |app: &crate::DesignApp| {
             let st = app.session.active().unwrap();
-            crate::canvas::current_slot(app, &oracle_guide_tools::layout::CanvasLayout::new(&st.doc, false)).unwrap()
+            crate::canvas::current_slot(app, &oracle_layout_tools::layout::CanvasLayout::new(&st.doc, false)).unwrap()
         };
         frame(&mut app, vec![]);
         frame(&mut app, vec![]);
@@ -4308,7 +4393,7 @@ mod tests {
         let zoom = app.view().unwrap().zoom;
         app.run("view.previousSpread", json!({})).unwrap();
         let st = app.session.active().unwrap();
-        let slot = oracle_guide_tools::layout::CanvasLayout::new(&st.doc, false).slots[1];
+        let slot = oracle_layout_tools::layout::CanvasLayout::new(&st.doc, false).slots[1];
         let (v, r) = (*app.view().unwrap(), app.canvas_rect.unwrap());
         let centre = (v.origin.x + r.width() as f64 / 2.0 / v.zoom, v.origin.y + r.height() as f64 / 2.0 / v.zoom);
         assert!((centre.0 - slot.bounds.center().x).abs() < 1e-6 && (centre.1 - slot.bounds.center().y).abs() < 1e-6);
@@ -4317,7 +4402,7 @@ mod tests {
 
     #[test]
     fn presentation_shows_one_spread_and_goes_through_them_with_keys_and_clicks() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({"pages": 7, "facingPages": true})).unwrap();
         app.session.execute("frame.create", &json!({"rect": [100, 100, 300, 300]})).unwrap();
         let id = app.session.active().unwrap().selection.items[0];
@@ -4349,12 +4434,12 @@ mod tests {
         };
         let spread = |app: &crate::DesignApp| {
             let st = app.session.active().unwrap();
-            crate::canvas::current_slot(app, &oracle_guide_tools::layout::CanvasLayout::new(&st.doc, false)).unwrap()
+            crate::canvas::current_slot(app, &oracle_layout_tools::layout::CanvasLayout::new(&st.doc, false)).unwrap()
         };
         // The spread fills the screen: as wide or as tall as it, centred.
         let fills = |app: &crate::DesignApp| {
             let st = app.session.active().unwrap();
-            let b = oracle_guide_tools::layout::CanvasLayout::new(&st.doc, false).slots[spread(app)].bounds;
+            let b = oracle_layout_tools::layout::CanvasLayout::new(&st.doc, false).slots[spread(app)].bounds;
             let (v, r) = (*app.view().unwrap(), app.canvas_rect.unwrap());
             let (w, h) = (b.width() * v.zoom, b.height() * v.zoom);
             let x0 = (b.x0 - v.origin.x) * v.zoom;
@@ -4420,7 +4505,7 @@ mod tests {
     fn tool_shortcuts_work_after_drawing_on_the_canvas() {
         // Clicking the canvas gives it keyboard focus; single-key tool shortcuts must still switch
         // tools without pressing Esc first (#1).
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp, events: Vec<egui::Event>| {
@@ -4470,7 +4555,7 @@ mod tests {
     #[test]
     fn escape_and_shift_w_leave_presentation_for_the_previous_mode() {
         // Presentation hides every control, so the keyboard must get out of it (#493).
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         app.session.execute("frame.create", &json!({"rect": [36, 36, 300, 200], "content": "graphic"})).unwrap();
         let ctx = egui::Context::default();
@@ -4525,7 +4610,7 @@ mod tests {
     fn cmd_plus_zooms_the_canvas_not_the_window() {
         // A German keyboard has its own + key, so Cmd+= arrives as Plus; it must zoom the canvas like
         // Cmd+- does, not hand the key to egui's whole-window zoom.
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp, events: Vec<egui::Event>| {
@@ -4593,7 +4678,7 @@ mod tests {
 
     #[test]
     fn the_quick_apply_shortcut_opens_it_without_running_an_entry() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp, events: Vec<egui::Event>| {
@@ -4632,7 +4717,7 @@ mod tests {
 
     #[test]
     fn quick_apply_rows_are_left_aligned() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         app.ui.palette = Some(String::new());
         let ctx = egui::Context::default();
@@ -4667,7 +4752,7 @@ mod tests {
     fn copy_and_paste_keys_work_for_objects_without_a_native_menu() {
         // Without a native menu the paste key arrives only as a paste event, which needs text on
         // the system clipboard (#164, #185).
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp, events: Vec<egui::Event>| {
@@ -4708,9 +4793,9 @@ mod tests {
         frame(&mut app, vec![egui::Event::Paste(copied.clone())]);
         // Shift pastes without formatting.
         frame(&mut app, vec![egui::Event::ModifiersChanged(egui::Modifiers::SHIFT), egui::Event::Paste(copied)]);
-        let text = app.session.active().unwrap().doc.story(oracle_guide_doc::StoryId(story)).unwrap().text.clone();
+        let text = app.session.active().unwrap().doc.story(oracle_layout_doc::StoryId(story)).unwrap().text.clone();
         assert!(text.starts_with("Hello") && !text.contains('\u{FFFC}'), "{text:?}");
-        assert!(text.contains(oracle_guide_doc::OBJECT_MARK), "{text:?}");
+        assert!(text.contains(oracle_layout_doc::OBJECT_MARK), "{text:?}");
     }
 
     #[test]
@@ -4724,7 +4809,7 @@ mod tests {
             Some(d.doc.story(it.text_frame()?.story)?.text.clone())
         };
         let ctx = egui::Context::default();
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         native_frame(&mut app, &ctx, vec![], None);
         native_frame(&mut app, &ctx, vec![], None);
@@ -4751,7 +4836,7 @@ mod tests {
         let clip = std::rc::Rc::new(std::cell::RefCell::new(Some("Menu text".to_string())));
         let read = clip.clone();
         let services = crate::Services { clipboard_text: Some(Box::new(move || read.borrow().clone())), ..Default::default() };
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), services);
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), services);
         app.native_menu = true;
         app.session.execute("file.new", &json!({})).unwrap();
         native_frame(&mut app, &ctx, vec![], None);
@@ -4776,7 +4861,7 @@ mod tests {
 
     #[test]
     fn sample_scripts_run() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         for (name, text) in app.ui.scripts.clone() {
             let r = app.session.execute("script.run", &json!({"text": text}));
@@ -4786,7 +4871,7 @@ mod tests {
 
     #[test]
     fn new_window_shows_a_second_view() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         let ctx = egui::Context::default();
         let frame = |app: &mut crate::DesignApp| {
@@ -4815,7 +4900,7 @@ mod tests {
 
     #[test]
     fn panels_float_and_dock() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let r = run_ui(&mut app, "window.floatPanel", &json!({"panel": "swatches", "x": 50, "y": 60})).unwrap().unwrap();
         assert_eq!(r["floating"], json!(["swatches"]));
         assert_eq!(app.ui.floating[0].1, [50.0, 60.0]);
@@ -4852,7 +4937,7 @@ mod tests {
     /// A document with two frames, nothing selected, and Quick Apply's search field focused
     /// holding `text`.
     fn app_with_focused_field(ctx: &egui::Context, text: &str) -> crate::DesignApp {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         app.session.execute("frame.create", &json!({"rect": [36, 36, 200, 200]})).unwrap();
         app.session.execute("frame.create", &json!({"rect": [236, 36, 400, 200]})).unwrap();
@@ -4909,7 +4994,7 @@ mod tests {
     #[test]
     fn native_copy_and_paste_use_the_system_clipboard_for_canvas_text() {
         let ctx = egui::Context::default();
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.session.execute("file.new", &json!({})).unwrap();
         app.session.execute("frame.create", &json!({"rect": [36, 36, 200, 200], "content": "text", "text": "hello"})).unwrap();
         let story = *app.session.active().unwrap().doc.stories.keys().next().unwrap();
@@ -4977,7 +5062,7 @@ mod tests {
 
     #[test]
     fn command_search_matches_labels_in_the_interface_language() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.ui.language = "de".into();
         let items = command_search(&app, "gruppieren");
         let group = items.iter().find(|i| i.id == "object.group").unwrap();
@@ -4990,7 +5075,7 @@ mod tests {
 
     #[test]
     fn quick_apply_lists_styles_then_commands() {
-        let mut s = oracle_guide_engine::Session::new();
+        let mut s = oracle_layout_engine::Session::new();
         s.execute("file.new", &json!({})).unwrap();
         s.execute("style.paragraph.create", &json!({"name": "Body Copy"})).unwrap();
         let items = quick_apply_items(&s, "body", false);
@@ -5003,7 +5088,7 @@ mod tests {
 
     #[test]
     fn distribute_rows_menu_dispatches_an_undoable_edit() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         let frame = app.run("frame.create", json!({"rect": [72, 72, 500, 700], "content": "text", "text": ""})).unwrap();
         app.run("text.select", json!({"story": frame["story"], "anchor": 0, "focus": 0})).unwrap();
@@ -5029,7 +5114,7 @@ mod tests {
         assert!(all.len() > 80, "{}", all.len());
         assert!(all.iter().any(|(label, id, _)| label == "Distribute Rows Evenly" && id == "table.distributeRows"));
         for (label, id, params) in &all {
-            assert!(ui_label(id).is_some() || oracle_guide_engine::find_command(id).is_some(), "menu entry {label}: unknown command {id}");
+            assert!(ui_label(id).is_some() || oracle_layout_engine::find_command(id).is_some(), "menu entry {label}: unknown command {id}");
             assert!(!label.is_empty() && label != id, "menu entry {id} has no label");
             if let Some(o) = params.as_object() {
                 assert!(!o.is_empty(), "{id}: empty fixed params");
@@ -5058,7 +5143,7 @@ mod tests {
                 walk(&items, &mut all);
             }
             for (label, id, _) in &all {
-                assert!(ui_label(id).is_some() || oracle_guide_engine::find_command(id).is_some(), "context entry {label}: unknown command {id}");
+                assert!(ui_label(id).is_some() || oracle_layout_engine::find_command(id).is_some(), "context entry {label}: unknown command {id}");
             }
         }
     }
@@ -5112,7 +5197,7 @@ mod tests {
         for gone in ["Align Left", "Bold", "Increase Point Size", "Paragraph Rules…"] {
             assert!(!labels.iter().any(|l| l == gone), "{gone}");
         }
-        let app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let all = effective_shortcuts(&app);
         for (id, sc) in [
             ("type.alignLeft", "Cmd+Shift+L"),
@@ -5137,7 +5222,7 @@ mod tests {
 
     #[test]
     fn type_panel_items_open_their_panels_and_the_marker_shortcut_inserts_a_page_number() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         activate(&mut app, "app.characterPanel", &Value::Null);
         assert_eq!(app.ui.open_panel.as_deref(), Some("character"));
@@ -5149,12 +5234,12 @@ mod tests {
         app.run("text.select", json!({"story": story, "anchor": 5, "focus": 5})).unwrap();
         activate(&mut app, "app.insertCurrentPageNumber", &Value::Null);
         let d = &app.session.doc().unwrap().doc;
-        assert_eq!(d.story(oracle_guide_doc::StoryId(story.as_u64().unwrap())).unwrap().text, "Page \u{e000}");
+        assert_eq!(d.story(oracle_layout_doc::StoryId(story.as_u64().unwrap())).unwrap().text, "Page \u{e000}");
     }
 
     #[test]
     fn custom_workspaces_save_apply_and_delete() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.ui.dock_tab = "swatches".into();
         app.ui.control_bar = true;
         run_ui(&mut app, "window.newWorkspace", &json!({"name": "Mine"})).unwrap().unwrap();
@@ -5174,7 +5259,7 @@ mod tests {
     /// Menu Customization, both on by default.
     #[test]
     fn new_workspace_captures_panel_locations_and_menu_customization() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         // The dialog offers both, checked.
         run_ui(&mut app, "window.newWorkspace", &json!({})).unwrap().unwrap();
         let d = app.ui.dialog.take().unwrap();
@@ -5207,7 +5292,7 @@ mod tests {
 
     #[test]
     fn essentials_classic_is_the_control_panel_and_iconic_groups() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         run_ui(&mut app, "window.workspace", &json!({"name": "Essentials Classic"})).unwrap().unwrap();
         assert!(app.ui.control_bar && !app.ui.dock_expanded);
         let groups = app.ui.icon_groups.clone().unwrap();
@@ -5228,7 +5313,7 @@ mod tests {
 
     #[test]
     fn typography_workspace_opens_its_panels_from_named_icon_groups_and_resets() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         run_ui(&mut app, "window.workspace", &json!({"name":"Typography"})).unwrap().unwrap();
         assert!(app.ui.control_bar);
         assert!(!app.ui.dock_expanded);
@@ -5300,7 +5385,7 @@ mod tests {
 
     #[test]
     fn interactive_workspaces_show_their_panels() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.ui.dock_expanded = false;
         run_ui(&mut app, "window.workspace", &json!({"name": "Interactive for PDF"})).unwrap().unwrap();
         assert_eq!((app.ui.dock_tab.as_str(), app.ui.dock_expanded, app.ui.open_panel.as_deref()), ("pages", true, Some("buttons")));
@@ -5312,7 +5397,7 @@ mod tests {
 
     #[test]
     fn hide_and_show_menu_items() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let items = all_menu_items();
         let (menu, label) = items.iter().find(|(m, _)| m == "Edit").cloned().expect("Edit items");
         let key = menu_key(&menu, &label);
@@ -5349,7 +5434,7 @@ mod tests {
     /// the user sets it. Hidden, they still run.
     #[test]
     fn cjk_menu_items_follow_show_cjk_features() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         let ty = menu_tree().into_iter().find(|(m, _)| *m == "Type").unwrap().1;
         let cjk: Vec<String> = ty
@@ -5389,7 +5474,7 @@ mod tests {
     /// language; changed, it is kept in prefs.json.
     #[test]
     fn show_cjk_features_is_a_persisted_preference() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.ui.language = "ja".into();
         run_ui(&mut app, "app.preferences", &json!({})).unwrap().unwrap();
         assert_eq!(app.ui.dialog.as_ref().unwrap().fields["cjkFeatures"], true);
@@ -5402,8 +5487,8 @@ mod tests {
         assert!(!crate::cjk_features(&app));
         // prefs.json round trip; a file from before the setting follows the language.
         let saved = serde_json::to_vec(&app.session.prefs).unwrap();
-        assert_eq!(serde_json::from_slice::<oracle_guide_engine::Prefs>(&saved).unwrap().cjk_features, Some(false));
-        assert_eq!(serde_json::from_str::<oracle_guide_engine::Prefs>(r#"{"scaleStrokes": false}"#).unwrap().cjk_features, None);
+        assert_eq!(serde_json::from_slice::<oracle_layout_engine::Prefs>(&saved).unwrap().cjk_features, Some(false));
+        assert_eq!(serde_json::from_str::<oracle_layout_engine::Prefs>(r#"{"scaleStrokes": false}"#).unwrap().cjk_features, None);
         assert_eq!(app.run("prefs.set", json!({"cjkFeatures": null})).unwrap()["cjkFeatures"], Value::Null);
         assert!(crate::cjk_features(&app), "follows the Japanese interface again");
     }
@@ -5546,7 +5631,7 @@ mod tests {
 
     #[test]
     fn clipped_submenu_does_not_open_when_hovering_outside_menu() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         let ctx = egui::Context::default();
         let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1000.0, 900.0));
         let entries = vec![Item::Sub("Hidden submenu".into(), vec![cmd_item("app.preferences", Value::Null)])];
@@ -5621,7 +5706,7 @@ mod tests {
         let window = native_menu_tree().into_iter().find(|(t, _)| *t == "Window").map(|(_, e)| e).unwrap_or_default();
         assert!(matches!(window.first(), Some(Item::Cmd { id, shortcut: Some("Cmd+M"), .. }) if id == "window.minimize"), "{:?}", window.first());
         assert!(matches!(window.get(1), Some(Item::Sep)));
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         assert!(run_ui(&mut app, "window.minimize", &Value::Null).is_some_and(|r| r.is_err()), "no host window controls");
         app.native_menu = true;
         assert!(menu_enabled(&app, "window.minimize") && !menu_enabled(&app, "window.maximize"));
@@ -5684,7 +5769,7 @@ mod tests {
             download: Some(Box::new(move |_: &str, _: &[u8]| if f.get() { Err("blocked".into()) } else { Ok(()) })),
             ..Default::default()
         };
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), services);
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), services);
         app.run("file.new", json!({"title": title})).unwrap();
         app.run("frame.create", json!({"rect": [36, 36, 300, 200]})).unwrap();
         assert!(app.session.active().unwrap().is_dirty());
@@ -5729,10 +5814,10 @@ mod tests {
         let Some(Item::Sub(name, children)) = file.get(2) else { panic!("Open Recent after Open…: {:?}", file.get(2)) };
         assert_eq!(format!("File/{name}"), OPEN_RECENT);
         assert!(matches!(children.as_slice(), [Item::Cmd { id, .. }] if id == "file.clearRecent"));
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         assert!(recent_items(&app).is_empty());
         assert!(!menu_enabled(&app, "file.clearRecent"));
-        app.session.prefs.note_recent_file("/work/a.oracle-guide");
+        app.session.prefs.note_recent_file("/work/a.oracle-layout");
         app.session.prefs.note_recent_file("/work/b.idml");
         let items = recent_items(&app);
         let labels: Vec<_> = items
@@ -5743,7 +5828,7 @@ mod tests {
                 Item::Sub(..) => "sub".into(),
             })
             .collect();
-        assert_eq!(labels, ["b.idml app.openRecent {\"index\":0}", "a.oracle-guide app.openRecent {\"index\":1}", "-"]);
+        assert_eq!(labels, ["b.idml app.openRecent {\"index\":0}", "a.oracle-layout app.openRecent {\"index\":1}", "-"]);
         assert!(menu_enabled(&app, "file.clearRecent"));
         assert!(menu_enabled(&app, "app.openRecent"));
     }
@@ -5751,18 +5836,18 @@ mod tests {
     /// A recent file that is gone says so in an alert (and the start screen still lists it).
     #[test]
     fn open_recent_of_a_missing_file_alerts_and_the_start_screen_lists_recent_files() {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         assert!(!start_screen_texts(&mut app).iter().any(|t| t == "Recent files"), "no section without recent files");
-        app.session.prefs.note_recent_file("/nonexistent/dc-recent/gone.oracle-guide");
+        app.session.prefs.note_recent_file("/nonexistent/dc-recent/gone.oracle-layout");
         assert!(app.run("app.openRecent", json!({"index": 0})).is_err());
         let d = app.ui.dialog.take().expect("an alert");
         assert_eq!(d.fields["title"], "Can't Open the File");
-        assert_eq!(d.fields["file"], "gone.oracle-guide");
+        assert_eq!(d.fields["file"], "gone.oracle-layout");
         assert!(d.fields["message"].as_str().unwrap().contains("can't be found"));
         assert!(app.run("app.openRecent", json!({"index": 9})).is_err(), "out of range: an error, not a panic");
         app.ui.dialog = None;
         let texts = start_screen_texts(&mut app);
         assert!(texts.iter().any(|t| t == "Recent files"), "{texts:?}");
-        assert!(texts.iter().any(|t| t == "gone"), "the card names it without `.oracle-guide`: {texts:?}");
+        assert!(texts.iter().any(|t| t == "gone"), "the card names it without `.oracle-layout`: {texts:?}");
     }
 }

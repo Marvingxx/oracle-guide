@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use oracle_guide_doc::{Document, Story, StoryId, XREF_MARK, xref};
+use oracle_layout_doc::{Document, Story, StoryId, XREF_MARK, xref};
 
 use crate::ComposedStory;
 

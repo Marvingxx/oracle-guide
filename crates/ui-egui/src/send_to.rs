@@ -1,4 +1,4 @@
-//! Send to: the Brand Guide hands its document to Oracle Edit (File › Send to Oracle Edit), and
+//! Send to: Oracle Layout hands its document to Oracle Edit, Vector or Motion (File › Send to), and
 //! takes what the other Oracle apps send it: an Oracle Vector logo placed, linked, in the open guide,
 //! following its saves (link_follow). The exchange goes through `oracle_suite_link::inbox`: a small
 //! request file the receiving app takes about every second, starting it when it isn't running.
@@ -14,11 +14,11 @@ use crate::DesignApp;
 /// How often the inbox is looked at, in seconds.
 const EVERY: f64 = 1.0;
 
-/// The file that stands for the active document: itself when saved as a Brand Guide document and
+/// The file that stands for the active document: itself when saved as an Oracle Layout document and
 /// unchanged since, else a copy stored in the library ("Mes créations").
 fn document_file(app: &mut DesignApp) -> Result<PathBuf, String> {
     let st = app.session.active().ok_or("no document is open")?;
-    if let Some(path) = st.path.as_deref().filter(|p| p.to_ascii_lowercase().ends_with(".oracle-guide") && !st.is_dirty()) {
+    if let Some(path) = st.path.as_deref().filter(|p| p.to_ascii_lowercase().ends_with(".oracle-layout") && !st.is_dirty()) {
         return Ok(PathBuf::from(path));
     }
     crate::library_send::store_active(app)
@@ -41,13 +41,13 @@ pub fn poll(app: &mut DesignApp, ctx: &egui::Context, now: f64) {
     if !ctx.data(|d| d.get_temp::<bool>(watching).unwrap_or(false)) {
         ctx.data_mut(|d| d.insert_temp(watching, true));
         let waker = ctx.clone();
-        inbox::watch(App::Guide, move || waker.request_repaint());
+        inbox::watch(App::Layout, move || waker.request_repaint());
     }
     if now - app.inbox_last < EVERY {
         return;
     }
     app.inbox_last = now;
-    let requests = inbox::take(App::Guide);
+    let requests = inbox::take(App::Layout);
     if requests.is_empty() {
         return;
     }

@@ -1,24 +1,25 @@
 [package]
-name = "oracle-guide-ui-egui"
+name = "oracle-layout-ui-egui"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide egui frontend (InDesign-style UI); swappable — nothing below depends on it"
+description = "Oracle Layout egui frontend (InDesign-style UI); swappable — nothing below depends on it"
 
 [lints]
 workspace = true
 
 [dependencies]
+oracle-style = { path = "../../../oracle-library/style" }
 craft-ui = { workspace = true }
-oracle-guide-geom = { workspace = true }
-oracle-guide-color = { workspace = true }
-oracle-guide-doc = { workspace = true }
-oracle-guide-fonts = { workspace = true }
-oracle-guide-compose = { workspace = true }
-oracle-guide-render = { workspace = true }
-oracle-guide-tools = { workspace = true }
-oracle-guide-engine = { workspace = true }
+oracle-layout-geom = { workspace = true }
+oracle-layout-color = { workspace = true }
+oracle-layout-doc = { workspace = true }
+oracle-layout-fonts = { workspace = true }
+oracle-layout-compose = { workspace = true }
+oracle-layout-render = { workspace = true }
+oracle-layout-tools = { workspace = true }
+oracle-layout-engine = { workspace = true }
 unicode-bidi = { workspace = true }
 unicode-bidi-mirroring = { workspace = true }
 unicode-segmentation = { workspace = true }
@@ -26,7 +27,7 @@ egui = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 log = { workspace = true }
-oracle-guide-format = { workspace = true }
+oracle-layout-format = { workspace = true }
 
 # The Oracle Library window (Window › Oracle Library), shared by the Oracle apps.
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -36,11 +37,11 @@ oracle-suite-link = { path = "../../../oracle-library/link" }
 
 [dev-dependencies]
 tempfile = { workspace = true }
-oracle-guide-idml = { workspace = true }
+oracle-layout-idml = { workspace = true }
 zip = { workspace = true }
 # Headless (offscreen wgpu) rendering of the whole window for UI screenshots: `examples/ui_shot.rs`.
 egui_kittest = { workspace = true, features = ["wgpu", "snapshot"] }
-oracle-guide-fonts = { workspace = true, features = ["testing"] }
+oracle-layout-fonts = { workspace = true, features = ["testing"] }
 
 [build-dependencies]
 serde_json = { workspace = true }

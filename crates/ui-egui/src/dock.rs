@@ -36,6 +36,7 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("conditions", "Conditional Text", "panel-conditions"),
     ("notes", "Notes", "panel-notes"),
     ("library", "Library", "panel-library"),
+    ("oracleLibrary", "Oracle Library", "panel-library"),
     ("hyperlinks", "Hyperlinks", "panel-hyperlinks"),
     ("bookmarks", "Bookmarks", "panel-bookmarks"),
     ("articles", "Articles", "panel-articles"),
@@ -275,6 +276,8 @@ pub fn scrolls_itself(id: &str) -> bool {
 /// The contents of an icon-column panel.
 pub fn panel_body(app: &mut DesignApp, ui: &mut egui::Ui, id: &str) {
     match id {
+        #[cfg(not(target_arch = "wasm32"))]
+        "oracleLibrary" => app.oracle_library.panel_ui(ui, app.ui.language.starts_with("fr")),
         "properties" => panels::properties::show(app, ui),
         "pages" => panels::pages::show(app, ui),
         "layers" => panels::layers::show(app, ui),
@@ -451,7 +454,7 @@ mod visual_regressions {
         for brightness in crate::theme::Brightness::ALL {
             for width in [800.0, 1280.0] {
                 for scale in [1.0, 1.5, 2.0] {
-                    let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Default::default());
+                    let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Default::default());
                     app.ui.dock_expanded = true;
                     app.ui.dock_tab = "properties".into();
                     let mut ready = false;
@@ -470,7 +473,7 @@ mod visual_regressions {
                         );
                     harness.input_mut().max_texture_side = Some(8192);
                     harness.run_steps(4);
-                    let stem = format!("oracle-guide-dock-{}-{width}-{scale}x", brightness.id());
+                    let stem = format!("oracle-layout-dock-{}-{width}-{scale}x", brightness.id());
                     harness.render().unwrap().save(directory.join(format!("{stem}.png"))).unwrap();
                     let panel = egui::containers::panel::PanelState::load(&harness.ctx, egui::Id::new("dock")).unwrap().outer_rect;
                     let region = serde_json::json!({
@@ -500,7 +503,7 @@ mod visual_regressions {
                     crate::theme::install_fonts(&ctx, "en");
                     let tokens = Tokens::for_brightness(brightness);
                     crate::theme::apply(&ctx, &tokens);
-                    let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Default::default());
+                    let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Default::default());
                     app.ui.dock_expanded = true;
                     app.ui.dock_tab = "properties".into();
                     let mut output = ctx.run_ui(scaled_input(vec2(width, 640.0), scale), |ui| show(&mut app, ui));
@@ -549,7 +552,7 @@ mod chevron_tests {
     /// Issue #1203: the header chevrons were painted text; clicking them did nothing.
     #[test]
     fn the_dock_chevron_collapses_and_expands_the_dock() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Default::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Default::default());
         app.ui.dock_expanded = true;
         let mut ready = false;
         let mut harness = Harness::builder().with_size(vec2(1280.0, 640.0)).build_ui_state(

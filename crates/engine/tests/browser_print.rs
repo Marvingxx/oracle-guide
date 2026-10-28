@@ -1,7 +1,7 @@
 //! Browser Print must reject native spooler operations without trapping the editor.
 #![cfg(target_arch = "wasm32")]
 
-use oracle_guide_engine::Session;
+use oracle_layout_engine::Session;
 use serde_json::json;
 use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
 

@@ -1,9 +1,9 @@
 [package]
-name = "oracle-guide-engine"
+name = "oracle-layout-engine"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide engine: session, documents, history, selection, command registry, tool hosting"
+description = "Oracle Layout engine: session, documents, history, selection, command registry, tool hosting"
 
 [lints]
 workspace = true
@@ -11,20 +11,20 @@ workspace = true
 [dependencies]
 craft-print = { workspace = true }
 craft-docpath = { workspace = true }
-oracle-guide-images = { workspace = true }
-oracle-guide-geom = { workspace = true }
-oracle-guide-color = { workspace = true }
-oracle-guide-doc = { workspace = true }
-oracle-guide-fonts = { workspace = true }
-oracle-guide-compose = { workspace = true }
-oracle-guide-render = { workspace = true }
-oracle-guide-format = { workspace = true }
-oracle-guide-epub = { workspace = true }
-oracle-guide-pptx = { workspace = true }
-oracle-guide-textimport = { workspace = true }
-oracle-guide-pdf = { workspace = true }
-oracle-guide-tools = { workspace = true }
-oracle-guide-idml = { workspace = true }
+oracle-layout-images = { workspace = true }
+oracle-layout-geom = { workspace = true }
+oracle-layout-color = { workspace = true }
+oracle-layout-doc = { workspace = true }
+oracle-layout-fonts = { workspace = true }
+oracle-layout-compose = { workspace = true }
+oracle-layout-render = { workspace = true }
+oracle-layout-format = { workspace = true }
+oracle-layout-epub = { workspace = true }
+oracle-layout-pptx = { workspace = true }
+oracle-layout-textimport = { workspace = true }
+oracle-layout-pdf = { workspace = true }
+oracle-layout-tools = { workspace = true }
+oracle-layout-idml = { workspace = true }
 indd = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -38,13 +38,15 @@ unicode-segmentation = { workspace = true }
 craft-atomic = { workspace = true }
 # Documents of the other Oracle apps, drawn by them (io::read_graphic).
 oracle-suite-link = { path = "../../../oracle-library/link" }
+# Logo grids and bento layouts shared by the Oracle apps (cmd/brandgen.rs).
+oracle-brandtools = { path = "../../../oracle-library/brandtools" }
 tempfile = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
 same-file = { workspace = true }
 
 [dev-dependencies]
-oracle-guide-fonts = { workspace = true, features = ["testing"] }
+oracle-layout-fonts = { workspace = true, features = ["testing"] }
 zip = { workspace = true }
 hayro-syntax = "0.7.2"
 hayro-interpret = { version = "0.7.0", default-features = false, features = ["embed-fonts"] }

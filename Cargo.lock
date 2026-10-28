@@ -2944,8 +2944,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
-name = "oracle-guide"
-version = "0.13.0"
+name = "oracle-brandtools"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "usvg 0.45.1",
+]
+
+[[package]]
+name = "oracle-layout"
+version = "0.14.0"
 dependencies = [
  "arboard",
  "eframe",
@@ -2955,8 +2964,8 @@ dependencies = [
  "muda",
  "objc2 0.6.4",
  "objc2-app-kit 0.3.2",
- "oracle-guide-engine",
- "oracle-guide-ui-egui",
+ "oracle-layout-engine",
+ "oracle-layout-ui-egui",
  "rfd",
  "serde",
  "serde_json",
@@ -2966,24 +2975,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-cli"
-version = "0.13.0"
+name = "oracle-layout-cli"
+version = "0.14.0"
 dependencies = [
- "oracle-guide-color",
- "oracle-guide-compose",
- "oracle-guide-doc",
- "oracle-guide-engine",
- "oracle-guide-format",
- "oracle-guide-geom",
- "oracle-guide-mcp",
- "oracle-guide-pdf",
- "oracle-guide-render",
+ "oracle-layout-color",
+ "oracle-layout-compose",
+ "oracle-layout-doc",
+ "oracle-layout-engine",
+ "oracle-layout-format",
+ "oracle-layout-geom",
+ "oracle-layout-mcp",
+ "oracle-layout-pdf",
+ "oracle-layout-render",
  "serde_json",
 ]
 
 [[package]]
-name = "oracle-guide-color"
-version = "0.13.0"
+name = "oracle-layout-color"
+version = "0.14.0"
 dependencies = [
  "craft-cms",
  "kurbo 0.13.1",
@@ -2994,17 +3003,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-compose"
-version = "0.13.0"
+name = "oracle-layout-compose"
+version = "0.14.0"
 dependencies = [
  "fancy-regex",
  "hypher",
  "log",
  "miniz_oxide 0.8.9",
- "oracle-guide-color",
- "oracle-guide-doc",
- "oracle-guide-fonts",
- "oracle-guide-geom",
+ "oracle-layout-color",
+ "oracle-layout-doc",
+ "oracle-layout-fonts",
+ "oracle-layout-geom",
  "proptest",
  "regex",
  "unicode-bidi",
@@ -3014,12 +3023,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-doc"
-version = "0.13.0"
+name = "oracle-layout-doc"
+version = "0.14.0"
 dependencies = [
  "chrono",
- "oracle-guide-color",
- "oracle-guide-geom",
+ "oracle-layout-color",
+ "oracle-layout-geom",
  "proptest",
  "serde",
  "serde_json",
@@ -3027,8 +3036,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-engine"
-version = "0.13.0"
+name = "oracle-layout-engine"
+version = "0.14.0"
 dependencies = [
  "caseless",
  "craft-atomic",
@@ -3040,20 +3049,21 @@ dependencies = [
  "indd",
  "kurbo 0.13.1",
  "log",
- "oracle-guide-color",
- "oracle-guide-compose",
- "oracle-guide-doc",
- "oracle-guide-epub",
- "oracle-guide-fonts",
- "oracle-guide-format",
- "oracle-guide-geom",
- "oracle-guide-idml",
- "oracle-guide-images",
- "oracle-guide-pdf",
- "oracle-guide-pptx",
- "oracle-guide-render",
- "oracle-guide-textimport",
- "oracle-guide-tools",
+ "oracle-brandtools",
+ "oracle-layout-color",
+ "oracle-layout-compose",
+ "oracle-layout-doc",
+ "oracle-layout-epub",
+ "oracle-layout-fonts",
+ "oracle-layout-format",
+ "oracle-layout-geom",
+ "oracle-layout-idml",
+ "oracle-layout-images",
+ "oracle-layout-pdf",
+ "oracle-layout-pptx",
+ "oracle-layout-render",
+ "oracle-layout-textimport",
+ "oracle-layout-tools",
  "oracle-suite-link",
  "quick-xml",
  "same-file",
@@ -3067,18 +3077,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-epub"
-version = "0.13.0"
+name = "oracle-layout-epub"
+version = "0.14.0"
 dependencies = [
  "chrono",
- "oracle-guide-color",
- "oracle-guide-doc",
+ "oracle-layout-color",
+ "oracle-layout-doc",
  "zip",
 ]
 
 [[package]]
-name = "oracle-guide-fonts"
-version = "0.13.0"
+name = "oracle-layout-fonts"
+version = "0.14.0"
 dependencies = [
  "core-text",
  "harfrust 0.13.3",
@@ -3090,11 +3100,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-format"
-version = "0.13.0"
+name = "oracle-layout-format"
+version = "0.14.0"
 dependencies = [
- "oracle-guide-doc",
- "oracle-guide-images",
+ "oracle-layout-doc",
+ "oracle-layout-images",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -3102,8 +3112,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-geom"
-version = "0.13.0"
+name = "oracle-layout-geom"
+version = "0.14.0"
 dependencies = [
  "flo_curves",
  "kurbo 0.13.1",
@@ -3115,29 +3125,29 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-idml"
-version = "0.13.0"
+name = "oracle-layout-idml"
+version = "0.14.0"
 dependencies = [
  "log",
- "oracle-guide-color",
- "oracle-guide-compose",
- "oracle-guide-doc",
- "oracle-guide-geom",
- "oracle-guide-images",
+ "oracle-layout-color",
+ "oracle-layout-compose",
+ "oracle-layout-doc",
+ "oracle-layout-geom",
+ "oracle-layout-images",
  "quick-xml",
  "thiserror 2.0.21",
  "zip",
 ]
 
 [[package]]
-name = "oracle-guide-images"
-version = "0.13.0"
+name = "oracle-layout-images"
+version = "0.14.0"
 dependencies = [
  "craft-cms",
  "image",
  "log",
- "oracle-guide-color",
- "oracle-guide-fonts",
+ "oracle-layout-color",
+ "oracle-layout-fonts",
  "resvg 0.47.0",
  "tiff",
  "zune-core 0.5.3",
@@ -3145,21 +3155,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-mcp"
-version = "0.13.0"
+name = "oracle-layout-mcp"
+version = "0.14.0"
 dependencies = [
  "image",
  "log",
- "oracle-guide-engine",
- "oracle-guide-geom",
- "oracle-guide-render",
- "oracle-guide-tools",
+ "oracle-layout-engine",
+ "oracle-layout-geom",
+ "oracle-layout-render",
+ "oracle-layout-tools",
  "serde_json",
 ]
 
 [[package]]
-name = "oracle-guide-pdf"
-version = "0.13.0"
+name = "oracle-layout-pdf"
+version = "0.14.0"
 dependencies = [
  "chrono",
  "craft-pdf",
@@ -3170,28 +3180,28 @@ dependencies = [
  "krilla-svg",
  "kurbo 0.13.1",
  "log",
- "oracle-guide-color",
- "oracle-guide-compose",
- "oracle-guide-doc",
- "oracle-guide-fonts",
- "oracle-guide-geom",
- "oracle-guide-images",
+ "oracle-layout-color",
+ "oracle-layout-compose",
+ "oracle-layout-doc",
+ "oracle-layout-fonts",
+ "oracle-layout-geom",
+ "oracle-layout-images",
  "thiserror 2.0.21",
  "tiff",
 ]
 
 [[package]]
-name = "oracle-guide-pptx"
-version = "0.13.0"
+name = "oracle-layout-pptx"
+version = "0.14.0"
 dependencies = [
  "chrono",
  "image",
- "oracle-guide-color",
- "oracle-guide-compose",
- "oracle-guide-doc",
- "oracle-guide-fonts",
- "oracle-guide-geom",
- "oracle-guide-images",
+ "oracle-layout-color",
+ "oracle-layout-compose",
+ "oracle-layout-doc",
+ "oracle-layout-fonts",
+ "oracle-layout-geom",
+ "oracle-layout-images",
  "quick-xml",
  "skrifa 0.47.0",
  "thiserror 2.0.21",
@@ -3199,18 +3209,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-render"
-version = "0.13.0"
+name = "oracle-layout-render"
+version = "0.14.0"
 dependencies = [
  "craft-pdf",
  "image",
  "log",
- "oracle-guide-color",
- "oracle-guide-compose",
- "oracle-guide-doc",
- "oracle-guide-fonts",
- "oracle-guide-geom",
- "oracle-guide-images",
+ "oracle-layout-color",
+ "oracle-layout-compose",
+ "oracle-layout-doc",
+ "oracle-layout-fonts",
+ "oracle-layout-geom",
+ "oracle-layout-images",
  "serde",
  "thiserror 2.0.21",
  "vello_common 0.2.0",
@@ -3218,45 +3228,46 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-textimport"
-version = "0.13.0"
+name = "oracle-layout-textimport"
+version = "0.14.0"
 dependencies = [
- "oracle-guide-doc",
+ "oracle-layout-doc",
  "quick-xml",
  "zip",
 ]
 
 [[package]]
-name = "oracle-guide-tools"
-version = "0.13.0"
+name = "oracle-layout-tools"
+version = "0.14.0"
 dependencies = [
- "oracle-guide-color",
- "oracle-guide-compose",
- "oracle-guide-doc",
- "oracle-guide-geom",
+ "oracle-layout-color",
+ "oracle-layout-compose",
+ "oracle-layout-doc",
+ "oracle-layout-geom",
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "oracle-guide-ui-egui"
-version = "0.13.0"
+name = "oracle-layout-ui-egui"
+version = "0.14.0"
 dependencies = [
  "craft-ui",
  "egui",
  "egui_kittest",
  "log",
- "oracle-guide-color",
- "oracle-guide-compose",
- "oracle-guide-doc",
- "oracle-guide-engine",
- "oracle-guide-fonts",
- "oracle-guide-format",
- "oracle-guide-geom",
- "oracle-guide-idml",
- "oracle-guide-render",
- "oracle-guide-tools",
+ "oracle-layout-color",
+ "oracle-layout-compose",
+ "oracle-layout-doc",
+ "oracle-layout-engine",
+ "oracle-layout-fonts",
+ "oracle-layout-format",
+ "oracle-layout-geom",
+ "oracle-layout-idml",
+ "oracle-layout-render",
+ "oracle-layout-tools",
  "oracle-library-ui",
+ "oracle-style",
  "oracle-suite-link",
  "serde",
  "serde_json",
@@ -3269,17 +3280,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "oracle-guide-web"
-version = "0.13.0"
+name = "oracle-layout-web"
+version = "0.14.0"
 dependencies = [
  "eframe",
  "egui",
  "form_urlencoded",
  "js-sys",
  "log",
- "oracle-guide-engine",
- "oracle-guide-format",
- "oracle-guide-ui-egui",
+ "oracle-layout-engine",
+ "oracle-layout-format",
+ "oracle-layout-ui-egui",
  "rfd",
  "serde_json",
  "wasm-bindgen",
@@ -3302,6 +3313,7 @@ dependencies = [
 name = "oracle-library-ui"
 version = "0.1.0"
 dependencies = [
+ "craft-ui",
  "egui",
  "image",
  "log",
@@ -3310,6 +3322,13 @@ dependencies = [
  "resvg 0.45.1",
  "rfd",
  "winsafe",
+]
+
+[[package]]
+name = "oracle-style"
+version = "0.1.0"
+dependencies = [
+ "egui",
 ]
 
 [[package]]
@@ -6009,7 +6028,7 @@ checksum = "9440ea3e5aeabb0ac63af70daf835274065238cdd0cec83418f417eae38bacee"
 
 [[package]]
 name = "xtask"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "serde_json",
 ]

@@ -2,7 +2,7 @@
 
 > **Last reviewed:** 2026-10-11 · **Last updated:** 2026-10-14 · **Change:** minor (Polish and Georgian interfaces; catalog counts remain the 2026-10-10 measurement) · **Target:** Adobe InDesign 2026 (21.6)
 
-Per-language status of the Oracle Brand Guide interface and of document typesetting in each script.
+Per-language status of the Oracle Layout interface and of document typesetting in each script.
 Script-specific typesetting detail: [cjk.md](cjk.md), [cjk-typography.md](cjk-typography.md),
 [arabic-typography.md](arabic-typography.md). Overall numbers: [target-app-parity.md](target-app-parity.md).
 
@@ -16,7 +16,7 @@ Untranslated strings fall back to English. A script (2026-10-10) built the set o
 interface strings as the union of every catalog's keys, every engine command label and every
 literal passed to `tr`/`t` in the UI crate: **1,724 strings**. A further ~145 capitalized literals
 in the UI crate appear in no catalog (some are test data or proper names), so the true total is
-somewhat higher and every percentage below is a slight overestimate. Help: Oracle Brand Guide has no
+somewhat higher and every percentage below is a slight overestimate. Help: Oracle Layout has no
 help content in any language (Help ▸ opens the project's pages).
 
 InDesign 2026 ships 25 interface localizations (`.lproj` folders: cs, da, de, el, en, en_GB, es,
@@ -58,13 +58,13 @@ craft-fonts. The language totals above retain their dated measurement; this is a
 | Polish | pl | 1,717 (99%), count captions category-first; AI-drafted, awaiting native review | partial |
 | Georgian | ka | 1,724 (~100%: every catalog key plus the command labels the others lack), count captions as `noun: n` | partial (reviewed by a native speaker) |
 
-Oracle Brand Guide ships **5** interface languages beyond the twelve; InDesign ships 17 beyond its
+Oracle Layout ships **5** interface languages beyond the twelve; InDesign ships 17 beyond its
 eight of the twelve (cs, da, el, en_GB, fi, hu, it, nb, nl, pl, ro, ru, sq, sv, tr, uk, zh_TW).
 
 ## Document languages
 
 InDesign 2026 hyphenates and spell-checks ~40 languages (Hunspell and Duden dictionaries).
-Oracle Brand Guide hyphenates **English, Spanish, Portuguese and Norwegian** and spell-checks **English** only. Text language
+Oracle Layout hyphenates **English, Spanish, Portuguese and Norwegian** and spell-checks **English** only. Text language
 can be set per paragraph and character (Properties, Character panel) and drives quotes and
 locale shaping. See [typography-parity.md](typography-parity.md).
 

@@ -1,16 +1,16 @@
 [package]
-name = "oracle-guide-format"
+name = "oracle-layout-format"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide native file format: zip with document.json and embedded assets; versioned"
+description = "Oracle Layout native file format: zip with document.json and embedded assets; versioned"
 
 [lints]
 workspace = true
 
 [dependencies]
-oracle-guide-doc = { workspace = true }
-oracle-guide-images = { workspace = true }
+oracle-layout-doc = { workspace = true }
+oracle-layout-images = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 zip = { workspace = true }

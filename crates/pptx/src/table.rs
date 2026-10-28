@@ -3,9 +3,9 @@
 
 use std::fmt::Write as _;
 
-use oracle_guide_compose::{FrameText, PlacedCell, StrokeSeg, TableFrag};
-use oracle_guide_doc::StrokeType;
-use oracle_guide_geom::{Affine, Rect};
+use oracle_layout_compose::{FrameText, PlacedCell, StrokeSeg, TableFrag};
+use oracle_layout_doc::StrokeType;
+use oracle_layout_geom::{Affine, Rect};
 
 use crate::slide::{Exporter, box_of};
 use crate::text::{paragraphs, seg_rect, segments};

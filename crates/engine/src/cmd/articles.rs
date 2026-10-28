@@ -1,6 +1,6 @@
 //! Window › Articles: named reading-order lists of objects (EPUB / HTML export order).
 
-use oracle_guide_doc::{Article, ItemId};
+use oracle_layout_doc::{Article, ItemId};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, bad, cmd, has_doc, ids_param, ok, str_param};

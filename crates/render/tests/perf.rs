@@ -1,14 +1,14 @@
 //! Renderer caching/culling behaviour, and a render-time regression test (`#[ignore]`: wall-clock
 //! timings are only meaningful on an idle machine — run with
-//! `cargo test --release -p oracle-guide-render --test perf -- --ignored`).
+//! `cargo test --release -p oracle-layout-render --test perf -- --ignored`).
 
 use std::time::Instant;
 
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::build::NewDocument;
-use oracle_guide_doc::{Document, ParaFormat, SpreadRef};
-use oracle_guide_geom::{Affine, Rect, Vec2};
-use oracle_guide_render::{Placed, RenderOptions, Renderer};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::build::NewDocument;
+use oracle_layout_doc::{Document, ParaFormat, SpreadRef};
+use oracle_layout_geom::{Affine, Rect, Vec2};
+use oracle_layout_render::{Placed, RenderOptions, Renderer};
 
 const WORDS: &[&str] = &["grid", "margin", "column", "rhythm", "baseline", "reader", "story", "frame", "quiet", "layout", "type", "texture"];
 

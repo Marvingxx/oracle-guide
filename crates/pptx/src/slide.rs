@@ -3,12 +3,12 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
-use oracle_guide_color::swatch::resolve_gradient;
-use oracle_guide_color::{BlendMode, GradientKind};
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::{Arrowhead, AssetId, Cap, Content, Document, Graphic, Item, Join, Shape, Stroke, StrokeAlign, StrokeType};
-use oracle_guide_geom::kurbo::{PathEl, Shape as _};
-use oracle_guide_geom::{Affine, BezPath, Point, Rect, Vec2, corners};
+use oracle_layout_color::swatch::resolve_gradient;
+use oracle_layout_color::{BlendMode, GradientKind};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::{Arrowhead, AssetId, Cap, Content, Document, Graphic, Item, Join, Shape, Stroke, StrokeAlign, StrokeType};
+use oracle_layout_geom::kurbo::{PathEl, Shape as _};
+use oracle_layout_geom::{Affine, BezPath, Point, Rect, Vec2, corners};
 
 use crate::fonts::Fonts;
 use crate::package::{Media, REL_IMAGE, Rel, Slide};
@@ -411,7 +411,7 @@ impl<'a> Exporter<'a> {
         Some(srgb(c.to_rgb(), alpha))
     }
 
-    pub fn fill(&mut self, f: &oracle_guide_doc::Fill, closed: bool, opacity: f32) -> String {
+    pub fn fill(&mut self, f: &oracle_layout_doc::Fill, closed: bool, opacity: f32) -> String {
         if f.is_none() || !closed {
             return "<a:noFill/>".into();
         }
@@ -511,7 +511,7 @@ impl<'a> Exporter<'a> {
                     return String::new();
                 }
             };
-            // PowerPoint's large heads come closest to Oracle Brand Guide's at the same weight.
+            // PowerPoint's large heads come closest to Oracle Layout's at the same weight.
             format!("<a:{tag} type=\"{kind}\" w=\"lg\" len=\"lg\"/>")
         };
         let head = ends("headEnd", s.start, self);
@@ -579,7 +579,7 @@ impl<'a> Exporter<'a> {
             return None;
         }
         let n = self.media.len() + 1;
-        let mime = oracle_guide_images::mime(data);
+        let mime = oracle_layout_images::mime(data);
         let ext = match mime {
             "image/png" => Some("png"),
             "image/jpeg" => Some("jpeg"),
@@ -592,7 +592,7 @@ impl<'a> Exporter<'a> {
             return Some((name, None));
         }
         if mime == "image/svg+xml" {
-            let png = oracle_guide_images::render_svg(data, 2048).and_then(|(px, w, h)| encode_png(unpremultiply(px), w, h));
+            let png = oracle_layout_images::render_svg(data, 2048).and_then(|(px, w, h)| encode_png(unpremultiply(px), w, h));
             let Some(png) = png else {
                 self.warn(format!("`{}` could not be read; left out", a.name));
                 return None;
@@ -610,7 +610,7 @@ impl<'a> Exporter<'a> {
             ));
             return None;
         }
-        let Some(img) = oracle_guide_images::decode_rgba(data) else {
+        let Some(img) = oracle_layout_images::decode_rgba(data) else {
             self.warn(format!("`{}` could not be read; left out", a.name));
             return None;
         };

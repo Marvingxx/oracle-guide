@@ -7,7 +7,7 @@
 //! ([`crate::io::document_path`]). Only regular files that hold an image or a graphic format are
 //! read, and only up to [`MAX_LINKED_FILE_BYTES`].
 
-use oracle_guide_doc::Document;
+use oracle_layout_doc::Document;
 use serde_json::{Value, json};
 
 use super::file::{base64_decode, base64_encode};
@@ -27,8 +27,8 @@ pub fn specs() -> Vec<CommandSpec> {
 
 fn export_idml(s: &mut Session, p: &Value) -> Result<Value> {
     let st = s.doc()?;
-    let opts = oracle_guide_idml::ExportOptions { embed_images: p.get("embedImages").and_then(Value::as_bool).unwrap_or(true) };
-    let bytes = oracle_guide_idml::export_idml_with(&st.doc, &opts);
+    let opts = oracle_layout_idml::ExportOptions { embed_images: p.get("embedImages").and_then(Value::as_bool).unwrap_or(true) };
+    let bytes = oracle_layout_idml::export_idml_with(&st.doc, &opts);
     match str_param(p, "path") {
         Some(path) => {
             #[cfg(not(target_arch = "wasm32"))]
@@ -39,10 +39,10 @@ fn export_idml(s: &mut Session, p: &Value) -> Result<Value> {
     }
 }
 
-/// [`oracle_guide_idml::import_idml`] with the linked images read through [`crate::io`] from
+/// [`oracle_layout_idml::import_idml`] with the linked images read through [`crate::io`] from
 /// beside `package` (the package's file, if it has one), so the automation read root applies to
 /// the paths the package names, and its PDF crops resolved.
-pub(crate) fn import_idml_confined(bytes: &[u8], package: Option<&std::path::Path>) -> oracle_guide_idml::Result<Document> {
+pub(crate) fn import_idml_confined(bytes: &[u8], package: Option<&std::path::Path>) -> oracle_layout_idml::Result<Document> {
     let read = |link: &str| -> Option<Vec<u8>> {
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -54,7 +54,7 @@ pub(crate) fn import_idml_confined(bytes: &[u8], package: Option<&std::path::Pat
             None
         }
     };
-    let mut d = oracle_guide_idml::import_idml_with(bytes, &read)?;
+    let mut d = oracle_layout_idml::import_idml_with(bytes, &read)?;
     resolve_pdf_crops(&mut d);
     Ok(d)
 }
@@ -90,8 +90,8 @@ fn import_report_with_previews(
             None
         }
     };
-    let oracle_guide_idml::Imported { mut document, warnings } =
-        oracle_guide_idml::import_idml_report_with_previews(bytes, &read, previews).map_err(|e| EngineError::Other(e.to_string()))?;
+    let oracle_layout_idml::Imported { mut document, warnings } =
+        oracle_layout_idml::import_idml_report_with_previews(bytes, &read, previews).map_err(|e| EngineError::Other(e.to_string()))?;
     resolve_pdf_crops(&mut document);
     #[cfg(not(target_arch = "wasm32"))]
     let document = {
@@ -111,13 +111,13 @@ fn import_report_with_previews(
 /// Placed PDFs read from IDML name their crop (`PDFCrop`): find where each box sits on its page,
 /// which the IDML reader can't (it doesn't parse PDFs). The box spans the graphic's
 /// `GraphicBounds`; a graphic without bounds takes the box's size. Bounding Box crops interpret
-/// the page's drawing to find the box, so they wait for drawing or export ([`oracle_guide_render::shown_box`],
+/// the page's drawing to find the box, so they wait for drawing or export ([`oracle_layout_render::shown_box`],
 /// [`with_pdf_boxes`]) unless a graphic needs the box's size now.
 pub(crate) fn resolve_pdf_crops(d: &mut Document) {
     use std::collections::{HashMap, HashSet};
     use std::sync::Arc;
 
-    use oracle_guide_doc::{AssetId, Content, Item, PdfCrop};
+    use oracle_layout_doc::{AssetId, Content, Item, PdfCrop};
     let mut no_bounds: HashSet<AssetId> = HashSet::new();
     for sp in d.spreads.iter().chain(&d.parents) {
         for it in &sp.items {
@@ -178,7 +178,7 @@ pub(crate) fn with_pdf_boxes(d: &Document) -> std::borrow::Cow<'_, Document> {
     for a in out.assets.values_mut() {
         if a.content_box_pending() {
             // No usable box: the whole page.
-            std::sync::Arc::make_mut(a).pdf_box = oracle_guide_render::shown_box(a);
+            std::sync::Arc::make_mut(a).pdf_box = oracle_layout_render::shown_box(a);
         }
     }
     std::borrow::Cow::Owned(out)
@@ -244,7 +244,7 @@ fn packaged_link_candidates(link: &str, package: Option<&std::path::Path>) -> Ve
 /// Bytes an image or a graphic can be placed from (raster formats, PDF, SVG, PSD, EPS).
 #[cfg(not(target_arch = "wasm32"))]
 fn is_graphic(bytes: &[u8]) -> bool {
-    oracle_guide_images::mime(bytes) != "application/octet-stream" || oracle_guide_images::is_eps(bytes)
+    oracle_layout_images::mime(bytes) != "application/octet-stream" || oracle_layout_images::is_eps(bytes)
 }
 
 /// Embedded images do not call the IDML resource loader. Rebind their missing links
@@ -314,7 +314,7 @@ pub(crate) fn open_idml(s: &mut Session, p: &Value) -> Result<Value> {
         // What the converter can't read still comes over as IDML (#21).
         let conversion = indd::convert(&bytes, &file).map_err(|e| {
             EngineError::Other(format!(
-                "can't convert the InDesign file: {e}. In InDesign, choose File ▸ Export… ▸ InDesign Markup (IDML) and open the .idml in Oracle Brand Guide."
+                "can't convert the InDesign file: {e}. In InDesign, choose File ▸ Export… ▸ InDesign Markup (IDML) and open the .idml in Oracle Layout."
             ))
         })?;
         warnings.extend(conversion.warnings.iter().map(|w| w.message().to_string()));
@@ -372,7 +372,7 @@ mod tests {
     use super::*;
 
     fn linked_idml(link: &str, embed_images: bool) -> Result<(Vec<u8>, Vec<u8>)> {
-        let png = oracle_guide_render::Rendered { width: 2, height: 2, pixels: vec![255; 16] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 2, height: 2, pixels: vec![255; 16] }.to_png();
         let mut session = Session::new();
         session.execute("file.new", &json!({}))?;
         session.execute("file.place", &json!({"base64": base64_encode(&png), "name": "logo.png"}))?;
@@ -381,7 +381,7 @@ mod tests {
             Arc::make_mut(asset).link = Some(link.into());
             Ok(Value::Null)
         })?;
-        let bytes = oracle_guide_idml::export_idml_with(&session.doc()?.doc, &oracle_guide_idml::ExportOptions { embed_images });
+        let bytes = oracle_layout_idml::export_idml_with(&session.doc()?.doc, &oracle_layout_idml::ExportOptions { embed_images });
         Ok((bytes, png))
     }
 
@@ -490,7 +490,7 @@ mod tests {
         std::fs::create_dir_all(dir.join("Links")).unwrap();
         std::fs::create_dir_all(&outside).unwrap();
         let package = dir.join("x.idml");
-        let png = oracle_guide_render::Rendered { width: 2, height: 2, pixels: vec![255; 16] }.to_png();
+        let png = oracle_layout_render::Rendered { width: 2, height: 2, pixels: vec![255; 16] }.to_png();
         std::fs::write(dir.join("Links").join("notes.png"), b"not an image").unwrap();
         std::fs::write(outside.join("notes.txt"), b"not an image").unwrap();
         #[cfg(unix)]

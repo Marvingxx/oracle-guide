@@ -29,7 +29,7 @@ pub struct LinkFollow {
 }
 
 fn stamp(path: &std::path::Path) -> Option<Stamp> {
-    let meta = oracle_guide_engine::io::metadata(path).ok()?;
+    let meta = oracle_layout_engine::io::metadata(path).ok()?;
     let time = meta.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_nanos();
     Some((meta.len(), time))
 }
@@ -49,7 +49,7 @@ pub fn tick(app: &mut DesignApp, now: f64) {
         .assets
         .values()
         .filter_map(|a| a.link.as_deref())
-        .filter_map(|link| oracle_guide_engine::io::document_path(link, document.as_deref()).ok())
+        .filter_map(|link| oracle_layout_engine::io::document_path(link, document.as_deref()).ok())
         .filter_map(|path| stamp(&path).map(|s| (path, s)))
         .collect();
     let before = app.link_follow.seen.insert(doc_id, files.clone());

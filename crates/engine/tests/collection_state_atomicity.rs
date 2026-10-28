@@ -1,6 +1,6 @@
 #![cfg(not(target_arch = "wasm32"))]
 
-use oracle_guide_engine::Session;
+use oracle_layout_engine::Session;
 use serde_json::json;
 
 fn library_failure(command: &str) {
@@ -44,7 +44,7 @@ fn book_failure(command: &str) {
     let mut chapters = Vec::new();
     for i in 0..3 {
         s.execute("file.new", &json!({})).unwrap();
-        let path = temp.path().join(format!("chapter-{i}.oracle-guide"));
+        let path = temp.path().join(format!("chapter-{i}.oracle-layout"));
         s.execute("file.saveAs", &json!({"path": path})).unwrap();
         chapters.push(path);
     }

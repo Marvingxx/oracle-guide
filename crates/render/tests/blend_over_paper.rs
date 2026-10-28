@@ -1,11 +1,11 @@
 //! Blend modes blend with the objects below, never with the paper: over blank paper an object in
 //! Color Dodge (or any other mode) shows as it is, as in InDesign and in the exported PDF.
 
-use oracle_guide_color::{BlendMode, Color, Swatch};
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::{Document, Fill, Item, ItemId, Shape, SpreadRef, build::NewDocument};
-use oracle_guide_geom::{Affine, Rect, shapes};
-use oracle_guide_render::{Placed, RenderOptions, Renderer};
+use oracle_layout_color::{BlendMode, Color, Swatch};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::{Document, Fill, Item, ItemId, Shape, SpreadRef, build::NewDocument};
+use oracle_layout_geom::{Affine, Rect, shapes};
+use oracle_layout_render::{Placed, RenderOptions, Renderer};
 
 /// A 200 x 100 page: a mid-blue rectangle on the right half, and over both halves a black
 /// rectangle in `blend`.

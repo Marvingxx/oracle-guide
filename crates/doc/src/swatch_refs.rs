@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use oracle_guide_color::SwatchValue;
+use oracle_layout_color::SwatchValue;
 
 use crate::Document;
 use crate::attrs::{CharAttrs, ParaAttrs};

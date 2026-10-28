@@ -3,7 +3,7 @@
 //! spot channels don't change the placed image; when the layer count is negative, the first extra
 //! channel is the composite's merged transparency.
 
-use oracle_guide_color::cms::{Lab, lab::lab_to_srgb};
+use oracle_layout_color::cms::{Lab, lab::lab_to_srgb};
 
 use crate::CmykRaster;
 use crate::colour::{DisplayColour, Pixels, to_display_rgba};

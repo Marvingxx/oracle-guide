@@ -1,9 +1,9 @@
 //! Paragraph border and shading: one box per column a paragraph (or a run of consecutive
 //! paragraphs with the same settings) sits in, drawn once the lines are in place.
 
-use oracle_guide_doc::{BoxBottom, BoxTop, BoxWidth, Cap, Document, Join, ParaProps, StrokeType};
-use oracle_guide_geom::corners::{Corner, box_outline};
-use oracle_guide_geom::{BezPath, Rect, Shape, kurbo};
+use oracle_layout_doc::{BoxBottom, BoxTop, BoxWidth, Cap, Document, Join, ParaProps, StrokeType};
+use oracle_layout_geom::corners::{Corner, box_outline};
+use oracle_layout_geom::{BezPath, Rect, Shape, kurbo};
 
 use crate::{ComposedStory, Deco, FrameSpec, Line};
 

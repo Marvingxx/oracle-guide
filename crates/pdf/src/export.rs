@@ -1,16 +1,16 @@
-//! Document → PDF. The item walk mirrors `oracle-guide-render`'s `draw_spread` / `draw_item`.
+//! Document → PDF. The item walk mirrors `oracle-layout-render`'s `draw_spread` / `draw_item`.
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use craft_pdf::write::backend as krilla;
 use craft_pdf::write::{self, Metadata, Writer};
-use oracle_guide_color::swatch::{ColorType, SwatchValue};
-use oracle_guide_color::{BlendMode as DcBlend, Color, GradientKind};
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::{AssetId, Content, Document, Item, PageSide, Spread, SpreadRef, StrokeAlign, StrokeType};
-use oracle_guide_geom::kurbo::{PathEl, Shape as _};
-use oracle_guide_geom::{Affine, BezPath, Rect, Vec2, corners};
+use oracle_layout_color::swatch::{ColorType, SwatchValue};
+use oracle_layout_color::{BlendMode as DcBlend, Color, GradientKind};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::{AssetId, Content, Document, Item, PageSide, Spread, SpreadRef, StrokeAlign, StrokeType};
+use oracle_layout_geom::kurbo::{PathEl, Shape as _};
+use oracle_layout_geom::{Affine, BezPath, Rect, Vec2, corners};
 use krilla::color::{cmyk, luma, rgb};
 use krilla::configure::{Archival, PdfVersion};
 use krilla::geom::{Path, PathBuilder, Size, Transform};
@@ -41,7 +41,7 @@ pub(crate) struct Sheet {
 pub(crate) const MARK_LEN: f64 = 18.0;
 
 /// Whether a layer's items go into the PDF.
-pub(crate) fn layer_exported(layer: &oracle_guide_doc::Layer) -> bool {
+pub(crate) fn layer_exported(layer: &oracle_layout_doc::Layer) -> bool {
     layer.visible && layer.printable
 }
 
@@ -147,8 +147,8 @@ fn export_pdf_with_report_inner(doc: &Document, cache: &Cache, opts: &PdfOptions
     let title = opts.title.clone().unwrap_or_else(|| doc.title.clone());
     let created = opts.created.or_else(now_unix);
     let metadata = Metadata {
-        creator: "Oracle Brand Guide".into(),
-        producer: "Oracle Brand Guide".into(),
+        creator: "Oracle Layout".into(),
+        producer: "Oracle Layout".into(),
         title: Some(title.clone()),
         authors: opts.author.iter().cloned().collect(),
         created: created.map(date_time),
@@ -230,7 +230,7 @@ fn export_pdf_with_report_inner(doc: &Document, cache: &Cache, opts: &PdfOptions
     let mut bytes = writer.finish().map_err(PdfError::from)?;
     // Transparency blends in the document's blend space: CMYK for print (and always in PDF/X).
     let mut warnings = ex.warnings;
-    if !ex.rgb_only && (doc.settings.blend_space == oracle_guide_doc::BlendSpace::Cmyk || opts.standard == Standard::PdfX4) {
+    if !ex.rgb_only && (doc.settings.blend_space == oracle_layout_doc::BlendSpace::Cmyk || opts.standard == Standard::PdfX4) {
         // The rewrite matches krilla's exact output; in PDF/X-4, `check_pdfx4` reports any
         // group that got past it, with its page.
         crate::pdfx::cmyk_group_spaces(&mut bytes);
@@ -273,7 +273,7 @@ pub fn merge_pdfs(parts: &[(Vec<u8>, Vec<(f32, f32)>)], title: Option<&str>) -> 
 }
 
 fn merge_pdfs_inner(parts: &[(Vec<u8>, Vec<(f32, f32)>)], title: Option<&str>) -> Result<Vec<u8>> {
-    let metadata = Metadata { creator: "Oracle Brand Guide".into(), producer: "Oracle Brand Guide".into(), title: title.map(str::to_owned), ..Default::default() };
+    let metadata = Metadata { creator: "Oracle Layout".into(), producer: "Oracle Layout".into(), title: title.map(str::to_owned), ..Default::default() };
     let mut writer = Writer::new(krilla::SerializeSettings::default(), metadata);
     let pdf = writer.document_mut();
     let mut pages = 0;
@@ -341,7 +341,7 @@ fn export_booklet_inner(doc: &Document, cache: &Cache, opts: &BookletOptions) ->
     let pdf_opts = PdfOptions { title: opts.title.clone(), ..PdfOptions::default() };
     let settings = krilla::SerializeSettings { compress_content_streams: true, ..Default::default() };
     let title = opts.title.clone().unwrap_or_else(|| doc.title.clone());
-    let metadata = Metadata { creator: "Oracle Brand Guide".into(), producer: "Oracle Brand Guide".into(), title: Some(title), ..Default::default() };
+    let metadata = Metadata { creator: "Oracle Layout".into(), producer: "Oracle Layout".into(), title: Some(title), ..Default::default() };
     let mut writer = Writer::new(settings, metadata);
     let pdf = writer.document_mut();
     let mut ex = Exporter {
@@ -406,7 +406,7 @@ fn export_booklet_inner(doc: &Document, cache: &Cache, opts: &BookletOptions) ->
     }
     ex.check_placed_versions()?;
     let mut bytes = writer.finish().map_err(PdfError::from)?;
-    if doc.settings.blend_space == oracle_guide_doc::BlendSpace::Cmyk {
+    if doc.settings.blend_space == oracle_layout_doc::BlendSpace::Cmyk {
         crate::pdfx::cmyk_group_spaces(&mut bytes);
     }
     let mut warnings = ex.warnings;
@@ -442,7 +442,7 @@ fn date_time(t: i64) -> krilla::metadata::DateTime {
 /// `civil`), rather than resetting to the epoch. `date_time` applies the PDF `0..=9999` year clamp.
 pub(crate) fn civil(t: i64) -> (i64, u8, u8, u8, u8, u8) {
     use chrono::{Datelike, Timelike};
-    let (y, t) = oracle_guide_doc::time::utc_parts(t, 0);
+    let (y, t) = oracle_layout_doc::time::utc_parts(t, 0);
     (y, t.month() as u8, t.day() as u8, t.hour() as u8, t.minute() as u8, t.second() as u8)
 }
 
@@ -479,7 +479,7 @@ pub(crate) struct Exporter<'a> {
     /// Current sheet's visible area (spread space) for culling.
     pub clip: Rect,
     pub warnings: Vec<String>,
-    drawing_items: Vec<oracle_guide_doc::ItemId>,
+    drawing_items: Vec<oracle_layout_doc::ItemId>,
     images: HashMap<AssetId, Option<Image>>,
     // Immutable export options (including rgb_only) make bytes the complete conversion key.
     // PDF-page/SVG/media routing precedes this path. Failures remain per AssetId.
@@ -493,26 +493,26 @@ pub(crate) struct Exporter<'a> {
     /// Placed PDFs too new to embed in this version ("name is PDF 2.0"): the export fails.
     too_new: Vec<String>,
     /// Parsed placed SVGs.
-    svgs: HashMap<AssetId, Option<Arc<oracle_guide_images::usvg::Tree>>>,
+    svgs: HashMap<AssetId, Option<Arc<oracle_layout_images::usvg::Tree>>>,
     pub fonts: HashMap<u32, Option<krilla::text::Font>>,
     pub reverse_cmaps: HashMap<u32, Arc<HashMap<u32, char>>>,
     /// Convert CMYK to RGB (PDF/A: krilla needs a CMYK output profile we don't ship yet).
     pub rgb_only: bool,
     /// Tagged PDF: the structure in reading order (stories gather their frames' content).
     tags: Vec<TagEntry>,
-    story_tags: HashMap<oracle_guide_doc::StoryId, Vec<Identifier>>,
+    story_tags: HashMap<oracle_layout_doc::StoryId, Vec<Identifier>>,
     /// While drawing a story's frame for the structure tree: the story (text runs are tagged
     /// per paragraph, everything else in the frame is an artifact).
-    pub(crate) tag_story: Option<oracle_guide_doc::StoryId>,
+    pub(crate) tag_story: Option<oracle_layout_doc::StoryId>,
     /// While drawing a frame's text: the frame's box in text space, which a gradient on the text
     /// spans (as InDesign lays it across the frame).
     pub(crate) text_area: Option<Rect>,
     /// Marked content of each (story, paragraph index).
-    pub(crate) para_tags: HashMap<(oracle_guide_doc::StoryId, usize), Vec<Identifier>>,
+    pub(crate) para_tags: HashMap<(oracle_layout_doc::StoryId, usize), Vec<Identifier>>,
 }
 
 enum TagEntry {
-    Story(oracle_guide_doc::StoryId),
+    Story(oracle_layout_doc::StoryId),
     Figure(TagGroup),
 }
 
@@ -552,7 +552,7 @@ fn regular(c: &Color, rgb_only: bool) -> krilla::color::RegularColor {
     match *c {
         Color::Rgb { r, g, b } => R::Rgb(rgb::Color::new(q(r), q(g), q(b))),
         Color::Cmyk { c, m, y, k } => R::Cmyk(cmyk::Color::new(q(c), q(m), q(y), q(k))),
-        // Oracle Brand Guide grey is ink coverage (0 = white); PDF DeviceGray is lightness.
+        // Oracle Layout grey is ink coverage (0 = white); PDF DeviceGray is lightness.
         Color::Gray { k } => R::Luma(luma::Color::new(q(1.0 - k))),
     }
 }
@@ -607,7 +607,7 @@ pub(crate) fn solid_fill(c: krilla::color::Color, opacity: f32) -> Fill {
 impl Exporter<'_> {
     /// A print document, or a PDF/X file (whose output intent is CMYK).
     pub(crate) fn for_print(&self) -> bool {
-        self.doc.settings.intent == oracle_guide_doc::Intent::Print || self.opts.standard == Standard::PdfX4
+        self.doc.settings.intent == oracle_layout_doc::Intent::Print || self.opts.standard == Standard::PdfX4
     }
 
     pub(crate) fn warn(&mut self, w: impl Into<String>) {
@@ -643,7 +643,7 @@ impl Exporter<'_> {
                         self.doc.swatch(ink).filter(|w| matches!(w.value, SwatchValue::Color { color_type: ColorType::Spot, .. })).unwrap_or(sw);
                     let SwatchValue::Color { color, .. } = &target.value else { break };
                     if process {
-                        return Some(device(&oracle_guide_color::swatch::apply_tint(*color, t), self.rgb_only));
+                        return Some(device(&oracle_layout_color::swatch::apply_tint(*color, t), self.rgb_only));
                     }
                     let space = SeparationSpace::new(SeparationColorant::Custom(target.name.clone()), regular(color, self.rgb_only));
                     return Some(SepColor::new(q(t), space).into());
@@ -973,10 +973,10 @@ impl Exporter<'_> {
                 let cs = self.cache.get(doc, tfr.story, page);
                 if let (Some(ft), Some(pt)) = (cs.frame(it.id), &tfr.options.path) {
                     // Type on a path: the glyphs as outlines along the path.
-                    for (si, gp) in oracle_guide_compose::path_glyphs(&cs, ft, &bp, pt) {
+                    for (si, gp) in oracle_layout_compose::path_glyphs(&cs, ft, &bp, pt) {
                         let st = &cs.styles[si as usize];
                         // A gradient spans the path's box.
-                        let fill = oracle_guide_doc::Fill { swatch: st.fill.clone(), tint: st.fill_tint, ..oracle_guide_doc::Fill::none() };
+                        let fill = oracle_layout_doc::Fill { swatch: st.fill.clone(), tint: st.fill_tint, ..oracle_layout_doc::Fill::none() };
                         if let (Some(paint), Some(p)) = (self.fill_paint(&fill, bp.bounding_box()), to_path(&gp)) {
                             s.set_fill(Some(Fill { paint, opacity: NormalizedF32::ONE, rule: FillRule::NonZero }));
                             s.draw_path(&p);
@@ -1025,7 +1025,7 @@ impl Exporter<'_> {
 
     /// Draw embedded page items after restoring the surface, retaining spread-space
     /// transforms for page culling (also for anonymous note and cell stories).
-    fn frame_objects(&mut self, s: &mut Surface, ft: &oracle_guide_compose::FrameText, xf: Affine, page: Option<usize>) {
+    fn frame_objects(&mut self, s: &mut Surface, ft: &oracle_layout_compose::FrameText, xf: Affine, page: Option<usize>) {
         let mut pending = vec![(ft, xf)];
         while let Some((frame, transform)) = pending.pop() {
             for object in &frame.objects {
@@ -1045,15 +1045,15 @@ impl Exporter<'_> {
     }
 
     /// A swatch fill (solid or gradient) in the item's inner space. `None` for [None]/unknown.
-    pub(crate) fn fill_paint(&mut self, fill: &oracle_guide_doc::Fill, bounds: Rect) -> Option<krilla::paint::Paint> {
+    pub(crate) fn fill_paint(&mut self, fill: &oracle_layout_doc::Fill, bounds: Rect) -> Option<krilla::paint::Paint> {
         self.fill_paint_in(fill, bounds, Affine::IDENTITY)
     }
 
     /// [`Self::fill_paint`] for a gradient laid out in a space that `xf` maps to the current one
     /// (text runs: the frame's text space under the run's origin).
-    pub(crate) fn fill_paint_in(&mut self, fill: &oracle_guide_doc::Fill, bounds: Rect, xf: Affine) -> Option<krilla::paint::Paint> {
+    pub(crate) fn fill_paint_in(&mut self, fill: &oracle_layout_doc::Fill, bounds: Rect, xf: Affine) -> Option<krilla::paint::Paint> {
         let (swatch, tint) = (fill.swatch.as_str(), fill.tint);
-        if let Some(g) = oracle_guide_color::swatch::resolve_gradient(&self.doc.swatches, swatch) {
+        if let Some(g) = oracle_layout_color::swatch::resolve_gradient(&self.doc.swatches, swatch) {
             let kind = g.kind;
             let mut expanded = g.expanded_stops();
             // Grey and CMYK stops blend as inks, so a grey stop beside a CMYK one is the K ink.
@@ -1136,7 +1136,7 @@ impl Exporter<'_> {
     fn stroke(&mut self, s: &mut Surface, it: &Item, bp: &BezPath, path: &Path) {
         let st = &it.stroke;
         // A gradient swatch runs across the path's box, as on a fill.
-        let paint: krilla::paint::Paint = if oracle_guide_color::swatch::resolve_gradient(&self.doc.swatches, &st.swatch).is_some() {
+        let paint: krilla::paint::Paint = if oracle_layout_color::swatch::resolve_gradient(&self.doc.swatches, &st.swatch).is_some() {
             let Some(p) = self.fill_paint(&st.as_fill(), bp.bounding_box()) else { return };
             p
         } else {
@@ -1145,9 +1145,9 @@ impl Exporter<'_> {
         };
         let closed = it.path.is_closed();
         let mut cap = match st.cap {
-            oracle_guide_doc::Cap::Butt => krilla::paint::LineCap::Butt,
-            oracle_guide_doc::Cap::Round => krilla::paint::LineCap::Round,
-            oracle_guide_doc::Cap::Projecting => krilla::paint::LineCap::Square,
+            oracle_layout_doc::Cap::Butt => krilla::paint::LineCap::Butt,
+            oracle_layout_doc::Cap::Round => krilla::paint::LineCap::Round,
+            oracle_layout_doc::Cap::Projecting => krilla::paint::LineCap::Square,
         };
         let kind = self.doc.stroke_kind(&st.kind);
         // Stripes, wavy and hash strokes: a filled outline (gap colour under it).
@@ -1156,7 +1156,7 @@ impl Exporter<'_> {
         {
             s.set_stroke(None);
             if let Some(g) = self.swatch_color(&st.gap_swatch, st.gap_tint)
-                && st.gap_swatch != oracle_guide_color::swatch::NONE
+                && st.gap_swatch != oracle_layout_color::swatch::NONE
             {
                 s.set_stroke(Some(Stroke { paint: g.into(), width: st.weight as f32, opacity: NormalizedF32::ONE, ..Default::default() }));
                 s.set_fill(None);
@@ -1169,7 +1169,7 @@ impl Exporter<'_> {
             return;
         }
         // Viewers expand dashes too: a degenerate pattern draws solid, as on screen.
-        let length = oracle_guide_doc::path_length_bound(bp);
+        let length = oracle_layout_doc::path_length_bound(bp);
         let dash = match &kind {
             StrokeType::Dashed { pattern } if StrokeType::expandable_dashes(pattern, length) => {
                 let mut pat: Vec<f32> = pattern.iter().map(|v| v.max(0.0) as f32).collect();
@@ -1184,7 +1184,7 @@ impl Exporter<'_> {
             }
             _ => None,
         };
-        let arrows = oracle_guide_doc::arrow::apply(bp, st, closed);
+        let arrows = oracle_layout_doc::arrow::apply(bp, st, closed);
         let trimmed = arrows.as_ref().and_then(|a| to_path(&a.0));
         let path = trimmed.as_ref().unwrap_or(path);
         let aligned = closed && st.align != StrokeAlign::Center;
@@ -1222,9 +1222,9 @@ impl Exporter<'_> {
             miter_limit: st.miter_limit.max(1.0) as f32,
             line_cap: cap,
             line_join: match st.join {
-                oracle_guide_doc::Join::Miter => krilla::paint::LineJoin::Miter,
-                oracle_guide_doc::Join::Round => krilla::paint::LineJoin::Round,
-                oracle_guide_doc::Join::Bevel => krilla::paint::LineJoin::Bevel,
+                oracle_layout_doc::Join::Miter => krilla::paint::LineJoin::Miter,
+                oracle_layout_doc::Join::Round => krilla::paint::LineJoin::Round,
+                oracle_layout_doc::Join::Bevel => krilla::paint::LineJoin::Bevel,
             },
             opacity: NormalizedF32::ONE,
             dash,
@@ -1258,7 +1258,7 @@ impl Exporter<'_> {
     /// `qpdf --force-version=1.6` does). A newer
     /// file is left out and the export fails naming it ([`Exporter::check_placed_versions`]).
     /// Returns the document with its page count.
-    fn placed_pdf(&mut self, asset: &oracle_guide_doc::Asset) -> Option<(krilla::pdf::PdfDocument, usize)> {
+    fn placed_pdf(&mut self, asset: &oracle_layout_doc::Asset) -> Option<(krilla::pdf::PdfDocument, usize)> {
         use hayro_syntax::PdfVersion as V;
         let Ok(pdf) = krilla::pdf::Pdf::new(asset.data.clone()) else {
             self.warn(format!("{}: can't read the placed PDF", asset.name));
@@ -1314,8 +1314,8 @@ impl Exporter<'_> {
         let asset = self.doc.assets.get(&id)?.clone();
         // Use the same EPS preview as the renderer, preserving CMYK TIFF inks below. The
         // content cache is keyed on the bytes actually converted, so equal previews share one.
-        let data = if oracle_guide_images::is_eps(&asset.data) {
-            let Some((proxy, _)) = oracle_guide_images::eps_proxy(&asset.data) else {
+        let data = if oracle_layout_images::is_eps(&asset.data) {
+            let Some((proxy, _)) = oracle_layout_images::eps_proxy(&asset.data) else {
                 self.warn(format!("image `{}` could not be decoded and was skipped", asset.name));
                 self.images.insert(id, None);
                 return None;
@@ -1342,7 +1342,7 @@ impl Exporter<'_> {
             Some(image::ImageFormat::Jpeg) => jpeg(data.clone().into(), || embedded_icc(&data), mode),
             // A CMYK TIFF keeps its ink values (`image` decodes it to RGB, and 100% K would print
             // as four-colour black). PDF/A exports are RGB only.
-            Some(image::ImageFormat::Tiff) if !self.rgb_only && oracle_guide_images::is_cmyk_tiff(&data) => match cmyk_tiff(&data, mode) {
+            Some(image::ImageFormat::Tiff) if !self.rgb_only && oracle_layout_images::is_cmyk_tiff(&data) => match cmyk_tiff(&data, mode) {
                 Some(img) => Some(img),
                 None => {
                     warning = Some(CMYK_FALLBACK_WARNING);
@@ -1372,7 +1372,7 @@ impl Exporter<'_> {
     }
 
     /// Draw a placed graphic, inside its clipping path when it has one.
-    pub(crate) fn graphic(&mut self, s: &mut Surface, g: &oracle_guide_doc::Graphic) {
+    pub(crate) fn graphic(&mut self, s: &mut Surface, g: &oracle_layout_doc::Graphic) {
         match g.clip_region().map(|(region, even_odd)| (to_path(&region), even_odd)) {
             Some((Some(clip), even_odd)) => {
                 s.push_clip_path(&clip, if even_odd { &FillRule::EvenOdd } else { &FillRule::NonZero });
@@ -1389,10 +1389,10 @@ impl Exporter<'_> {
         }
     }
 
-    fn graphic_unclipped(&mut self, s: &mut Surface, g: &oracle_guide_doc::Graphic) {
+    fn graphic_unclipped(&mut self, s: &mut Surface, g: &oracle_layout_doc::Graphic) {
         // Video / sound without a poster: a dark frame with a play mark.
         if let Some(asset) = self.doc.assets.get(&g.asset)
-            && oracle_guide_doc::media_kind(&asset.mime).is_some()
+            && oracle_layout_doc::media_kind(&asset.mime).is_some()
         {
             let (w, h) = g.size;
             let (cx, cy, r) = (w / 2.0, h / 2.0, w.min(h) * 0.18);
@@ -1456,10 +1456,10 @@ impl Exporter<'_> {
         }
         // Placed SVGs go in as vectors too.
         if let Some(asset) = self.doc.assets.get(&g.asset)
-            && oracle_guide_images::is_svg(&asset.data)
+            && oracle_layout_images::is_svg(&asset.data)
         {
             let Some(size) = Size::from_wh(g.size.0.max(1e-3) as f32, g.size.1.max(1e-3) as f32) else { return };
-            let tree = self.svgs.entry(g.asset).or_insert_with(|| oracle_guide_images::svg_tree(&asset.data).map(Arc::new)).clone();
+            let tree = self.svgs.entry(g.asset).or_insert_with(|| oracle_layout_images::svg_tree(&asset.data).map(Arc::new)).clone();
             match tree {
                 Some(tree) => {
                     use krilla_svg::SurfaceExt;
@@ -1487,22 +1487,22 @@ impl Exporter<'_> {
     /// painted through the image's ink coverage (its darkness), over 0% ink for a greyscale
     /// image, whose white is opaque. `false`, drawing nothing, when the image keeps its own
     /// colours: no swatch, one that no longer exists, a colour image.
-    fn colorized(&mut self, s: &mut Surface, g: &oracle_guide_doc::Graphic) -> bool {
+    fn colorized(&mut self, s: &mut Surface, g: &oracle_layout_doc::Graphic) -> bool {
         if g.fill.is_none() {
             return false;
         }
         let Some(asset) = self.doc.assets.get(&g.asset) else { return false };
-        let Some(tone) = oracle_guide_images::tone(&asset.data) else { return false };
+        let Some(tone) = oracle_layout_images::tone(&asset.data) else { return false };
         let Some(paint) = self.swatch_color(&g.fill.swatch, g.fill.tint) else { return false };
-        let Some(coverage) = oracle_guide_images::decode_rgba(&asset.data).and_then(|img| CoverageImage::new(&img)) else { return false };
+        let Some(coverage) = oracle_layout_images::decode_rgba(&asset.data).and_then(|img| CoverageImage::new(&img)) else { return false };
         let interpolate = RasterMode::for_standard(self.opts.standard).interpolate;
         let Ok(mask) = Image::from_custom(coverage, interpolate) else { return false };
         let size = Size::from_wh(g.size.0.max(1e-3) as f32, g.size.1.max(1e-3) as f32);
         let (Some(size), Some(rect)) = (size, to_path(&Rect::new(0.0, 0.0, g.size.0, g.size.1).to_path(0.1))) else { return false };
         s.push_transform(&tf(g.xf));
-        if tone == oracle_guide_images::Tone::Gray {
+        if tone == oracle_layout_images::Tone::Gray {
             let blank =
-                self.swatch_color(oracle_guide_color::swatch::PAPER, 1.0).unwrap_or_else(|| device(&Color::cmyk(0.0, 0.0, 0.0, 0.0), self.rgb_only));
+                self.swatch_color(oracle_layout_color::swatch::PAPER, 1.0).unwrap_or_else(|| device(&Color::cmyk(0.0, 0.0, 0.0, 0.0), self.rgb_only));
             s.set_fill(Some(Fill { paint: blank.into(), ..Default::default() }));
             s.draw_path(&rect);
         }
@@ -1658,7 +1658,7 @@ fn lossless(data: &Arc<Vec<u8>>, fmt: Option<image::ImageFormat>, mode: RasterMo
     // krilla reads PNG, GIF and WebP lazily: a damaged file is accepted here and fails the whole
     // export when the PDF is written. Decoding it first means it is skipped, like any other
     // image that can't be decoded.
-    let rgba = oracle_guide_images::decode_rgba(data)?;
+    let rgba = oracle_layout_images::decode_rgba(data)?;
     let i = mode.interpolate;
     let direct = match fmt {
         Some(image::ImageFormat::Png | image::ImageFormat::Gif | image::ImageFormat::WebP) if mode.tag_rgb && untagged_rgb(data) => None,
@@ -1727,7 +1727,7 @@ impl krilla::image::CustomImage for SrgbImage {
 /// the output intent's press, and tagging them with another CMYK profile would let a RIP
 /// convert 100% K to four-colour black.
 #[derive(Clone, Hash)]
-struct CmykImage(Arc<oracle_guide_images::CmykRaster>);
+struct CmykImage(Arc<oracle_layout_images::CmykRaster>);
 
 impl krilla::image::CustomImage for CmykImage {
     fn color_channel(&self) -> &[u8] {
@@ -1752,7 +1752,7 @@ impl krilla::image::CustomImage for CmykImage {
 
 /// A CMYK TIFF as a DeviceCMYK image. `None` when it can't be read as CMYK.
 fn cmyk_tiff(data: &[u8], mode: RasterMode) -> Option<Image> {
-    let r = oracle_guide_images::decode_cmyk_tiff(data)?;
+    let r = oracle_layout_images::decode_cmyk_tiff(data)?;
     // krilla panics when the channel lengths don't match the size.
     let pixels = usize::try_from(r.width).ok()?.checked_mul(usize::try_from(r.height).ok()?)?;
     if r.cmyk.len() != pixels.checked_mul(4)? || r.alpha.as_ref().is_some_and(|a| a.len() != pixels) {
@@ -1778,7 +1778,7 @@ fn recompress(data: &[u8], mode: RasterMode) -> Option<Image> {
 #[cfg(test)]
 mod image_content_cache_tests {
     use super::*;
-    use oracle_guide_doc::Asset;
+    use oracle_layout_doc::Asset;
 
     fn png(w: u32, h: u32, color: [u8; 4]) -> Vec<u8> {
         let image = image::RgbaImage::from_pixel(w, h, image::Rgba(color));
@@ -1886,9 +1886,9 @@ mod image_content_cache_tests {
     #[test]
     fn successful_cmyk_fallback_replays_each_asset_name_once_and_converts_once() {
         let bytes = crate::image_fixtures::cmyk_tiff(None, true);
-        assert!(oracle_guide_images::is_cmyk_tiff(&bytes));
-        assert!(oracle_guide_images::decode_cmyk_tiff(&bytes).is_none());
-        assert!(oracle_guide_images::decode_rgba(&bytes).is_some());
+        assert!(oracle_layout_images::is_cmyk_tiff(&bytes));
+        assert!(oracle_layout_images::decode_cmyk_tiff(&bytes).is_none());
+        assert!(oracle_layout_images::decode_rgba(&bytes).is_some());
         let mut d = Document::new(&Default::default());
         let a = asset(&mut d, bytes.clone(), "ink-a.tif");
         let b = asset(&mut d, bytes, "ink-b.tif");
@@ -1913,7 +1913,7 @@ mod image_content_cache_tests {
             let bytes = crate::image_fixtures::cmyk_tiff(alpha, false);
             // RGB-only exports get the RGB the screen shows.
             let screen_rgb: Vec<u8> =
-                oracle_guide_images::decode_rgba(&bytes).map_or_else(Vec::new, |img| img.pixels().flat_map(|p| [p[0], p[1], p[2]]).collect());
+                oracle_layout_images::decode_rgba(&bytes).map_or_else(Vec::new, |img| img.pixels().flat_map(|p| [p[0], p[1], p[2]]).collect());
             let a = asset(&mut d, bytes.clone(), "a.tif");
             let b = asset(&mut d, bytes, "b.tif");
             for standard in [Standard::None, Standard::PdfA2b, Standard::PdfX4, Standard::PdfA2b, Standard::None] {
@@ -2012,7 +2012,7 @@ mod unwind_tests {
 
     #[test]
     fn export_entry_points_recover_in_a_subprocess() {
-        const CHILD: &str = "ORACLE_GUIDE_PDF_EXPORT_PANIC_PROBE";
+        const CHILD: &str = "ORACLE_LAYOUT_PDF_EXPORT_PANIC_PROBE";
         if std::env::var_os(CHILD).is_none() {
             let output = std::process::Command::new(std::env::current_exe().unwrap())
                 .args(["--exact", "export::unwind_tests::export_entry_points_recover_in_a_subprocess", "--nocapture"])
@@ -2023,7 +2023,7 @@ mod unwind_tests {
             assert!(String::from_utf8_lossy(&output.stdout).contains("all three export entry points recovered"));
             return;
         }
-        let doc = Document::new(&oracle_guide_doc::build::NewDocument { pages: 1, ..Default::default() });
+        let doc = Document::new(&oracle_layout_doc::build::NewDocument { pages: 1, ..Default::default() });
         let cache = Cache::new();
         let source = export_pdf(&doc, &cache, &Default::default()).unwrap();
         let parts = [(source, vec![(612.0, 792.0)])];
@@ -2063,12 +2063,12 @@ mod eps_tests {
         eps.extend([0xFF, 0xFF]);
         eps.extend_from_slice(ps);
         eps.extend_from_slice(&tiff);
-        assert_eq!(oracle_guide_images::eps_proxy(&eps).unwrap().0, tiff);
-        let mut doc = Document::new(&oracle_guide_doc::build::NewDocument::default());
+        assert_eq!(oracle_layout_images::eps_proxy(&eps).unwrap().0, tiff);
+        let mut doc = Document::new(&oracle_layout_doc::build::NewDocument::default());
         let aid = AssetId(doc.alloc());
         doc.assets.insert(
             aid,
-            Arc::new(oracle_guide_doc::Asset {
+            Arc::new(oracle_layout_doc::Asset {
                 id: aid,
                 name: "cmyk.eps".into(),
                 mime: "application/postscript".into(),
@@ -2080,12 +2080,12 @@ mod eps_tests {
             }),
         );
         let mut item = Item::new(
-            oracle_guide_doc::ItemId(doc.alloc()),
+            oracle_layout_doc::ItemId(doc.alloc()),
             doc.default_layer(),
-            oracle_guide_doc::Shape::Rectangle,
-            oracle_guide_geom::shapes::rectangle(Rect::new(72.0, 72.0, 272.0, 172.0)),
+            oracle_layout_doc::Shape::Rectangle,
+            oracle_layout_geom::shapes::rectangle(Rect::new(72.0, 72.0, 272.0, 172.0)),
         );
-        item.content = Content::Graphic(oracle_guide_doc::Graphic {
+        item.content = Content::Graphic(oracle_layout_doc::Graphic {
             asset: aid,
             size: (2.0, 1.0),
             xf: Affine::translate((72.0, 72.0)) * Affine::scale(100.0),
@@ -2096,7 +2096,7 @@ mod eps_tests {
             wrap: Default::default(),
             fill: Default::default(),
         });
-        doc.insert_item(oracle_guide_doc::SpreadRef::Doc(0), item, None).unwrap();
+        doc.insert_item(oracle_layout_doc::SpreadRef::Doc(0), item, None).unwrap();
         for standard in [Standard::None, Standard::PdfX4] {
             let report = export_pdf_with_report(&doc, &Cache::new(), &PdfOptions { standard, ..Default::default() }).unwrap();
             assert!(report.warnings.is_empty(), "{:?}", report.warnings);

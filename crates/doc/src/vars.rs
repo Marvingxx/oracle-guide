@@ -267,7 +267,7 @@ impl Document {
             VarKind::ChapterNumber => self.chapter_label(),
             VarKind::FileName { extension } => {
                 if *extension {
-                    format!("{}.oracle-guide", self.title)
+                    format!("{}.oracle-layout", self.title)
                 } else {
                     self.title.clone()
                 }

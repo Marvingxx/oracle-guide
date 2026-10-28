@@ -3,9 +3,9 @@
 //! Geometry works in the frame's local coordinates (the space its path and corner sizes live in)
 //! and maps through the frame's canvas transform, so rotated and sheared frames work unchanged.
 
-use oracle_guide_doc::{ItemId, Shape};
-use oracle_guide_geom::corners::{Corner, CornerOptions, CornerShape};
-use oracle_guide_geom::{Affine, Point, Vec2};
+use oracle_layout_doc::{ItemId, Shape};
+use oracle_layout_geom::corners::{Corner, CornerOptions, CornerShape};
+use oracle_layout_geom::{Affine, Point, Vec2};
 use serde_json::{Value, json};
 
 use crate::ToolContext;

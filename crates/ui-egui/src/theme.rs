@@ -134,7 +134,7 @@ impl Tokens {
             caption_close: hex(0xc42b1c),
             caption_close_text: Color32::WHITE,
         };
-        match b {
+        let mut tokens = match b {
             Brightness::Dark => dark,
             // Measured from InDesign 2026 (plan/indesign/11-observed-ui.md §1).
             Brightness::MediumDark => Tokens {
@@ -257,7 +257,58 @@ impl Tokens {
                 tab_strip: hex(0x000000),
                 ..dark
             },
+        };
+        if b != Brightness::HighContrast {
+            // Guide keeps the monochrome accent of its icon on Edit's shared surfaces.
+            let mut p = oracle_style::Palette::for_dark(tokens.dark).with_accent(if tokens.dark { hex(0xf2f1ee) } else { hex(0x1d1d1b) });
+            match b {
+                Brightness::Dark => {
+                    p.void = p.void.lerp_to_gamma(Color32::BLACK, 0.28);
+                    p.ink = p.ink.lerp_to_gamma(Color32::BLACK, 0.28);
+                }
+                Brightness::MediumLight => {
+                    p.void = p.void.lerp_to_gamma(Color32::BLACK, 0.08);
+                    p.ink = p.ink.lerp_to_gamma(Color32::BLACK, 0.04);
+                }
+                _ => {}
+            }
+            tokens.app_bar = p.void;
+            tokens.panel = p.ink;
+            tokens.panel_darker = p.void;
+            tokens.input = if p.dark { p.void } else { p.steel };
+            tokens.input_border = p.line_strong;
+            tokens.border = p.line;
+            tokens.divider = p.line;
+            tokens.text = p.text;
+            tokens.text_strong = p.text;
+            tokens.text_dim = p.text_dim;
+            tokens.text_disabled = p.text_faint;
+            tokens.icon = p.text;
+            tokens.hover = p.steel;
+            tokens.tool_active = p.accent_soft;
+            tokens.row_selected = p.accent_soft;
+            tokens.pasteboard = p.void;
+            tokens.ruler = p.ink;
+            tokens.ruler_tick = p.text_faint;
+            tokens.button = p.void;
+            tokens.radius = 0;
+            tokens.tab_strip = p.void;
+            tokens.field_border = p.line_strong;
+            tokens.well = p.void;
+            tokens.well_rim = p.accent;
+            tokens.ruler_text = p.text_dim;
+            tokens.section_divider = p.line;
+            tokens.measure_bg = p.ink;
+            tokens.measure_text = p.text;
+            tokens.tab_inactive = p.text_dim;
+            tokens.accent = p.accent;
+            tokens.accent_strong = p.accent;
         }
+        tokens
+    }
+
+    pub fn on_accent(&self) -> Color32 {
+        if self.accent_strong == hex(0x1d1d1b) { Color32::WHITE } else { hex(0x1d1d1b) }
     }
 }
 
@@ -266,7 +317,7 @@ impl Tokens {
 /// installed without waiting, and the caller installs again once they are (see
 /// [`system_fonts_ready`]) to add the installed faces for the scripts they lack.
 pub fn install_fonts(ctx: &egui::Context, lang: &str) -> bool {
-    let craft = oracle_guide_fonts::CRAFT_FONTS;
+    let craft = oracle_layout_fonts::CRAFT_FONTS;
     let mut defs = font_definitions(craft, lang);
     let system = system_ui_fonts(craft);
     if let Some(system) = system {
@@ -278,7 +329,7 @@ pub fn install_fonts(ctx: &egui::Context, lang: &str) -> bool {
 
 /// Whether [`install_fonts`] would find the installed fonts cataloged.
 pub fn system_fonts_ready() -> bool {
-    oracle_guide_fonts::FontDb::global().system_fonts_cataloged()
+    oracle_layout_fonts::FontDb::global().system_fonts_cataloged()
 }
 
 /// An installed font the UI falls back to for a script the built-in faces lack.
@@ -350,9 +401,9 @@ const SYSTEM_UI_FONTS: &[(&str, char, &[&str])] = &[
 /// Traditional Chinese (font names in the font menus), Indic, Southeast Asian and other scripts
 /// in any build. egui can't find system fonts itself; the document font scan (not on the web)
 /// does.
-fn system_ui_fonts(craft: &[oracle_guide_fonts::CraftFont]) -> Option<&'static [SystemFont]> {
+fn system_ui_fonts(craft: &[oracle_layout_fonts::CraftFont]) -> Option<&'static [SystemFont]> {
     static FACES: std::sync::OnceLock<Vec<SystemFont>> = std::sync::OnceLock::new();
-    let db = oracle_guide_fonts::FontDb::global();
+    let db = oracle_layout_fonts::FontDb::global();
     // Never wait for the font scan here (the first frame): it runs in the background, and the
     // faces are read once, when it is done.
     // (Tests wait instead, so that the fonts don't change in the middle of one.)
@@ -364,7 +415,7 @@ fn system_ui_fonts(craft: &[oracle_guide_fonts::CraftFont]) -> Option<&'static [
 }
 
 /// The faces of [`SYSTEM_UI_FONTS`] that `db` has, for the scripts `craft` doesn't cover.
-fn installed_ui_fonts(db: &oracle_guide_fonts::FontDb, craft: &[oracle_guide_fonts::CraftFont]) -> Vec<SystemFont> {
+fn installed_ui_fonts(db: &oracle_layout_fonts::FontDb, craft: &[oracle_layout_fonts::CraftFont]) -> Vec<SystemFont> {
     let mut faces: Vec<SystemFont> = Vec::new();
     for (script, sample, families) in SYSTEM_UI_FONTS {
         if craft.iter().any(|f| f.scripts.contains(script)) {
@@ -386,8 +437,8 @@ fn installed_ui_fonts(db: &oracle_guide_fonts::FontDb, craft: &[oracle_guide_fon
     faces
 }
 
-/// The UI face every family starts with (Source Sans 3; the semibold shares its line metrics).
-const UI_FONT: &[u8] = include_bytes!("../../../assets/fonts/SourceSans3-Regular.ttf");
+/// The bundled Cyrillic fallback behind Lexend (the semibold shares its line metrics).
+const UI_FONT: &[u8] = include_bytes!("../../../assets/fonts/Inter-Regular.ttf");
 
 /// The tweak that puts a fallback face's baseline on the UI face's. egui centres a fallback's
 /// line height in the primary's instead (`pos.y = ascent + (line height − its line height) / 2`),
@@ -395,7 +446,7 @@ const UI_FONT: &[u8] = include_bytes!("../../../assets/fonts/SourceSans3-Regular
 /// text beside it. Shifts are in ems of the font size.
 pub(crate) fn baseline_tweak(face: &[u8], index: u32) -> egui::FontTweak {
     let metrics = |data: &[u8], i: u32| {
-        oracle_guide_fonts::line_metrics(data, i).map(|(upem, ascent, descent, gap)| (ascent / upem, (ascent - descent + gap) / upem))
+        oracle_layout_fonts::line_metrics(data, i).map(|(upem, ascent, descent, gap)| (ascent / upem, (ascent - descent + gap) / upem))
     };
     let shift = match (metrics(UI_FONT, 0), metrics(face, index)) {
         (Some((ap, hp)), Some((af, hf))) => ap - (af + 0.5 * (hp - hf)),
@@ -449,24 +500,24 @@ pub(crate) fn add_system_fallbacks(fonts: &mut FontDefinitions, system: &[System
 /// Simplified Chinese, in the interface language's order, then Arabic. The `arabic` families
 /// put the Arabic face first for right-to-left runs. egui has no system-font discovery, so
 /// without craft-fonts CJK and Arabic UI text has no glyphs.
-pub(crate) fn font_definitions(craft: &'static [oracle_guide_fonts::CraftFont], lang: &str) -> FontDefinitions {
+pub(crate) fn font_definitions(craft: &'static [oracle_layout_fonts::CraftFont], lang: &str) -> FontDefinitions {
     let mut fonts = FontDefinitions::default();
     let add = |fonts: &mut FontDefinitions, name: &str, data: &'static [u8]| {
         fonts.font_data.insert(name.into(), Arc::new(FontData::from_static(data)));
     };
-    add(&mut fonts, "ui", include_bytes!("../../../assets/fonts/SourceSans3-Regular.ttf"));
-    add(&mut fonts, "ui-semibold", include_bytes!("../../../assets/fonts/SourceSans3-Semibold.ttf"));
+    add(&mut fonts, "ui", include_bytes!("../../../assets/fonts/Inter-Regular.ttf"));
+    add(&mut fonts, "ui-semibold", include_bytes!("../../../assets/fonts/Inter-SemiBold.ttf"));
     add(&mut fonts, "mono", include_bytes!("../../../assets/fonts/JetBrainsMono-Regular.ttf"));
     fonts.families.entry(FontFamily::Proportional).or_default().insert(0, "ui".into());
     fonts.families.entry(FontFamily::Monospace).or_default().insert(0, "mono".into());
     fonts.families.insert(FontFamily::Name("semibold".into()), vec!["ui-semibold".into(), "ui".into()]);
-    let pick = |script: &str| -> Vec<&oracle_guide_fonts::CraftFont> { craft.iter().filter(|f| f.scripts.contains(&script)).collect() };
+    let pick = |script: &str| -> Vec<&oracle_layout_fonts::CraftFont> { craft.iter().filter(|f| f.scripts.contains(&script)).collect() };
     let mut japanese = pick("Jpan");
     // BIZ UDPGothic (the UI face) first, Regular before Bold; the semibold family prefers Bold.
     japanese.sort_by_key(|f| (f.family != "BIZ UDPGothic", f.style != "Regular"));
     let chinese = pick("Hans");
     let arabic = pick("Arab");
-    let name = |f: &oracle_guide_fonts::CraftFont| format!("craft-{}-{}", f.family, f.style);
+    let name = |f: &oracle_layout_fonts::CraftFont| format!("craft-{}-{}", f.family, f.style);
     for f in japanese.iter().chain(&chinese) {
         // CJK faces sit on the Latin baseline (see `baseline_tweak`).
         fonts.font_data.insert(name(f), Arc::new(FontData { tweak: baseline_tweak(f.bytes, 0), ..FontData::from_static(f.bytes) }));
@@ -492,6 +543,7 @@ pub(crate) fn font_definitions(craft: &'static [oracle_guide_fonts::CraftFont], 
         let mut seen = std::collections::HashSet::new();
         fonts.families.insert(FontFamily::Name(family.into()), stack.filter(|n| seen.insert(n.clone())).collect());
     }
+    oracle_style::fonts::add_lexend(&mut fonts);
     fonts
 }
 
@@ -519,7 +571,7 @@ pub fn apply(ctx: &egui::Context, t: &Tokens) {
     v.window_corner_radius = CornerRadius::same(4);
     v.menu_corner_radius = CornerRadius::same(4);
     v.selection.bg_fill = t.accent_strong;
-    v.selection.stroke = Stroke::new(1.0, t.text_strong);
+    v.selection.stroke = Stroke::new(1.0, t.on_accent());
     v.hyperlink_color = t.accent;
     v.override_text_color = Some(t.text);
     craft_ui::theme::WidgetPalette { noninteractive: t.panel, inactive: t.button, hovered: t.hover, active: t.tool_active, open: t.hover }.apply_to(
@@ -530,7 +582,7 @@ pub fn apply(ctx: &egui::Context, t: &Tokens) {
     v.widgets.noninteractive.bg_stroke = Stroke::new(1.0, t.divider);
     v.widgets.inactive.bg_stroke = Stroke::new(1.0, t.field_border);
     v.widgets.hovered.bg_stroke = Stroke::new(1.0, t.field_border);
-    v.widgets.active.bg_stroke = Stroke::new(1.0, t.field_border);
+    v.widgets.active.bg_stroke = Stroke::new(1.0, t.accent);
     // InDesign buttons are outline-only.
     v.widgets.inactive.weak_bg_fill = Color32::TRANSPARENT;
     v.widgets.inactive.bg_fill = t.input;
@@ -544,6 +596,7 @@ pub fn apply(ctx: &egui::Context, t: &Tokens) {
         s.spacing.menu_margin = egui::Margin::same(4);
         s.animation_time = 0.06;
     });
+    oracle_style::chrome::finish(ctx, true);
 }
 
 impl Tokens {
@@ -559,7 +612,7 @@ mod japanese_font_tests {
         [egui::FontFamily::Proportional, egui::FontFamily::Monospace, egui::FontFamily::Name("semibold".into())]
     }
 
-    fn ctx_with(craft: &'static [oracle_guide_fonts::CraftFont]) -> egui::Context {
+    fn ctx_with(craft: &'static [oracle_layout_fonts::CraftFont]) -> egui::Context {
         let ctx = egui::Context::default();
         ctx.set_fonts(super::font_definitions(craft, "ja"));
         let mut output = ctx.run_ui(egui::RawInput::default(), |_| {});
@@ -569,11 +622,11 @@ mod japanese_font_tests {
 
     #[test]
     fn japanese_ui_glyphs_are_available_in_every_family() {
-        if oracle_guide_fonts::CRAFT_FONTS.is_empty() {
+        if oracle_layout_fonts::CRAFT_FONTS.is_empty() {
             eprintln!("skipped: built without craft-fonts (set CRAFT_FONTS_DIR to a checkout)");
             return;
         }
-        let ctx = ctx_with(oracle_guide_fonts::CRAFT_FONTS);
+        let ctx = ctx_with(oracle_layout_fonts::CRAFT_FONTS);
         ctx.fonts_mut(|fonts| {
             for family in families() {
                 let font = egui::FontId::new(13.0, family);
@@ -584,7 +637,7 @@ mod japanese_font_tests {
             }
         });
         // The UI face is BIZ UDPGothic, ahead of the Mincho faces.
-        let defs = super::font_definitions(oracle_guide_fonts::CRAFT_FONTS, "ja");
+        let defs = super::font_definitions(oracle_layout_fonts::CRAFT_FONTS, "ja");
         let stack = &defs.families[&egui::FontFamily::Proportional];
         assert_eq!(stack.iter().find(|n| n.starts_with("craft-")).map(String::as_str), Some("craft-BIZ UDPGothic-Regular"));
     }
@@ -593,7 +646,7 @@ mod japanese_font_tests {
     /// synthetic stand-in, so the test doesn't depend on the machine's fonts).
     #[test]
     fn installed_fonts_give_japanese_glyphs_without_craft_fonts() {
-        let bytes = oracle_guide_fonts::testing::font_with("DC UI Japanese", &['日', '本', '語']).unwrap();
+        let bytes = oracle_layout_fonts::testing::font_with("DC UI Japanese", &['日', '本', '語']).unwrap();
         let system = [super::SystemFont::new("Jpan", "DC UI Japanese".into(), bytes, 0)];
         let mut defs = super::font_definitions(&[], "ja");
         super::add_system_fallbacks(&mut defs, &system, "ja");
@@ -616,12 +669,12 @@ mod japanese_font_tests {
     /// at `ascent + (primary line height − its line height) / 2`, plus the tweak.
     #[test]
     fn fallback_faces_share_the_ui_baseline() {
-        let ui = oracle_guide_fonts::line_metrics(super::UI_FONT, 0).unwrap();
+        let ui = oracle_layout_fonts::line_metrics(super::UI_FONT, 0).unwrap();
         // A synthetic face with a taller ascent and a line gap (Hiragino-like proportions).
-        let base = oracle_guide_fonts::testing::font_with("DC Tall", &['日']).unwrap();
-        let tall = oracle_guide_fonts::testing::with_table_u16(base, b"hhea", 4, 1200u16).unwrap();
-        let tall = oracle_guide_fonts::testing::with_table_u16(tall, b"hhea", 8, 500u16).unwrap();
-        let face = oracle_guide_fonts::line_metrics(&tall, 0).unwrap();
+        let base = oracle_layout_fonts::testing::font_with("DC Tall", &['日']).unwrap();
+        let tall = oracle_layout_fonts::testing::with_table_u16(base, b"hhea", 4, 1200u16).unwrap();
+        let tall = oracle_layout_fonts::testing::with_table_u16(tall, b"hhea", 8, 500u16).unwrap();
+        let face = oracle_layout_fonts::line_metrics(&tall, 0).unwrap();
         let tweak = super::baseline_tweak(&tall, 0);
         let em = |m: (f32, f32, f32, f32)| (m.1 / m.0, (m.1 - m.2 + m.3) / m.0);
         let ((ap, hp), (af, hf)) = (em(ui), em(face));
@@ -637,7 +690,7 @@ mod japanese_font_tests {
     #[test]
     fn installed_korean_faces_give_hangul_glyphs() {
         let face = |family: &str, chars: &[char], script| {
-            super::SystemFont::new(script, family.into(), oracle_guide_fonts::testing::font_with(family, chars).unwrap(), 0)
+            super::SystemFont::new(script, family.into(), oracle_layout_fonts::testing::font_with(family, chars).unwrap(), 0)
         };
         let system = [face("DC UI Korean", &['한', '글'], "Kore"), face("DC UI Japanese", &['日'], "Jpan")];
         let mut defs = super::font_definitions(&[], "ja");
@@ -660,7 +713,7 @@ mod japanese_font_tests {
     #[test]
     fn interface_language_orders_the_cjk_faces() {
         let face =
-            |family: &str, script| super::SystemFont::new(script, family.into(), oracle_guide_fonts::testing::font_with(family, &['日']).unwrap(), 0);
+            |family: &str, script| super::SystemFont::new(script, family.into(), oracle_layout_fonts::testing::font_with(family, &['日']).unwrap(), 0);
         let system = [face("DC Ja", "Jpan"), face("DC Hans", "Hans"), face("DC Hant", "Hant"), face("DC Ko", "Kore")];
         for (lang, first) in [("ja", "DC Ja"), ("zh", "DC Hans"), ("zh-hant", "DC Hant"), ("ko", "DC Ko"), ("", "DC Ja")] {
             let mut defs = super::font_definitions(&[], lang);
@@ -696,9 +749,9 @@ mod japanese_font_tests {
             ("Noto Sans Thai", &['ก'][..]),
         ];
         for (i, (family, chars)) in fonts.iter().enumerate() {
-            std::fs::write(dir.join(format!("font{i}.ttf")), oracle_guide_fonts::testing::font_with(family, chars).unwrap()).unwrap();
+            std::fs::write(dir.join(format!("font{i}.ttf")), oracle_layout_fonts::testing::font_with(family, chars).unwrap()).unwrap();
         }
-        let db = oracle_guide_fonts::FontDb::with_font_dirs(vec![dir.clone()]);
+        let db = oracle_layout_fonts::FontDb::with_font_dirs(vec![dir.clone()]);
         let system = super::installed_ui_fonts(&db, &[]);
         let _ = std::fs::remove_dir_all(&dir);
         let picked: Vec<(&str, &str)> = system.iter().map(|f| (f.script, f.family.as_str())).collect();
@@ -731,10 +784,10 @@ mod japanese_font_tests {
             // (egui's has_glyph reports false for characters of the face that also supplies the
             // replacement glyph, as Source Sans Semibold does in the semibold stack.)
             let body = egui::FontId::new(13.0, egui::FontFamily::Proportional);
-            assert!(fonts.has_glyphs(&body, "Oracle Brand Guide"));
+            assert!(fonts.has_glyphs(&body, "Oracle Layout"));
             for family in families() {
                 let font = egui::FontId::new(13.0, family);
-                let galley = fonts.layout_no_wrap("日本語 Oracle Brand Guide".into(), font, egui::Color32::WHITE);
+                let galley = fonts.layout_no_wrap("日本語 Oracle Layout".into(), font, egui::Color32::WHITE);
                 assert!(galley.size().x > 0.0);
             }
         });
@@ -750,7 +803,7 @@ mod ukrainian_font_tests {
         // Check the actual installed face data, without craft-fonts or system fonts.
         // egui's has_glyph can report false for the face providing its replacement glyph.
         let definitions = super::font_definitions(&[], "uk");
-        let db = oracle_guide_fonts::FontDb::with_font_dirs(Vec::new());
+        let db = oracle_layout_fonts::FontDb::with_font_dirs(Vec::new());
         db.set_system_fallback(false);
         let characters: std::collections::HashSet<_> = crate::i18n::ukrainian_catalog()
             .iter()
@@ -759,11 +812,11 @@ mod ukrainian_font_tests {
             .filter(|c| matches!(*c, '\u{0400}'..='\u{052f}'))
             .collect();
         for (name, family, style) in
-            [("ui", "Source Sans 3", "Regular"), ("ui-semibold", "Source Sans 3", "Semibold"), ("mono", "JetBrains Mono", "Regular")]
+            [("ui", "Inter", "Regular"), ("ui-semibold", "Inter", "SemiBold"), ("mono", "JetBrains Mono", "Regular")]
         {
             let data = &definitions.font_data[name].font;
             let face = db.face(family, style);
-            assert_eq!(face.data(), data.as_ref(), "configured UI face {name}");
+            assert!(face.data() == data.as_ref(), "configured UI face {name}");
             for character in &characters {
                 assert_ne!(face.glyph_for(*character), 0, "missing {character} in {name}");
             }
@@ -777,7 +830,7 @@ mod russian_font_tests {
     fn every_catalog_cyrillic_glyph_exists_in_the_bundled_ui_fonts() {
         // Same check as for Ukrainian: the installed face data only, without craft-fonts or system fonts.
         let definitions = super::font_definitions(&[], "ru");
-        let db = oracle_guide_fonts::FontDb::with_font_dirs(Vec::new());
+        let db = oracle_layout_fonts::FontDb::with_font_dirs(Vec::new());
         db.set_system_fallback(false);
         let characters: std::collections::HashSet<_> = crate::i18n::russian_catalog()
             .iter()
@@ -786,11 +839,11 @@ mod russian_font_tests {
             .filter(|c| matches!(*c, '\u{0400}'..='\u{052f}'))
             .collect();
         for (name, family, style) in
-            [("ui", "Source Sans 3", "Regular"), ("ui-semibold", "Source Sans 3", "Semibold"), ("mono", "JetBrains Mono", "Regular")]
+            [("ui", "Inter", "Regular"), ("ui-semibold", "Inter", "SemiBold"), ("mono", "JetBrains Mono", "Regular")]
         {
             let data = &definitions.font_data[name].font;
             let face = db.face(family, style);
-            assert_eq!(face.data(), data.as_ref(), "configured UI face {name}");
+            assert!(face.data() == data.as_ref(), "configured UI face {name}");
             for character in &characters {
                 assert_ne!(face.glyph_for(*character), 0, "missing {character} in {name}");
             }

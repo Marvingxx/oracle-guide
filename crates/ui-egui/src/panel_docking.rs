@@ -15,14 +15,14 @@ struct LegacyDrag {
 
 pub(crate) fn cancel_gesture(app: &mut DesignApp, ctx: &egui::Context) {
     cancel_legacy_drag(app, ctx);
-    craft_ui::docking::cancel_drag::<String>(ctx, egui::Id::new("oracle-guide-panel-docking"));
+    craft_ui::docking::cancel_drag::<String>(ctx, egui::Id::new("oracle-layout-panel-docking"));
 }
 
 fn cancel_legacy_drag(app: &mut DesignApp, ctx: &egui::Context) -> bool {
-    let key = egui::Id::new("oracle-guide-panel-docking").with("legacy-origin");
+    let key = egui::Id::new("oracle-layout-panel-docking").with("legacy-origin");
     let previous = ctx.data_mut(|data| data.remove_temp::<LegacyDrag>(key));
     if let Some(previous) = previous {
-        craft_ui::docking::cancel_drag::<String>(ctx, egui::Id::new("oracle-guide-panel-docking"));
+        craft_ui::docking::cancel_drag::<String>(ctx, egui::Id::new("oracle-layout-panel-docking"));
         if previous.generation != app.ui.docking_generation {
             return false;
         }
@@ -125,7 +125,12 @@ fn first_root(layout: &Layout<String>, except: &str) -> Option<String> {
 }
 
 fn ensure(layout: &mut Layout<String>, panel: &str) -> Result<(), String> {
-    let anchor = first_root(layout, panel);
+    let root = Layout { root: layout.root.clone(), floating: Vec::new() };
+    let anchor = if panel == "oracleLibrary" && root.contains(&"properties".to_string()) {
+        Some("properties".to_string())
+    } else {
+        first_root(layout, panel)
+    };
     layout.apply(Action::Open { panel: panel.into(), anchor }).map_err(|e| e.to_string())
 }
 
@@ -344,6 +349,12 @@ fn open_floating_group(app: &mut DesignApp, params: &Value) -> Option<Result<Val
     Some(result)
 }
 
+/// Window > Oracle Library reveals the dock tab, preserving an explicitly detached tab.
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn open_library(app: &mut DesignApp) -> Result<Value, String> {
+    change(app, "activate", &json!({"panel": "oracleLibrary"}))
+}
+
 fn change(app: &mut DesignApp, operation: &str, params: &Value) -> Result<Value, String> {
     let panel = params.get("panel").and_then(Value::as_str).and_then(normalize).ok_or("panel must name a registered panel")?;
     if app.ui.docking.as_ref().is_some_and(|layout| !valid(layout)) {
@@ -431,7 +442,7 @@ fn change(app: &mut DesignApp, operation: &str, params: &Value) -> Result<Value,
 }
 
 pub(crate) fn show(app: &mut DesignApp, ui: &mut egui::Ui) -> bool {
-    let area = egui::Id::new("oracle-guide-panel-docking");
+    let area = egui::Id::new("oracle-layout-panel-docking");
     let changed_workspace = ui.ctx().data_mut(|data| {
         let previous = data.get_temp::<u64>(area.with("generation"));
         data.insert_temp(area.with("generation"), app.ui.docking_generation);
@@ -484,7 +495,7 @@ pub(crate) fn show(app: &mut DesignApp, ui: &mut egui::Ui) -> bool {
         style.panels_label = crate::i18n::tr(&language, "Panels").to_owned();
         style.resize_label = crate::i18n::tr(&language, "Resize panels").to_owned();
         style.resize_window_label = crate::i18n::tr(&language, "Resize panel window").to_owned();
-        let mut area = craft_ui::docking::DockArea::new(egui::Id::new("oracle-guide-panel-docking")).blocked_rects(&blocked);
+        let mut area = craft_ui::docking::DockArea::new(egui::Id::new("oracle-layout-panel-docking")).blocked_rects(&blocked);
         if let Some(panel) = &raise {
             area = area.raise_panel(panel.clone());
         }
@@ -526,7 +537,7 @@ pub(crate) fn show(app: &mut DesignApp, ui: &mut egui::Ui) -> bool {
         if !output.actions.iter().any(|action| matches!(action, Action::Move { .. } | Action::Float { .. })) && cancel_legacy_drag(app, ui.ctx()) {
             return app.ui.docking.is_some();
         }
-        ui.ctx().data_mut(|data| data.remove::<LegacyDrag>(egui::Id::new("oracle-guide-panel-docking").with("legacy-origin")));
+        ui.ctx().data_mut(|data| data.remove::<LegacyDrag>(egui::Id::new("oracle-layout-panel-docking").with("legacy-origin")));
     }
     for action in output.actions {
         if let Err(error) = app.run("window.panel.layout", json!({"action": action})) {
@@ -580,11 +591,11 @@ pub(crate) fn legacy_tab(app: &mut DesignApp, ui: &mut egui::Ui, panel: &str, re
             egui::vec2(bounds.width().clamp(240.0, 600.0), bounds.height().clamp(200.0, 600.0)),
         );
         if ensure(&mut layout, id).is_ok()
-            && craft_ui::docking::begin_drag(ui.ctx(), egui::Id::new("oracle-guide-panel-docking"), id.to_string(), source)
+            && craft_ui::docking::begin_drag(ui.ctx(), egui::Id::new("oracle-layout-panel-docking"), id.to_string(), source)
         {
             ui.ctx().data_mut(|data| {
                 data.insert_temp(
-                    egui::Id::new("oracle-guide-panel-docking").with("legacy-origin"),
+                    egui::Id::new("oracle-layout-panel-docking").with("legacy-origin"),
                     LegacyDrag {
                         layout: app.ui.docking.clone(),
                         open_panel: app.ui.open_panel.clone(),

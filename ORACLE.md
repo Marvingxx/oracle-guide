@@ -1,13 +1,31 @@
-# Oracle Brand Guide
+# Oracle Layout
 
 L'outil de mise en page et de chartes de la suite Oracle, issu de [DesignCraft](https://github.com/storytold/designcraft)
 0.11 (storytold, MIT OR Apache-2.0, `NOTICE` conservé) : mise en page, pages maîtresses, styles, liens, nuances, PDF avec fonds perdus — et
-des **guides de marque liés à un projet Oracle Brand Kit**. Local, sans compte, sans IA.
+un **module Marque** lié à un projet Oracle Brand Kit. Local, sans compte, sans IA.
+
+Jusqu'au 28/10/2026, l'app s'appelait **Oracle Brand Guide** (`tools/rename_guide_to_layout.py`) : les
+documents `.oracle-guide` s'ouvrent et s'enregistrent sous leur nom, les réglages de
+`%APPDATA%\Oracle Brand Guide` sont repris au premier lancement, et l'installeur garde le même
+`UpgradeCode` (il remplace le Brand Guide installé). Le dépôt GitHub garde le nom `oracle-guide`.
+
+## Générer depuis le Brand Kit (`cmd/brandgen.rs`, Marque › Générer)
+
+- `brand.generateGuide` : une charte complète dans un nouveau document lié (couverture, sommaire,
+  logo, déclinaisons, logo sur les couleurs, zone de protection, construction, agencements, couleurs,
+  typographies, règles, applications, contact), seulement les sections dont la marque a la matière.
+- `brand.generatePresentation` : la présentation de pistes (jusqu'à trois logos), le studio sur
+  chaque page ; par piste : ouverture, logo, logo sur couleur, construction, zone de protection,
+  planche bento.
+- `brand.gridGraphic` et `brand.bento` : une grille de logo (calculée sur les tracés du maître SVG par
+  `oracle-brandtools`, écrite dans `Grilles/` du projet, placée liée) et un bento de blocs image.
+- Les fonds où le logo est posé sont choisis par contraste avec ses vraies couleurs : un logo n'est
+  jamais posé sur sa propre couleur.
 
 ## Ce qui change par rapport à DesignCraft
 
-- Nom, identifiants, extension `.oracle-guide`, liens GitHub (Marvingxx) ; accent rouge Oracle
-  (#d31c3b) ; liens vers la suite Oracle (`tools/brand_oracle_guide.py`).
+- Nom, identifiants, extension `.oracle-layout`, liens GitHub (Marvingxx) ; accent rouge Oracle
+  (#d31c3b) ; liens vers la suite Oracle (`tools/brand_oracle_layout.py`).
 - `crates/engine/src/cmd/brand.rs` : les commandes `brand.*`, et le lien `settings.brand` du document.
 - `crates/ui-egui/src/panels/brand.rs` : le panneau **Marque** (Fenêtre › Marque, colonne des panneaux).
 
@@ -42,14 +60,14 @@ Le guide suit la marque à travers ce que la mise en page sait déjà faire :
 - **PDF/X-4 (impression)** : l'export ajoute à chaque page un espace `DefaultRGB` (profil sRGB) :
   les couleurs vectorielles RVB (logos SVG, nuances RVB) et les images non étiquetées deviennent
   gérées sous l'intention de sortie CMJN ; le gris et le CMJN restent en valeurs d'appareil. Le
-  contrôle intégré (`oracle-guide-cli validate-pdf`) passe sur le guide de démo. Aucun contrôle
+  contrôle intégré (`oracle-layout-cli validate-pdf`) passe sur le guide de démo. Aucun contrôle
   externe (preflight d'un imprimeur, Acrobat) n'a été fait.
 
 ## Tests
 
 ```sh
-cargo test -p oracle-guide-engine --lib brand::     # lien, synchronisation, modèle réutilisé, guide 8 pages → PDF
-cargo test -p oracle-guide-ui-egui --lib brand_tests # le panneau Marque
+cargo test -p oracle-layout-engine --lib brand::     # lien, synchronisation, modèle réutilisé, guide 8 pages → PDF
+cargo test -p oracle-layout-ui-egui --lib brand_tests # le panneau Marque
 python ../tools/demo_brand_guide.py                 # démo de bout en bout (données fictives)
 ```
 

@@ -1,10 +1,10 @@
 //! Stroke behind fill on text: the fill covers the inner half of a double-width stroke.
-use oracle_guide_color::{Color, swatch::Swatch};
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::build::NewDocument;
-use oracle_guide_doc::{Document, ParaFormat, SpreadRef};
-use oracle_guide_geom::Rect;
-use oracle_guide_render::{RenderOptions, Rendered, Renderer};
+use oracle_layout_color::{Color, swatch::Swatch};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::build::NewDocument;
+use oracle_layout_doc::{Document, ParaFormat, SpreadRef};
+use oracle_layout_geom::Rect;
+use oracle_layout_render::{RenderOptions, Rendered, Renderer};
 
 const WHITE: [u8; 4] = [255, 255, 255, 255];
 const RED: [u8; 4] = [255, 0, 0, 255];
@@ -21,7 +21,7 @@ fn render(fill: &str, stroke: bool, behind: bool) -> Rendered {
     d.story_mut(sid).unwrap().format_chars(0..1, |f| {
         f.over.size = Some(200.0);
         f.over.fill = Some(fill.into());
-        f.over.stroke = Some(if stroke { "Red" } else { oracle_guide_color::swatch::NONE }.into());
+        f.over.stroke = Some(if stroke { "Red" } else { oracle_layout_color::swatch::NONE }.into());
         f.over.stroke_weight = Some(WEIGHT);
         f.over.stroke_behind_fill = Some(behind);
     });
@@ -57,7 +57,7 @@ fn stroke_behind_fill_shows_only_outside_the_letter() {
     assert_eq!(behind.pixel(inner, y), BLUE, "the fill covers the stroke behind it");
     assert_eq!(behind.pixel(outer, y), RED, "the full stroke weight lies outside the letter");
     assert_eq!(behind.pixel(x - 15, y), WHITE, "and no further");
-    let hollow = render(oracle_guide_color::swatch::NONE, true, true);
+    let hollow = render(oracle_layout_color::swatch::NONE, true, true);
     assert_eq!(hollow.pixel(inner, y), WHITE, "with no fill the letter stays empty");
     assert_eq!(hollow.pixel(outer, y), RED);
 }

@@ -1,0 +1,25 @@
+[package]
+name = "oracle-layout-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "oracle-layout-cli"
+path = "src/main.rs"
+
+[dependencies]
+oracle-layout-engine = { workspace = true }
+oracle-layout-render = { workspace = true }
+oracle-layout-doc = { workspace = true }
+oracle-layout-geom = { workspace = true }
+oracle-layout-color = { workspace = true }
+oracle-layout-compose = { workspace = true }
+oracle-layout-format = { workspace = true }
+oracle-layout-pdf = { workspace = true }
+oracle-layout-mcp = { workspace = true }
+serde_json = { workspace = true }

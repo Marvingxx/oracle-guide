@@ -2,8 +2,8 @@
 //! drawn in the stroke colour, sized by the stroke weight; the path is shortened under heads that
 //! end in a point so the stroke doesn't show past the tip.
 
-use oracle_guide_geom::kurbo::{self, ParamCurve, ParamCurveArclen, ParamCurveDeriv};
-use oracle_guide_geom::{Affine, BezPath, PathSeg, Point, Vec2};
+use oracle_layout_geom::kurbo::{self, ParamCurve, ParamCurveArclen, ParamCurveDeriv};
+use oracle_layout_geom::{Affine, BezPath, PathSeg, Point, Vec2};
 
 use crate::item::{Arrowhead, Stroke};
 

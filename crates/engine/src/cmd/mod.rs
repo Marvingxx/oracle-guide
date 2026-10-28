@@ -5,6 +5,7 @@ pub mod anchors;
 mod articles;
 pub mod book;
 pub mod brand;
+pub mod brandgen;
 mod buttons;
 pub(crate) mod captions;
 mod changes;
@@ -66,8 +67,8 @@ mod variables;
 mod xml;
 mod xref;
 
-use oracle_guide_doc::{ItemId, SpreadRef};
-use oracle_guide_geom::{Point, Rect};
+use oracle_layout_doc::{ItemId, SpreadRef};
+use oracle_layout_geom::{Point, Rect};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -170,6 +171,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         let mut v = Vec::new();
         v.extend(file::specs());
         v.extend(brand::specs());
+        v.extend(brandgen::specs());
         v.extend(interchange::specs());
         v.extend(export::specs());
         v.extend(edit::specs());
@@ -268,7 +270,7 @@ pub(crate) fn text_param(p: &Value, key: &str) -> String {
         .unwrap_or("")
         .replace("\r\n", "\n")
         .replace('\r', "\n")
-        .replace('\u{B}', oracle_guide_doc::story::FORCED_LINE_BREAK.encode_utf8(&mut [0; 4]))
+        .replace('\u{B}', oracle_layout_doc::story::FORCED_LINE_BREAK.encode_utf8(&mut [0; 4]))
 }
 pub(crate) fn id_param(p: &Value, key: &str) -> Option<ItemId> {
     p.get(key).and_then(Value::as_u64).map(ItemId)
@@ -339,10 +341,10 @@ pub(crate) fn ok() -> Result<Value> {
     Ok(Value::Null)
 }
 
-pub fn file_bytes(d: &oracle_guide_doc::Document) -> Result<Vec<u8>> {
+pub fn file_bytes(d: &oracle_layout_doc::Document) -> Result<Vec<u8>> {
     file::to_bytes(d)
 }
-pub fn file_from(b: &[u8]) -> Result<oracle_guide_doc::Document> {
+pub fn file_from(b: &[u8]) -> Result<oracle_layout_doc::Document> {
     file::from_bytes(b)
 }
 pub(crate) use datamerge::sync_placeholders;

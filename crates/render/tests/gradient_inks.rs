@@ -1,11 +1,11 @@
 //! A gradient between process colours shows the inks' blend, as InDesign shows it.
-use oracle_guide_color::swatch::Swatch;
-use oracle_guide_color::{Color, Gradient, GradientKind, GradientStop, SwatchValue};
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::build::NewDocument;
-use oracle_guide_doc::{Document, Fill, Item, ItemId, Shape, SpreadRef, Stroke};
-use oracle_guide_geom::{Affine, Rect, shapes};
-use oracle_guide_render::{Placed, RenderOptions, Renderer};
+use oracle_layout_color::swatch::Swatch;
+use oracle_layout_color::{Color, Gradient, GradientKind, GradientStop, SwatchValue};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::build::NewDocument;
+use oracle_layout_doc::{Document, Fill, Item, ItemId, Shape, SpreadRef, Stroke};
+use oracle_layout_geom::{Affine, Rect, shapes};
+use oracle_layout_render::{Placed, RenderOptions, Renderer};
 
 #[test]
 fn a_cmyk_gradient_is_c50_m50_halfway() {

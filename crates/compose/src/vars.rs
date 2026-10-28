@@ -4,8 +4,8 @@
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 
-use oracle_guide_doc::vars::{Use, VarKind, var_index};
-use oracle_guide_doc::{Document, SpreadRef, Story, StoryId};
+use oracle_layout_doc::vars::{Use, VarKind, var_index};
+use oracle_layout_doc::{Document, SpreadRef, Story, StoryId};
 
 use crate::ComposedStory;
 

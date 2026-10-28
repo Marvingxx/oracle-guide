@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use oracle_guide_geom::Unit;
-pub use oracle_guide_tools::SnapView;
-use oracle_guide_tools::{Action, CanvasLayout, Cursor, Mods, Overlay, PointerEvent, PointerKind, ToolContext, ToolKey};
+use oracle_layout_geom::Unit;
+pub use oracle_layout_tools::SnapView;
+use oracle_layout_tools::{Action, CanvasLayout, Cursor, Mods, Overlay, PointerEvent, PointerKind, ToolContext, ToolKey};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -64,7 +64,7 @@ impl Session {
         if let Err(e) = self.end_composition() {
             log::warn!("ending the IME composition: {e}");
         }
-        self.tool = oracle_guide_tools::create(id);
+        self.tool = oracle_layout_tools::create(id);
         self.temp_tool = None;
         if matches!(self.tool.id(), "selection" | "directSelection") {
             self.last_selection_tool = self.tool.id();
@@ -114,7 +114,7 @@ impl Session {
 
     /// The tool pointer, key, overlay and cursor events go to: the selection tool a Cmd-held press
     /// borrowed, for the rest of that gesture, or else the chosen tool.
-    fn gesture_tool(&mut self) -> &mut dyn oracle_guide_tools::Tool {
+    fn gesture_tool(&mut self) -> &mut dyn oracle_layout_tools::Tool {
         match self.temp_tool.as_deref_mut() {
             Some(t) => t,
             None => self.tool.as_mut(),
@@ -145,7 +145,7 @@ impl Session {
             && !self.tool.busy()
             && let Some(id) = self.borrowed_selection_tool()
         {
-            self.temp_tool = Some(oracle_guide_tools::create(id));
+            self.temp_tool = Some(oracle_layout_tools::create(id));
         }
         let actions = self.with_ctx(view, |s, cx| s.gesture_tool().pointer(cx, ev)).unwrap_or_default();
         let r = self.run_actions(actions);
@@ -157,7 +157,7 @@ impl Session {
 
     /// Dispatch a temporary view tool without replacing the active tool or its state.
     /// Its actions use the same execution path as the selected tool's gestures.
-    pub fn pointer_with_tool(&mut self, tool: &mut dyn oracle_guide_tools::Tool, ev: &PointerEvent, view: ViewInfo) -> Result<()> {
+    pub fn pointer_with_tool(&mut self, tool: &mut dyn oracle_layout_tools::Tool, ev: &PointerEvent, view: ViewInfo) -> Result<()> {
         let actions = self.with_ctx(view, |_, cx| tool.pointer(cx, ev)).unwrap_or_default();
         self.run_actions(actions)
     }
@@ -177,14 +177,14 @@ impl Session {
         self.with_ctx(view, |s, cx| s.gesture_tool().overlays(cx)).unwrap_or_default()
     }
 
-    pub fn cursor(&mut self, p: oracle_guide_geom::Point, mods: Mods, view: ViewInfo) -> Cursor {
+    pub fn cursor(&mut self, p: oracle_layout_geom::Point, mods: Mods, view: ViewInfo) -> Cursor {
         // Cmd held over the canvas shows the selection tool a press would borrow.
         if mods.cmd
             && self.temp_tool.is_none()
             && !self.tool.busy()
             && let Some(id) = self.borrowed_selection_tool()
         {
-            let borrowed = oracle_guide_tools::create(id);
+            let borrowed = oracle_layout_tools::create(id);
             return self.with_ctx(view, |_, cx| borrowed.cursor(cx, p, mods)).unwrap_or_default();
         }
         self.with_ctx(view, |s, cx| s.gesture_tool().cursor(cx, p, mods)).unwrap_or_default()
@@ -192,11 +192,11 @@ impl Session {
 
     /// Canvas centres of the content grabbers the Selection tool shows: the selected frame's and
     /// the one under `hover`.
-    pub fn content_grabbers(&mut self, hover: Option<oracle_guide_geom::Point>, view: ViewInfo) -> Vec<oracle_guide_geom::Point> {
+    pub fn content_grabbers(&mut self, hover: Option<oracle_layout_geom::Point>, view: ViewInfo) -> Vec<oracle_layout_geom::Point> {
         if self.tool.id() != "selection" {
             return vec![];
         }
-        self.with_ctx(view, |_, cx| oracle_guide_tools::select::grabbers(cx, hover).into_iter().map(|(_, c)| c).collect()).unwrap_or_default()
+        self.with_ctx(view, |_, cx| oracle_layout_tools::select::grabbers(cx, hover).into_iter().map(|(_, c)| c).collect()).unwrap_or_default()
     }
 
     pub fn tool_busy(&self) -> bool {
@@ -217,7 +217,7 @@ impl Session {
             // typed, so no gesture stays open.
             match self.with_ctx(view, |s, cx| s.tool.ime_preedit(cx, "", None)) {
                 Some(cancel) => self.run_actions(cancel)?,
-                None => self.tool = oracle_guide_tools::create(self.tool.id()),
+                None => self.tool = oracle_layout_tools::create(self.tool.id()),
             }
         }
         r
@@ -245,14 +245,14 @@ impl Session {
             Some(actions) => self.run_actions(actions),
             None => {
                 // No document to type into: only the tool's state goes.
-                self.tool = oracle_guide_tools::create(self.tool.id());
+                self.tool = oracle_layout_tools::create(self.tool.id());
                 Ok(())
             }
         }
     }
 
     /// The caret line (canvas space) the IME candidate window follows.
-    pub fn tool_ime_caret(&mut self, view: ViewInfo) -> Option<(oracle_guide_geom::Point, oracle_guide_geom::Point)> {
+    pub fn tool_ime_caret(&mut self, view: ViewInfo) -> Option<(oracle_layout_geom::Point, oracle_layout_geom::Point)> {
         self.with_ctx(view, |s, cx| s.tool.ime_caret(cx)).flatten()
     }
 

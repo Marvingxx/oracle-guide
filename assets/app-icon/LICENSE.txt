@@ -1,7 +1,7 @@
-Oracle Brand Guide app icon (oracle-guide.svg, oracle-guide-small.svg and every file derived from them in this directory).
+Oracle Layout app icon (oracle-layout.svg, oracle-layout-small.svg and every file derived from them in this directory).
 
 Original artwork made for this project: the Oracle app tile, drawn by Oracle-suite/tools/make_app_icon.py
-(the letters are Archivo outlines, SIL Open Font License 1.1). Licensed like the rest of Oracle Brand Guide,
+(the letters are Archivo outlines, SIL Open Font License 1.1). Licensed like the rest of Oracle Layout,
 under either of
 
   * Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)

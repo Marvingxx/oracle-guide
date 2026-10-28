@@ -2,7 +2,7 @@
 //! numbering of the section that starts at the current page, then the document's chapter
 //! numbering. OK applies `layout.section` and `layout.chapterNumbering`.
 
-use oracle_guide_doc::{ChapterSource, NumberStyle};
+use oracle_layout_doc::{ChapterSource, NumberStyle};
 use egui::{Align, Layout, Ui, vec2};
 use serde_json::{Value, json};
 
@@ -30,7 +30,7 @@ const FIELD_W: f32 = 84.0;
 
 /// Open the dialog for the section at the page in view.
 pub(crate) fn open(app: &mut DesignApp) {
-    let Ok(chapter) = oracle_guide_engine::cmd::chapter_numbering(&app.session) else { return };
+    let Ok(chapter) = oracle_layout_engine::cmd::chapter_numbering(&app.session) else { return };
     let current = crate::canvas::current_page(app).unwrap_or(0);
     let Some(st) = app.session.active() else { return };
     let doc = &st.doc;
@@ -216,7 +216,7 @@ pub(crate) fn actions(app: &DesignApp, ui: &mut Ui) -> Option<bool> {
     let t = Tokens::get(ui.ctx());
     let size = vec2(ACTIONS_W - 8.0, 26.0);
     let mut out = None;
-    let ok = egui::Button::new(crate::rtl::widget(ui, egui::RichText::new(crate::i18n::tr(&app.ui.language, "OK")).color(egui::Color32::WHITE)))
+    let ok = egui::Button::new(crate::rtl::widget(ui, egui::RichText::new(crate::i18n::tr(&app.ui.language, "OK")).color(t.on_accent())))
         .fill(t.accent_strong)
         .corner_radius(13.0)
         .min_size(size);
@@ -236,7 +236,7 @@ mod tests {
 
     /// A four-page document with Numbering & Section Options open (on page 1).
     fn open_app() -> DesignApp {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"pages": 4})).unwrap();
         crate::menus::activate(&mut app, "layout.section", &Value::Null);
         app

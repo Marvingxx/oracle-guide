@@ -1,7 +1,7 @@
 //! IDML ruby settings (`Ruby*` attributes of styles and character ranges). `RubyFlag` and
 //! `RubyString` are read and written with the other character attributes.
-use oracle_guide_doc::CharAttrs;
-use oracle_guide_doc::ruby::{RubyAlignment, RubyOverhang, RubyParentSpacing, RubyPosition, RubyType};
+use oracle_layout_doc::CharAttrs;
+use oracle_layout_doc::ruby::{RubyAlignment, RubyOverhang, RubyParentSpacing, RubyPosition, RubyType};
 
 use crate::cjk::{overprint_in, overprint_out};
 use crate::names::num;

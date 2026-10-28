@@ -1,7 +1,7 @@
 //! Window chrome: application bar (with menus), Control panel, document tabs, status bar, start screen.
 
-use oracle_guide_doc::{Align, Content};
-use oracle_guide_geom::Unit;
+use oracle_layout_doc::{Align, Content};
+use oracle_layout_geom::Unit;
 use egui::{Color32, Sense, Stroke, vec2};
 use serde_json::json;
 
@@ -338,8 +338,8 @@ pub fn app_bar(app: &mut DesignApp, ui: &mut egui::Ui) {
             });
             // Centred title.
             let title = match app.session.active() {
-                Some(d) => format!("Oracle Brand Guide — {}", crate::rtl::isolate(&d.title())),
-                None => "Oracle Brand Guide".to_string(),
+                Some(d) => format!("Oracle Layout — {}", crate::rtl::isolate(&d.title())),
+                None => "Oracle Layout".to_string(),
             };
             // Centred between the menus and the right-hand controls; left out when it won't fit.
             let galley = crate::rtl::plain(ui.ctx(), &title, egui::FontId::proportional(11.5), t.text);
@@ -849,7 +849,7 @@ pub fn start_screen(app: &mut DesignApp, ui: &mut egui::Ui) {
         |ui| {
             ui.label(crate::rtl::widget(
                 ui,
-                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Welcome to Oracle Brand Guide")).font(semibold(28.0)).color(t.text_strong),
+                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Welcome to Oracle Layout")).font(semibold(28.0)).color(t.text_strong),
             ));
             ui.label(crate::rtl::widget(
                 ui,
@@ -863,7 +863,7 @@ pub fn start_screen(app: &mut DesignApp, ui: &mut egui::Ui) {
                     .add(
                         egui::Button::new(crate::rtl::widget(
                             ui,
-                            egui::RichText::new(crate::i18n::tr(&app.ui.language, "  New file  ")).size(14.0).color(Color32::WHITE),
+                            egui::RichText::new(crate::i18n::tr(&app.ui.language, "  New file  ")).size(14.0).color(t.on_accent()),
                         ))
                         .fill(t.accent_strong)
                         .corner_radius(16.0)
@@ -906,7 +906,7 @@ pub fn start_screen(app: &mut DesignApp, ui: &mut egui::Ui) {
             ));
             ui.add_space(8.0);
             ui.horizontal_wrapped(|ui| {
-                for p in oracle_guide_doc::build::PRESETS.iter().filter(|p| p.intent == oracle_guide_doc::Intent::Print) {
+                for p in oracle_layout_doc::build::PRESETS.iter().filter(|p| p.intent == oracle_layout_doc::Intent::Print) {
                     let (cr, resp) = ui.allocate_exact_size(vec2(120.0, 150.0), Sense::click());
                     let hov = resp.hovered();
                     ui.painter().rect_filled(cr, 6.0, if hov { t.hover } else { t.panel });
@@ -917,7 +917,7 @@ pub fn start_screen(app: &mut DesignApp, ui: &mut egui::Ui) {
                     ui.painter().text(
                         egui::pos2(cr.center().x, cr.max.y - 11.0),
                         egui::Align2::CENTER_CENTER,
-                        format!("{} × {}", oracle_guide_geom::format_measure(p.width, p.units), oracle_guide_geom::format_measure(p.height, p.units)),
+                        format!("{} × {}", oracle_layout_geom::format_measure(p.width, p.units), oracle_layout_geom::format_measure(p.height, p.units)),
                         egui::FontId::proportional(10.0),
                         t.text_dim,
                     );
@@ -974,9 +974,9 @@ fn recent_files(app: &mut DesignApp, ui: &mut egui::Ui) {
                 }
             }
             let color = if there { t.text_strong } else { t.text_dim };
-            // The name without `.oracle-guide`, on up to two lines (broken after a space or dash).
+            // The name without `.oracle-layout`, on up to two lines (broken after a space or dash).
             let label = crate::menus::recent_label(&path);
-            let name = label.strip_suffix(".oracle-guide").unwrap_or(&label).to_string();
+            let name = label.strip_suffix(".oracle-layout").unwrap_or(&label).to_string();
             let mut job = egui::text::LayoutJob::simple(name, semibold(12.0), color, cr.width() - 12.0);
             job.wrap.max_rows = 2;
             job.halign = egui::Align::Center;
@@ -1017,7 +1017,7 @@ fn recent_file_stat_at(ctx: &egui::Context, path: &str, now: f64) -> RecentStat 
     {
         return st;
     }
-    let meta = oracle_guide_engine::io::metadata(path).ok().filter(oracle_guide_engine::io::Metadata::is_file);
+    let meta = oracle_layout_engine::io::metadata(path).ok().filter(oracle_layout_engine::io::Metadata::is_file);
     let st = RecentStat { exists: meta.is_some(), modified: meta.and_then(|m| m.modified().ok()), checked: now };
     ctx.data_mut(|d| d.insert_temp(key, st.clone()));
     st
@@ -1032,7 +1032,7 @@ fn recent_preview_texture(ctx: &egui::Context, path: &str, modified: Option<std:
     {
         return tex;
     }
-    let tex = oracle_guide_engine::cmd::recent_preview(path).and_then(|p| {
+    let tex = oracle_layout_engine::cmd::recent_preview(path).and_then(|p| {
         let size = [usize::try_from(p.width).ok()?, usize::try_from(p.height).ok()?];
         (size[0].checked_mul(size[1])?.checked_mul(4)? == p.rgba.len()).then(|| {
             ctx.load_texture(format!("recent_preview:{path}"), egui::ColorImage::from_rgba_unmultiplied(size, &p.rgba), egui::TextureOptions::LINEAR)
@@ -1059,7 +1059,7 @@ mod tests {
     #[test]
     fn recent_files_are_looked_up_on_disk_every_few_seconds() {
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("a.oracle-guide");
+        let path = dir.path().join("a.oracle-layout");
         std::fs::write(&path, b"x").unwrap();
         let path = path.to_string_lossy().to_string();
         let ctx = egui::Context::default();
@@ -1071,7 +1071,7 @@ mod tests {
     }
 
     fn app() -> crate::DesignApp {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.ui.control_bar = true;
         app
     }
@@ -1104,7 +1104,7 @@ mod tests {
 
     /// A document with two frames, the Selection tool, German menus, and the search field clicked.
     fn searching() -> egui_kittest::Harness<'static, test_window::Window> {
-        let mut app = crate::DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = crate::DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.ui.language = "de".into();
         let mut h = test_window::open(app, vec2(1440.0, 900.0));
         let app = &mut h.state_mut().app;
@@ -1260,7 +1260,7 @@ mod tests {
         // Pages don't move within their spread, so there is no "Objects Move with Page" option, and
         // no "Controlled by Parent" rule until parent pages have rules of their own.
         assert!(h.query_by_label("Objects Move with Page").is_none());
-        assert!(!crate::panels::interactive::LIQUID_RULES.iter().any(|(r, _)| *r == oracle_guide_doc::LiquidRule::ControlledByParent));
+        assert!(!crate::panels::interactive::LIQUID_RULES.iter().any(|(r, _)| *r == oracle_layout_doc::LiquidRule::ControlledByParent));
         assert_eq!(crate::panels::properties::preset_name(252.0, 144.0), "US Business Card");
         h.get_by_label("Show Parent Page Overlay").click();
         h.run_steps(4);
@@ -1480,7 +1480,7 @@ mod tests {
 
     impl WindowHarness {
         fn new() -> Self {
-            let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+            let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
             app.custom_titlebar = true;
             let ctx = egui::Context::default();
             crate::theme::install_fonts(&ctx, "");
@@ -1585,7 +1585,7 @@ mod tests {
 
     #[test]
     fn native_window_actions_are_unavailable_without_custom_chrome() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         assert!(!crate::menus::enabled(&app, "window.close"));
         assert!(app.run("window.close", json!({})).is_err());
         assert!(app.pending_window_commands.is_empty());

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Oracle Layout MSI (WiX Toolset v5: `dotnet tool install -g wix`). Built by package.ps1:
+
+    wix build oracle-layout.wxs installer-ui.wxs -arch x64 -d Version=1.2.3 -d BinDir=... -d IconPath=... -o out.msi
+
+  Per-machine install into Program Files, a Start Menu shortcut, `.oracle-layout` owned by
+  Oracle Layout, and Oracle Layout offered under "Open with" for IDML (without taking over the user's
+  default app for it).
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="Oracle Layout"
+      Manufacturer="Oracle"
+      Version="$(var.Version)"
+      UpgradeCode="E1EE0C76-B5FD-49DF-8289-DFA99B3BBD05"
+      Scope="perMachine"
+      Compressed="yes"
+      Language="1033">
+    <SummaryInformation Description="Oracle Layout page layout and publishing" Manufacturer="Oracle" />
+    <!-- Same-version upgrades let successive pre-releases of one X.Y.Z replace each other
+         (MSI versions are numeric, so 1.2.3-rc.1 and 1.2.3-rc.2 are both 1.2.3). -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+        DowngradeErrorMessage="A newer version of Oracle Layout is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="OracleLayoutIcon.ico" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="OracleLayoutIcon.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/Marvingxx/oracle-guide" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/Marvingxx/oracle-guide" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/Marvingxx/oracle-guide" />
+
+    <!-- Shared native setup UI, including install/uninstall completion. -->
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="Oracle Layout" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="Oracle Layout" Level="1">
+      <ComponentGroupRef Id="OracleLayoutFiles" />
+      <ComponentGroupRef Id="CraftInstallerSettings" />
+    </Feature>
+    <!-- Shared full UI; app installation policy remains below. -->
+    <UIRef Id="CraftInstallerUI" />
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="OracleLayoutFiles" Directory="INSTALLFOLDER">
+      <Component Id="OracleLayoutApp" Guid="A1778AED-F9BB-4A70-8672-60282EA31999">
+        <File Id="OracleLayoutExe" Source="$(var.BinDir)\oracle-layout.exe" KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="Oracle Layout"
+              Description="Oracle Layout page layout and publishing" WorkingDirectory="INSTALLFOLDER" Advertise="yes"
+              Icon="OracleLayoutIcon.ico" IconIndex="0" />
+        </File>
+
+        <!-- .oracle-layout: Oracle Layout's own format; Oracle Layout is its default app. -->
+        <ProgId Id="OracleLayout.Document" Description="Oracle Layout Document" Icon="OracleLayoutExe" IconIndex="0">
+          <Extension Id="oracle-layout" ContentType="application/x-oracle-layout">
+            <Verb Id="open" Command="Open" TargetFile="OracleLayoutExe" Argument="&quot;%1&quot;" />
+          </Extension>
+        </ProgId>
+        <!-- .oracle-guide: documents saved by Oracle Brand Guide, the app's name before 28/10/2026. -->
+        <ProgId Id="OracleLayout.LegacyDocument" Description="Oracle Layout Document" Icon="OracleLayoutExe" IconIndex="0">
+          <Extension Id="oracle-guide" ContentType="application/x-oracle-layout">
+            <Verb Id="open" Command="Open" TargetFile="OracleLayoutExe" Argument="&quot;%1&quot;" />
+          </Extension>
+        </ProgId>
+        <!-- IDML: offered under "Open with", never forced as the default. -->
+        <ProgId Id="OracleLayout.Idml" Description="IDML Document" Icon="OracleLayoutExe" IconIndex="0" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\OracleLayout.Idml\shell\open\command" Value="&quot;[#OracleLayoutExe]&quot; &quot;%1&quot;" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.idml\OpenWithProgids" Name="OracleLayout.Idml" Value="" Type="string" />
+
+        <!-- "Open with" app list and the Run dialog (Win+R "oracle-layout"). -->
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\oracle-layout.exe" Name="FriendlyAppName" Value="Oracle Layout" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\oracle-layout.exe\shell\open\command" Value="&quot;[#OracleLayoutExe]&quot; &quot;%1&quot;" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\oracle-layout.exe\SupportedTypes" Name=".oracle-layout" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\oracle-layout.exe\SupportedTypes" Name=".oracle-guide" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\oracle-layout.exe\SupportedTypes" Name=".idml" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\oracle-layout.exe" Value="[#OracleLayoutExe]" Type="string" />
+      </Component>
+
+      <Component Id="OracleLayoutCli">
+        <File Id="OracleLayoutCliExe" Source="$(var.BinDir)\oracle-layout-cli.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

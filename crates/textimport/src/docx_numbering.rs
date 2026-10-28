@@ -16,7 +16,7 @@
 
 use std::collections::HashMap;
 
-use oracle_guide_doc::{ListType, NumberStyle, ParaAttrs};
+use oracle_layout_doc::{ListType, NumberStyle, ParaAttrs};
 
 use crate::docx::El;
 

@@ -1,8 +1,8 @@
 //! Frame and shape tools (Rectangle/Ellipse/Polygon Frame, Rectangle/Ellipse/Polygon, Line).
 //! Drag to draw (Shift = square/45°, Alt = from centre); click opens the size dialog.
 
-use oracle_guide_doc::SpreadRef;
-use oracle_guide_geom::{Point, Rect};
+use oracle_layout_doc::SpreadRef;
+use oracle_layout_geom::{Point, Rect};
 use serde_json::json;
 
 use crate::{Action, Cursor, Gesture, Mods, Overlay, PointerEvent, PointerKind, Snap, SnapRequest, Tool, ToolContext, rect_json, spread_json};
@@ -396,7 +396,7 @@ impl Tool for FrameTool {
                     let mut b = cx.layout.to_spread(sr, ev.pos);
                     if ev.mods.shift {
                         let v = b - sa;
-                        b = sa + oracle_guide_geom::constrain_angle(v, 45.0);
+                        b = sa + oracle_layout_geom::constrain_angle(v, 45.0);
                     }
                     if cx.snap.any() {
                         b = if ev.mods.shift {

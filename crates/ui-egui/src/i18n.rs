@@ -714,6 +714,7 @@ const TABLE: &[(&str, [&str; 5])] = &[
     ("Links", ["Verknüpfungen", "Liens", "Vínculos", "リンク", "链接"]),
     ("Edit Original", ["Original bearbeiten", "Modifier l'original", "Editar original", "元データを編集", "编辑原稿"]),
     ("Send to Oracle Edit", ["An Oracle Edit senden", "Envoyer vers Oracle Edit", "Enviar a Oracle Edit", "Oracle Edit に送る", "发送到 Oracle Edit"]),
+    ("Send to Oracle Vector", ["An Oracle Vector senden", "Envoyer vers Oracle Vector", "Enviar a Oracle Vector", "Oracle Vector に送る", "发送到 Oracle Vector"]),
     ("Send to Oracle Motion", ["An Oracle Motion senden", "Envoyer vers Oracle Motion", "Enviar a Oracle Motion", "Oracle Motion に送る", "发送到 Oracle Motion"]),
     ("Sent to {app}", ["An {app} gesendet", "Envoyé vers {app}", "Enviado a {app}", "{app} に送りました", "已发送到 {app}"]),
     (
@@ -1464,8 +1465,8 @@ const TABLE: &[(&str, [&str; 5])] = &[
         ["Spreads of up to 10 pages", "Planches de 10 pages maximum", "Spreads of up to 10 pages", "Spreads of up to 10 pages", "最多10页的跨页"],
     ),
     ("for", ["for", "pour", "por", "に対して", "行"]),
-    ("About Oracle Brand Guide", ["About Oracle Brand Guide", "À propos de Oracle Brand Guide", "About Oracle Brand Guide", "About Oracle Brand Guide", "关于 Oracle Brand Guide"]),
-    ("Quit Oracle Brand Guide", ["Oracle Brand Guide beenden", "Quitter Oracle Brand Guide", "Salir de Oracle Brand Guide", "Oracle Brand Guide を終了", "退出 Oracle Brand Guide"]),
+    ("About Oracle Layout", ["About Oracle Layout", "À propos de Oracle Layout", "About Oracle Layout", "About Oracle Layout", "关于 Oracle Layout"]),
+    ("Quit Oracle Layout", ["Oracle Layout beenden", "Quitter Oracle Layout", "Salir de Oracle Layout", "Oracle Layout を終了", "退出 Oracle Layout"]),
     ("Accept All Changes", ["Accept All Changes", "Accepter toutes les modifications", "Accept All Changes", "Accept All Changes", "接受所有更改"]),
     ("Activate Document", ["Activate Document", "Activer le document", "Activate Document", "Activate Document", "激活文档"]),
     ("Add Anchor Point", ["Add Anchor Point", "Ajouter un point d'ancrage", "Add Anchor Point", "Add Anchor Point", "添加锚点"]),
@@ -1677,12 +1678,12 @@ const TABLE: &[(&str, [&str; 5])] = &[
     ),
     ("Delete Workspace…", ["Delete Workspace…", "Supprimer l'espace de travail…", "Delete Workspace…", "Delete Workspace…", "删除工作区…"]),
     (
-        "Oracle Brand Guide Website…",
-        ["Oracle Brand Guide Website…", "Site web de Oracle Brand Guide…", "Oracle Brand Guide Website…", "Oracle Brand Guide Website…", "Oracle Brand Guide 网站…"],
+        "Oracle Layout Website…",
+        ["Oracle Layout Website…", "Site web de Oracle Layout…", "Oracle Layout Website…", "Oracle Layout Website…", "Oracle Layout 网站…"],
     ),
     (
-        "Oracle Brand Guide on GitHub…",
-        ["Oracle Brand Guide on GitHub…", "Oracle Brand Guide sur GitHub…", "Oracle Brand Guide on GitHub…", "Oracle Brand Guide on GitHub…", "Oracle Brand Guide 在 GitHub 上…"],
+        "Oracle Layout on GitHub…",
+        ["Oracle Layout on GitHub…", "Oracle Layout sur GitHub…", "Oracle Layout on GitHub…", "Oracle Layout on GitHub…", "Oracle Layout 在 GitHub 上…"],
     ),
     (
         "Detach All Objects from Parent",
@@ -2469,7 +2470,7 @@ const TABLE: &[(&str, [&str; 5])] = &[
         ["Cross-Reference Format", "Format de référence croisée", "Cross-Reference Format", "Cross-Reference Format", "交叉引用格式"],
     ),
     ("Delete Workspace", ["Delete Workspace", "Supprimer l'espace de travail", "Delete Workspace", "Delete Workspace", "删除工作区"]),
-    ("Oracle Brand Guide", ["Oracle Brand Guide", "Oracle Brand Guide", "Oracle Brand Guide", "Oracle Brand Guide", "Oracle Brand Guide"]),
+    ("Oracle Layout", ["Oracle Layout", "Oracle Layout", "Oracle Layout", "Oracle Layout", "Oracle Layout"]),
     ("Display Performance", ["Display Performance", "Performances d'affichage", "Display Performance", "Display Performance", "显示性能"]),
     ("Document Grid", ["Document Grid", "Grille du document", "Document Grid", "Document Grid", "文档网格"]),
     (
@@ -2829,8 +2830,8 @@ const TABLE: &[(&str, [&str; 5])] = &[
     ("Utilities", ["Utilities", "Utilitaires", "Utilities", "Utilities", "实用程序"]),
     ("Variable Font", ["Variable Font", "Police variable", "Variable Font", "Variable Font", "可变字体"]),
     (
-        "Welcome to Oracle Brand Guide",
-        ["Welcome to Oracle Brand Guide", "Bienvenue dans Oracle Brand Guide", "Welcome to Oracle Brand Guide", "Welcome to Oracle Brand Guide", "欢迎使用 Oracle Brand Guide"],
+        "Welcome to Oracle Layout",
+        ["Welcome to Oracle Layout", "Bienvenue dans Oracle Layout", "Welcome to Oracle Layout", "Welcome to Oracle Layout", "欢迎使用 Oracle Layout"],
     ),
     ("When Scaling", ["When Scaling", "Lors du redimensionnement", "When Scaling", "When Scaling", "缩放时"]),
     ("[Basic] (working) ▾", ["[Basic] (working) ▾", "[De base] (de travail) ▾", "[Basic] (working) ▾", "[Basic] (working) ▾", "[基本] (工作区) ▾"]),
@@ -4585,7 +4586,7 @@ pub fn count_label(lang: &str, noun: &str, count: usize) -> String {
 /// Localize reserved built-in style names only; user-defined names are document data.
 pub fn style_name<'a>(lang: &str, name: &'a str) -> &'a str {
     match name {
-        oracle_guide_doc::NO_PARA_STYLE | oracle_guide_doc::BASIC_PARAGRAPH | oracle_guide_doc::NO_CHAR_STYLE => tr(lang, name),
+        oracle_layout_doc::NO_PARA_STYLE | oracle_layout_doc::BASIC_PARAGRAPH | oracle_layout_doc::NO_CHAR_STYLE => tr(lang, name),
         _ => name,
     }
 }
@@ -4963,13 +4964,13 @@ mod tests {
             keys.extend(table.iter().map(|(key, _)| *key));
         }
         // Command labels and menu names reach `tr` from the engine and the UI command table.
-        for spec in oracle_guide_engine::command_specs() {
+        for spec in oracle_layout_engine::command_specs() {
             keys.insert(spec.label);
             keys.extend(spec.menu.iter().copied());
         }
         keys.extend(crate::menus::UI_COMMANDS.iter().map(|(_, label, _, _)| *label));
         // Tool names reach `tr` from the Tools panel.
-        keys.extend(oracle_guide_tools::TOOL_GROUPS.iter().flat_map(|group| group.iter()).map(|tool| tool.label));
+        keys.extend(oracle_layout_tools::TOOL_GROUPS.iter().flat_map(|group| group.iter()).map(|tool| tool.label));
         // So do the About window's tab names, app descriptions and the credits' column and sort labels.
         keys.extend(crate::about::ABOUT_TABS);
         keys.extend(crate::about::SIBLINGS.iter().map(|(_, _, what)| *what));
@@ -5011,7 +5012,7 @@ mod tests {
             "Auto Rename",
             "Character Style",
             "Company",
-            "Oracle Brand Guide page",
+            "Oracle Layout page",
             "Equal fixed heights for the selected rows; cell text may become overset.",
             "Found",
             "Grab bag",
@@ -5113,7 +5114,7 @@ mod tests {
 
     #[test]
     fn czech_translates_every_tool_name() {
-        for tool in oracle_guide_tools::TOOL_GROUPS.iter().flat_map(|group| group.iter()) {
+        for tool in oracle_layout_tools::TOOL_GROUPS.iter().flat_map(|group| group.iter()) {
             assert_ne!(tr("cs", tool.label), tool.label, "{}", tool.id);
             assert_eq!(tr("", tool.label), tool.label);
         }

@@ -3,7 +3,7 @@
 # exports VERSION and NFPM_ARCH.
 #
 #   nfpm package -f packaging/linux/nfpm.yaml -p deb -t dist/release/
-name: oracle-guide
+name: oracle-layout
 arch: ${NFPM_ARCH}
 platform: linux
 version: ${VERSION}
@@ -12,7 +12,7 @@ version_schema: semver
 release: 1
 section: graphics
 priority: optional
-maintainer: ${ORACLE_GUIDE_MAINTAINER}
+maintainer: ${ORACLE_LAYOUT_MAINTAINER}
 vendor: Oracle
 homepage: https://github.com/Marvingxx/oracle-guide
 license: MIT OR Apache-2.0
@@ -20,7 +20,7 @@ description: |-
   Open-source, native page layout and publishing that works the way InDesign users expect.
   Spreads and parent pages, threaded text frames, paragraph and character styles, swatches,
   text wrap and a Knuth-Plass paragraph composer; IDML import and export.
-  Includes oracle-guide-cli, a headless renderer and command runner.
+  Includes oracle-layout-cli, a headless renderer and command runner.
 
 # The binaries link only glibc and libgcc_s directly. Windowing (X11/Wayland, xkbcommon) and the
 # GPU (Vulkan, EGL/GL) are loaded at runtime, so they are dependencies/recommendations here
@@ -60,8 +60,8 @@ overrides:
       - libXrandr
       - mesa-vulkan-drivers
       - xdg-desktop-portal
-  # Named app.oracle.oracle-guide, not oracle-guide: the AUR already has oracle-guide, oracle-guide-bin and
-  # oracle-guide-git, and an AUR helper treats any installed package with an AUR name as its own and
+  # Named app.oracle.oracle-layout, not oracle-layout: the AUR already has oracle-layout, oracle-layout-bin and
+  # oracle-layout-git, and an AUR helper treats any installed package with an AUR name as its own and
   # rebuilds it on the next update. Oracle Suite also uses the bundle id to tell this package
   # (which it updates with `pacman -U`) from an AUR build (which it leaves to the AUR helper).
   # nfpm has no optdepends for Arch, so the recommends above have no equivalent here.
@@ -73,18 +73,18 @@ overrides:
       - libxkbcommon
       - vulkan-icd-loader
     provides:
-      - oracle-guide
+      - oracle-layout
     conflicts:
-      - oracle-guide
-      - oracle-guide-bin
-      - oracle-guide-git
+      - oracle-layout
+      - oracle-layout-bin
+      - oracle-layout-git
 
 contents:
-  - src: ${STAGE}/usr/bin/oracle-guide
-    dst: /usr/bin/oracle-guide
+  - src: ${STAGE}/usr/bin/oracle-layout
+    dst: /usr/bin/oracle-layout
     file_info: { mode: 0755 }
-  - src: ${STAGE}/usr/bin/oracle-guide-cli
-    dst: /usr/bin/oracle-guide-cli
+  - src: ${STAGE}/usr/bin/oracle-layout-cli
+    dst: /usr/bin/oracle-layout-cli
     file_info: { mode: 0755 }
   - src: ${STAGE}/usr/share/
     dst: /usr/share/

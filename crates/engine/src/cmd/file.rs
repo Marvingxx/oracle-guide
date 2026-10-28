@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use oracle_guide_doc::build::{NewDocument, PRESETS};
-use oracle_guide_doc::{Asset, AssetId, Content, Document, Graphic, Item, ItemId, PdfCrop, Selection, Shape};
-use oracle_guide_geom::{Affine, Rect, shapes};
+use oracle_layout_doc::build::{NewDocument, PRESETS};
+use oracle_layout_doc::{Asset, AssetId, Content, Document, Graphic, Item, ItemId, PdfCrop, Selection, Shape};
+use oracle_layout_geom::{Affine, Rect, shapes};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, always, bad, cmd, f64_or, has_doc, ok, str_param};
@@ -39,9 +39,9 @@ pub fn specs() -> Vec<CommandSpec> {
             ok()
         }),
         cmd!(noundo "file.open", "Open…", ["File"], Some("Cmd+O"),
-            "{path} — a Oracle Brand Guide or IDML file (recognised by its content, so the extension may be missing), or an InDesign .indd/.indt (recognised by its signature or extension, converted to IDML; its conversion warnings join `warnings`); the fonts in a `Document Fonts` folder beside it load first → {index, documentFonts: faces loaded, warnings: font files skipped, GREP styles whose pattern can't compile, Based on Parent links cleared and, for IDML and InDesign files, package parts missing}",
+            "{path} — a Oracle Layout or IDML file (recognised by its content, so the extension may be missing), or an InDesign .indd/.indt (recognised by its signature or extension, converted to IDML; its conversion warnings join `warnings`); the fonts in a `Document Fonts` folder beside it load first → {index, documentFonts: faces loaded, warnings: font files skipped, GREP styles whose pattern can't compile, Based on Parent links cleared and, for IDML and InDesign files, package parts missing}",
             always, file_open),
-        cmd!(noundo "file.openBytes", "Open Bytes", [], None, "{name, base64} — Oracle Brand Guide JSON, an IDML package or an InDesign .indd/.indt → {index, warnings}", always, file_open_bytes),
+        cmd!(noundo "file.openBytes", "Open Bytes", [], None, "{name, base64} — Oracle Layout JSON, an IDML package or an InDesign .indd/.indt → {index, warnings}", always, file_open_bytes),
         cmd!(noundo "file.openRecent", "Open Recent File", [], None,
             "{index} — reopen entry `index` of File › Open Recent (as file.open); a file that is gone is an error and stays listed",
             has_recent, file_open_recent),
@@ -52,9 +52,9 @@ pub fn specs() -> Vec<CommandSpec> {
             s.prefs.recent_files.clear();
             ok()
         }),
-        cmd!(noundo "file.save", "Save", ["File"], Some("Cmd+S"), "{path?} — a `path` without the .oracle-guide extension gets it → {path: the file written, bytes}", has_doc, file_save),
-        cmd!(noundo "file.saveAs", "Save As…", ["File"], Some("Cmd+Shift+S"), "{path} — a path without the .oracle-guide extension gets it → {path: the file written, bytes}", has_doc, file_save),
-        cmd!(noundo "file.saveACopy", "Save a Copy…", ["File"], None, "{path} — writes the document without changing which file it is or its unsaved state; a path without the .oracle-guide extension gets it → {path: the file written, bytes}", has_doc, |s, p| {
+        cmd!(noundo "file.save", "Save", ["File"], Some("Cmd+S"), "{path?} — a `path` without the .oracle-layout extension gets it → {path: the file written, bytes}", has_doc, file_save),
+        cmd!(noundo "file.saveAs", "Save As…", ["File"], Some("Cmd+Shift+S"), "{path} — a path without the .oracle-layout extension gets it → {path: the file written, bytes}", has_doc, file_save),
+        cmd!(noundo "file.saveACopy", "Save a Copy…", ["File"], None, "{path} — writes the document without changing which file it is or its unsaved state; a path without the .oracle-layout extension gets it → {path: the file written, bytes}", has_doc, |s, p| {
             let path = str_param(p, "path").ok_or_else(|| bad("file.saveACopy", "missing `path`"))?;
             let path = with_document_extension(path);
             let mut copy = (*s.doc()?.doc).clone();
@@ -78,7 +78,7 @@ pub fn specs() -> Vec<CommandSpec> {
             let dir = recovery_dir(s, p, FolderAccess::ReadWrite)?;
             Ok(json!({"opened": crate::recovery::open(s, &dir)?}))
         }),
-        cmd!(query "file.serialize", "Serialize", [], None, "{} → {base64, bytes} the .oracle-guide file", has_doc, |s, _| {
+        cmd!(query "file.serialize", "Serialize", [], None, "{} → {base64, bytes} the .oracle-layout file", has_doc, |s, _| {
             let st = s.doc()?;
             // Preview fill is session state. Serialize the unfilled template.
             let doc = st.preview_stash.as_deref().unwrap_or(st.doc.as_ref());
@@ -95,12 +95,12 @@ pub fn specs() -> Vec<CommandSpec> {
             ok()
         }),
         cmd!(query "snippet.export", "Export Selection as Snippet", ["File", "Export"], None,
-            "{path?} — the selected items (with their stories, styles and images) as a .oracle-guide snippet; no path: {base64}", super::has_selection, snippet_export),
+            "{path?} — the selected items (with their stories, styles and images) as a .oracle-layout snippet; no path: {base64}", super::has_selection, snippet_export),
         cmd!(query "place.styles", "Import Options: Styles", [], None,
         "{path | base64, name} → {paragraph: [name], character: [name], conflicts: [name]} — the styles a Word/RTF file brings (for styleMap / styleConflicts)",
         has_doc, |s, p| {
             let (bytes, name, _) = read_source(p)?;
-            let imp = oracle_guide_textimport::import(&name, &bytes).map_err(|e| bad("place.styles", e.to_string()))?;
+            let imp = oracle_layout_textimport::import(&name, &bytes).map_err(|e| bad("place.styles", e.to_string()))?;
             let st = &s.doc()?.doc.styles;
             let conflicts: Vec<&str> = imp
                 .para_styles
@@ -135,7 +135,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Place…",
             ["File"],
             Some("Cmd+D"),
-            "{path?|base64?, name?, frame?: id (place into), spread?, x?, y?, width?: finite number > 0 (null: absent), height? (video/audio), pdfPage?: n (1-based, Image Import Options), pdfCrop?: crop|art|trim|bleed|media|contentVisible|contentAll (the box the graphic shows; `width` is the whole page's), loadCursor? (with no frame to fill and no x/y, an image loads into the place cursor, as File › Place), layoutPage?: n (IDML / .oracle-guide: that page's objects as a group), page?, rect?: [x0,y0,x1,y1] (text: a new frame there), autoflow? (threads one frame per page column from the first frame on, adding pages until the text fits), removeStyles?, styleMap?: {imported name: document style}, styleConflicts?: useExisting|redefine|autoRename, link? (keep the file linked in the Links panel; default: the linkTextFiles preference)} — places an image into `frame` when given; otherwise any explicit x/y/spread/width creates a new frame; otherwise uses the selected empty or graphic frame, or creates a new frame; text files (.txt, .docx, .rtf, .md) and Excel workbooks (.xlsx, as a table) go into the insertion point, the selected frame or a new frame on `page`/`rect`",
+            "{path?|base64?, name?, frame?: id (place into), spread?, x?, y?, width?: finite number > 0 (null: absent), height? (video/audio), pdfPage?: n (1-based, Image Import Options), pdfCrop?: crop|art|trim|bleed|media|contentVisible|contentAll (the box the graphic shows; `width` is the whole page's), loadCursor? (with no frame to fill and no x/y, an image loads into the place cursor, as File › Place), layoutPage?: n (IDML / .oracle-layout: that page's objects as a group), page?, rect?: [x0,y0,x1,y1] (text: a new frame there), autoflow? (threads one frame per page column from the first frame on, adding pages until the text fits), removeStyles?, styleMap?: {imported name: document style}, styleConflicts?: useExisting|redefine|autoRename, link? (keep the file linked in the Links panel; default: the linkTextFiles preference)} — places an image into `frame` when given; otherwise any explicit x/y/spread/width creates a new frame; otherwise uses the selected empty or graphic frame, or creates a new frame; text files (.txt, .docx, .rtf, .md) and Excel workbooks (.xlsx, as a table) go into the insertion point, the selected frame or a new frame on `page`/`rect`",
             has_doc,
             file_place
         ),
@@ -148,7 +148,7 @@ thread_local! {
     pub(crate) static FAIL_TO_BYTES: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
-/// The document as `.oracle-guide` bytes, or an error when it can't be written; never an empty file.
+/// The document as `.oracle-layout` bytes, or an error when it can't be written; never an empty file.
 pub fn to_bytes(d: &Document) -> Result<Vec<u8>> {
     save_bytes(d, None)
 }
@@ -159,25 +159,25 @@ fn save_bytes(d: &Document, preview: Option<&[u8]>) -> Result<Vec<u8>> {
     if FAIL_TO_BYTES.with(std::cell::Cell::get) {
         return Err(EngineError::Other("could not write the document: injected failure".into()));
     }
-    oracle_guide_format::save_with_preview(d, preview).map_err(|e| EngineError::Other(format!("could not write the document: {e}")))
+    oracle_layout_format::save_with_preview(d, preview).map_err(|e| EngineError::Other(format!("could not write the document: {e}")))
 }
 
-/// `path` ending in `.oracle-guide`: the extension is added when it is missing or another one, so
+/// `path` ending in `.oracle-layout`: the extension is added when it is missing or another one, so
 /// the file opens from the file manager. A path without a file name is left for the write to fail.
 pub fn with_document_extension(path: &str) -> String {
     let p = std::path::Path::new(path);
     let ext = p.extension().and_then(|e| e.to_str());
-    if p.file_name().is_none() || ext.is_some_and(|e| e.eq_ignore_ascii_case(oracle_guide_format::EXTENSION)) {
+    if p.file_name().is_none() || ext.is_some_and(oracle_layout_format::is_document_extension) {
         return path.to_string();
     }
-    format!("{path}.{}", oracle_guide_format::EXTENSION)
+    format!("{path}.{}", oracle_layout_format::EXTENSION)
 }
 
-/// Whether `bytes` are a document `file.open` reads: a Oracle Brand Guide package or an IDML package.
+/// Whether `bytes` are a document `file.open` reads: a Oracle Layout package or an IDML package.
 /// The first [`DOCUMENT_SNIFF_BYTES`] of a file are enough for packages that start with their
 /// `mimetype` entry, as both formats write them.
 pub fn is_document(bytes: &[u8]) -> bool {
-    oracle_guide_idml::is_idml(bytes) || oracle_guide_format::starts_oracle_guide(bytes) || oracle_guide_format::is_oracle_guide(bytes)
+    oracle_layout_idml::is_idml(bytes) || oracle_layout_format::starts_oracle_layout(bytes) || oracle_layout_format::is_oracle_layout(bytes)
 }
 
 /// How much of a file [`is_document`] needs to recognise a package by its `mimetype` entry.
@@ -195,7 +195,7 @@ fn to_bytes_with_preview(d: &Document, cache: &crate::Cache) -> Result<Vec<u8>> 
         (side.is_finite() && side > 0.0).then_some(PREVIEW_PX / side)
     });
     let png =
-        preview.and_then(|scale| oracle_guide_render::Renderer::new().render_page(d, cache, 0, scale, false, &Default::default())).map(|r| r.to_png());
+        preview.and_then(|scale| oracle_layout_render::Renderer::new().render_page(d, cache, 0, scale, false, &Default::default())).map(|r| r.to_png());
     save_bytes(d, png.as_deref())
 }
 
@@ -203,10 +203,10 @@ pub fn from_bytes(b: &[u8]) -> Result<Document> {
     load_bytes(b).map(|(d, _)| d)
 }
 
-/// Read `.oracle-guide` bytes and repair what a hand-edited file can get wrong without failing the
+/// Read `.oracle-layout` bytes and repair what a hand-edited file can get wrong without failing the
 /// open, with a warning for each repair.
 fn load_bytes(b: &[u8]) -> Result<(Document, Vec<String>)> {
-    let mut d = oracle_guide_format::load(b).map_err(|e| EngineError::Other(e.to_string()))?;
+    let mut d = oracle_layout_format::load(b).map_err(|e| EngineError::Other(e.to_string()))?;
     let warnings = d.fix_parent_bases();
     Ok((d, warnings))
 }
@@ -364,7 +364,7 @@ fn apply_settings(nd: &mut NewDocument, p: &Value) {
     nd.gutter = f64_or(p, "gutter", nd.gutter);
     nd.primary_text_frame = p.get("primaryTextFrame").and_then(Value::as_bool).unwrap_or(nd.primary_text_frame);
     match p.get("margins") {
-        Some(Value::Number(n)) => nd.margins = oracle_guide_doc::Margins::uniform(n.as_f64().unwrap_or(36.0)),
+        Some(Value::Number(n)) => nd.margins = oracle_layout_doc::Margins::uniform(n.as_f64().unwrap_or(36.0)),
         Some(v @ Value::Object(_)) => {
             if let Ok(m) = serde_json::from_value(v.clone()) {
                 nd.margins = m;
@@ -409,14 +409,14 @@ pub struct RecentPreview {
     pub rgba: Vec<u8>,
 }
 
-/// The picture a `.oracle-guide` file saved of its first page; None when the file is gone, isn't
+/// The picture a `.oracle-layout` file saved of its first page; None when the file is gone, isn't
 /// ours, or was saved before files had one (it gets one when saved again).
 pub fn recent_preview(path: &str) -> Option<RecentPreview> {
     #[cfg(not(target_arch = "wasm32"))]
     {
         // Only the zip directory and the preview entry are read, not the whole document.
-        let png = oracle_guide_format::read_preview(std::io::BufReader::new(crate::io::open(path).ok()?))?;
-        let img = oracle_guide_images::decode_rgba(&png)?;
+        let png = oracle_layout_format::read_preview(std::io::BufReader::new(crate::io::open(path).ok()?))?;
+        let img = oracle_layout_images::decode_rgba(&png)?;
         let (width, height) = img.dimensions();
         Some(RecentPreview { width, height, rgba: img.into_raw() })
     }
@@ -470,12 +470,12 @@ fn open_path(s: &mut Session, p: &Value) -> Result<Value> {
         // The content decides first: a file's extension may be missing or wrong. The extension
         // then routes files whose content isn't recognised to the reader that explains why.
         let ext = std::path::Path::new(path).extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
-        let native = oracle_guide_format::is_oracle_guide(&bytes) || bytes.trim_ascii_start().starts_with(b"{");
-        if oracle_guide_idml::is_idml(&bytes) || (!native && (super::interchange::is_indd(path, &bytes) || ext == "idml")) {
+        let native = oracle_layout_format::is_oracle_layout(&bytes) || bytes.trim_ascii_start().starts_with(b"{");
+        if oracle_layout_idml::is_idml(&bytes) || (!native && (super::interchange::is_indd(path, &bytes) || ext == "idml")) {
             return super::interchange::open_idml(s, p);
         }
-        if !native && ext != oracle_guide_format::EXTENSION {
-            return Err(bad("file.open", format!("{path}: not a Oracle Brand Guide or IDML file")));
+        if !native && !oracle_layout_format::is_document_extension(&ext) {
+            return Err(bad("file.open", format!("{path}: not a Oracle Layout or IDML file")));
         }
         let (mut d, mut warnings) = load_bytes(&bytes)?;
         super::interchange::resolve_packaged_links(&mut d, Some(std::path::Path::new(path)));
@@ -501,12 +501,12 @@ fn open_path(s: &mut Session, p: &Value) -> Result<Value> {
 pub(crate) fn load_document_fonts(d: &mut Document, path: &str) -> (Option<Arc<crate::FontScope>>, usize, Vec<String>) {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        use oracle_guide_fonts::DOCUMENT_FONTS_FOLDER;
+        use oracle_layout_fonts::DOCUMENT_FONTS_FOLDER;
         let Some(folder) = std::path::Path::new(path).parent().map(document_fonts_folder) else { return (None, 0, Vec::new()) };
         // A document's folder is the agent's to name (a recovery entry or a book lists paths too):
         // the fonts crate asks the automation roots about the folder and each font file, so fonts
         // outside the read root stay unloaded.
-        let r = oracle_guide_fonts::FontDb::global().load_document_fonts(&folder, &|p| crate::file_access::check_read(p));
+        let r = oracle_layout_fonts::FontDb::global().load_document_fonts(&folder, &|p| crate::file_access::check_read(p));
         d.font_scope = r.scope;
         let scope = (r.scope != 0).then(|| Arc::new(crate::FontScope(r.scope)));
         (scope, r.faces, r.skipped.into_iter().map(|s| format!("{DOCUMENT_FONTS_FOLDER}: {s}")).collect())
@@ -522,7 +522,7 @@ pub(crate) fn load_document_fonts(d: &mut Document, path: &str) -> (Option<Arc<c
 /// `Document fonts`, and file systems on Linux are case-sensitive. The exact name wins.
 #[cfg(not(target_arch = "wasm32"))]
 fn document_fonts_folder(dir: &std::path::Path) -> std::path::PathBuf {
-    use oracle_guide_fonts::DOCUMENT_FONTS_FOLDER;
+    use oracle_layout_fonts::DOCUMENT_FONTS_FOLDER;
     let exact = dir.join(DOCUMENT_FONTS_FOLDER);
     if crate::io::is_dir(&exact) {
         return exact;
@@ -539,7 +539,7 @@ fn file_open_bytes(s: &mut Session, p: &Value) -> Result<Value> {
     let b = base64_decode(str_param(p, "base64").unwrap_or(""));
     // IDML packages are recognised by their stored `mimetype` first entry, INDD files by their
     // signature (or their name).
-    if oracle_guide_idml::is_idml(&b) || super::interchange::is_indd(str_param(p, "name").unwrap_or_default(), &b) {
+    if oracle_layout_idml::is_idml(&b) || super::interchange::is_indd(str_param(p, "name").unwrap_or_default(), &b) {
         return super::interchange::open_idml(s, p);
     }
     let (mut d, warnings) = load_bytes(&b)?;
@@ -605,19 +605,19 @@ fn file_place(s: &mut Session, p: &Value) -> Result<Value> {
         s.ui_requests.push(crate::UiRequest::Pick { purpose: "place".into(), params: json!({}) });
         return ok();
     };
-    // A page of another layout (IDML or Oracle Brand Guide): its objects, as one group.
+    // A page of another layout (IDML or Oracle Layout): its objects, as one group.
     let lname = name.to_lowercase();
-    if lname.ends_with(".idml") || lname.ends_with(".oracle-guide") {
+    if lname.ends_with(".idml") || lname.ends_with(".oracle-layout") || lname.ends_with(".oracle-guide") {
         return place_layout_page(s, p, &name, &bytes);
     }
     // Keep the EPS source for link comparison; rendering uses its preview at the bounding box size.
     let eps_size = eps_size(&bytes, "file.place")?;
     // Video and sound: a media frame (Window › Interactive › Media).
-    if let Some(mime) = oracle_guide_doc::media_mime(&name) {
+    if let Some(mime) = oracle_layout_doc::media_mime(&name) {
         return super::media::place_media(s, p, name, mime, bytes, link);
     }
     // Text files (plain, Word, RTF) flow into frames.
-    if oracle_guide_textimport::is_text_file(&name) {
+    if oracle_layout_textimport::is_text_file(&name) {
         return super::place_text::place_text(s, p, &name, &bytes, link, before);
     }
     let want_w = p
@@ -631,12 +631,12 @@ fn file_place(s: &mut Session, p: &Value) -> Result<Value> {
         })
         .transpose()?;
     // Image Import Options: which page of a PDF (1-based).
-    if oracle_guide_render::is_pdf(&bytes) {
-        oracle_guide_render::check_pdf_input_size(bytes.len()).map_err(|e| bad("file.place", e.to_string()))?;
+    if oracle_layout_render::is_pdf(&bytes) {
+        oracle_layout_render::check_pdf_input_size(bytes.len()).map_err(|e| bad("file.place", e.to_string()))?;
     }
     let pdf_page = match p.get("pdfPage").and_then(Value::as_u64) {
-        Some(n) if oracle_guide_render::is_pdf(&bytes) => {
-            let count = oracle_guide_render::pdf_page_count(&bytes).unwrap_or(1);
+        Some(n) if oracle_layout_render::is_pdf(&bytes) => {
+            let count = oracle_layout_render::pdf_page_count(&bytes).unwrap_or(1);
             let invalid_page = || bad("file.place", format!("the PDF has {count} page(s)"));
             let one_based = usize::try_from(n).map_err(|_| invalid_page())?;
             if one_based == 0 || one_based > count {
@@ -648,22 +648,22 @@ fn file_place(s: &mut Session, p: &Value) -> Result<Value> {
         _ => 0,
     };
     let (pw, ph) = match pdf_page {
-        0 => oracle_guide_render::image_size(&bytes).ok_or_else(|| bad("file.place", "unsupported or corrupt image"))?,
-        n => oracle_guide_render::pdf_page_size(&bytes, n as usize)
+        0 => oracle_layout_render::image_size(&bytes).ok_or_else(|| bad("file.place", "unsupported or corrupt image"))?,
+        n => oracle_layout_render::pdf_page_size(&bytes, n as usize)
             .map(|(w, h)| (w.round().max(1.0) as u32, h.round().max(1.0) as u32))
             .ok_or_else(|| bad("file.place", "can't read that PDF page"))?,
     };
     // 72 ppi by default unless the file says otherwise; scale so it fits the page when huge. PDF pages
     // and SVGs keep their exact size: rounding it to whole points would stretch them unevenly.
-    let (nw, nh) = eps_size.or_else(|| oracle_guide_render::natural_size(&bytes, pdf_page as usize)).unwrap_or((pw as f64, ph as f64));
+    let (nw, nh) = eps_size.or_else(|| oracle_layout_render::natural_size(&bytes, pdf_page as usize)).unwrap_or((pw as f64, ph as f64));
     // Image Import Options › Crop to: the graphic spans that box of the PDF page.
-    let is_pdf = oracle_guide_render::is_pdf(&bytes);
+    let is_pdf = oracle_layout_render::is_pdf(&bytes);
     let pdf_crop = match str_param(p, "pdfCrop") {
         Some(k) if is_pdf => PdfCrop::from_name(k)
             .ok_or_else(|| bad("file.place", format!("unknown pdfCrop `{k}` (crop, art, trim, bleed, media, contentVisible, contentAll)")))?,
         _ => PdfCrop::Crop,
     };
-    let mime = oracle_guide_render::image_mime(&bytes).to_string();
+    let mime = oracle_layout_render::image_mime(&bytes).to_string();
     let mut asset = Asset { page: pdf_page, name, mime, link, data: Arc::new(bytes), pixels: Some((pw, ph)), pdf_crop, ..Default::default() };
     // The graphic's natural size: the box in points (the whole page when the box can't be found,
     // and then the document says so).
@@ -700,7 +700,7 @@ fn file_place(s: &mut Session, p: &Value) -> Result<Value> {
             }
         };
         let id = if let Some(fid) = target_frame {
-            let it = d.item_mut(fid).ok_or(oracle_guide_doc::DocError::NoItem(fid))?;
+            let it = d.item_mut(fid).ok_or(oracle_layout_doc::DocError::NoItem(fid))?;
             let r = it.inner_bounds();
             // Fill the frame proportionally once. Auto-Fit stays off, so resizing the frame crops.
             let k = (r.width() / bw).max(r.height() / bh);
@@ -794,10 +794,10 @@ pub fn base64_decode(s: &str) -> Vec<u8> {
 /// keeps its crop choice (a missing link relinked later gets its box then).
 pub(crate) fn crop_pdf(a: &mut Asset) -> Option<(f64, f64)> {
     a.pdf_box = None;
-    if a.pdf_crop == PdfCrop::Crop || !oracle_guide_render::is_pdf(&a.data) {
+    if a.pdf_crop == PdfCrop::Crop || !oracle_layout_render::is_pdf(&a.data) {
         return None;
     }
-    let (frac, size) = oracle_guide_render::pdf_crop_box(&a.data, a.page as usize, a.pdf_crop)?;
+    let (frac, size) = oracle_layout_render::pdf_crop_box(&a.data, a.page as usize, a.pdf_crop)?;
     a.pdf_box = Some(frac);
     Some(size)
 }
@@ -816,10 +816,10 @@ pub(crate) fn read_source(p: &Value) -> Result<(Vec<u8>, String, Option<String>)
 }
 
 fn eps_size(bytes: &[u8], command: &str) -> Result<Option<(f64, f64)>> {
-    if !oracle_guide_images::is_eps(bytes) {
+    if !oracle_layout_images::is_eps(bytes) {
         return Ok(None);
     }
-    oracle_guide_images::eps_size(bytes)
+    oracle_layout_images::eps_size(bytes)
         .map(Some)
         .ok_or_else(|| bad(command, "the EPS has a missing or invalid bounding box (dimensions must be 0.001–20,000 points)"))
 }
@@ -842,9 +842,9 @@ pub(crate) fn validate_placement(size: (f64, f64), frame: Rect, xf: Affine, comm
 
 fn place_load(s: &mut Session, p: &Value) -> Result<Value> {
     let (bytes, name, link) = read_source(p)?;
-    let (pw, ph) = oracle_guide_render::image_size(&bytes).ok_or_else(|| bad("place.load", "unsupported or corrupt image"))?;
-    let natural = eps_size(&bytes, "place.load")?.or_else(|| oracle_guide_render::natural_size(&bytes, 0)).unwrap_or((pw as f64, ph as f64));
-    let mime = oracle_guide_render::image_mime(&bytes).to_string();
+    let (pw, ph) = oracle_layout_render::image_size(&bytes).ok_or_else(|| bad("place.load", "unsupported or corrupt image"))?;
+    let natural = eps_size(&bytes, "place.load")?.or_else(|| oracle_layout_render::natural_size(&bytes, 0)).unwrap_or((pw as f64, ph as f64));
+    let mime = oracle_layout_render::image_mime(&bytes).to_string();
     let asset = Asset { name, mime, link, data: Arc::new(bytes), pixels: Some((pw, ph)), ..Default::default() };
     load_cursor(s, asset, natural)
 }
@@ -876,7 +876,7 @@ fn place_drop(s: &mut Session, p: &Value) -> Result<Value> {
     let (x, y) = (super::f64_or(p, "x", 0.0), super::f64_or(p, "y", 0.0));
     let d = &s.doc()?.doc;
     let (frame_rect, xf, auto_fit) = if let Some(fid) = frame {
-        let r = d.item(fid).ok_or(oracle_guide_doc::DocError::NoItem(fid))?.inner_bounds();
+        let r = d.item(fid).ok_or(oracle_layout_doc::DocError::NoItem(fid))?.inner_bounds();
         let k = (r.width() / nw).max(r.height() / nh);
         let xf = Affine::translate((r.x0 + (r.width() - nw * k) / 2.0, r.y0 + (r.height() - nh * k) / 2.0)) * Affine::scale(k);
         // Fill the frame proportionally once. Auto-Fit stays off, so resizing the frame crops.
@@ -909,7 +909,7 @@ fn place_drop(s: &mut Session, p: &Value) -> Result<Value> {
             fill: Default::default(),
         });
         let id = if let Some(fid) = frame {
-            d.item_mut(fid).ok_or(oracle_guide_doc::DocError::NoItem(fid))?.content = graphic;
+            d.item_mut(fid).ok_or(oracle_layout_doc::DocError::NoItem(fid))?.content = graphic;
             fid
         } else {
             let id = ItemId(d.alloc());
@@ -930,7 +930,7 @@ fn place_drop(s: &mut Session, p: &Value) -> Result<Value> {
     Ok(r)
 }
 
-/// The selection as `.oracle-guide` snippet bytes.
+/// The selection as `.oracle-layout` snippet bytes.
 pub(crate) fn snippet_bytes(s: &mut Session) -> Result<Vec<u8>> {
     to_bytes(&super::edit::clip_doc(s)?)
 }
@@ -948,7 +948,7 @@ fn snippet_export(s: &mut Session, p: &Value) -> Result<Value> {
     }
 }
 
-/// File › Place of an IDML or Oracle Brand Guide document: the objects of one page (`layoutPage`,
+/// File › Place of an IDML or Oracle Layout document: the objects of one page (`layoutPage`,
 /// 1-based) grouped, top-left at x/y (default: the source position on the first page).
 fn place_layout_page(s: &mut Session, p: &Value, name: &str, bytes: &[u8]) -> Result<Value> {
     const ID: &str = "file.place";
@@ -971,8 +971,8 @@ fn place_layout_page(s: &mut Session, p: &Value, name: &str, bytes: &[u8]) -> Re
     }
     let to = super::spread_param(p, ID)?;
     let off = match (p.get("x").and_then(Value::as_f64), p.get("y").and_then(Value::as_f64)) {
-        (Some(x), Some(y)) => oracle_guide_geom::Vec2::new(x - pr.x0, y - pr.y0),
-        _ => oracle_guide_geom::Vec2::new(-pr.x0, -pr.y0),
+        (Some(x), Some(y)) => oracle_layout_geom::Vec2::new(x - pr.x0, y - pr.y0),
+        _ => oracle_layout_geom::Vec2::new(-pr.x0, -pr.y0),
     };
     let placed = s.edit(|d, sel| {
         for sw in &src.swatches {
@@ -1008,8 +1008,8 @@ pub(crate) fn snippet_place(s: &mut Session, p: &Value) -> Result<Value> {
     let sr = super::spread_param(p, "snippet.place")?;
     let bounds = ids.iter().filter_map(|i| src.item(*i).map(|it| it.bounds())).reduce(|a, b| a.union(b)).unwrap_or(Rect::ZERO);
     let off = match (p.get("x").and_then(Value::as_f64), p.get("y").and_then(Value::as_f64)) {
-        (Some(x), Some(y)) => oracle_guide_geom::Vec2::new(x - bounds.x0, y - bounds.y0),
-        _ => oracle_guide_geom::Vec2::ZERO,
+        (Some(x), Some(y)) => oracle_layout_geom::Vec2::new(x - bounds.x0, y - bounds.y0),
+        _ => oracle_layout_geom::Vec2::ZERO,
     };
     s.edit(|d, sel| {
         // Bring over styles and swatches the snippet uses that this document lacks.
@@ -1104,8 +1104,8 @@ fn file_revert(s: &mut Session, _: &Value) -> Result<Value> {
 
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod image_place_tests {
-    use oracle_guide_doc::{Content, ItemId};
-    use oracle_guide_geom::Rect;
+    use oracle_layout_doc::{Content, ItemId};
+    use oracle_layout_geom::Rect;
     use serde_json::{Value, json};
 
     use crate::Session;
@@ -1116,7 +1116,7 @@ mod image_place_tests {
 
     fn image_file_with_color(red: u8) -> std::io::Result<tempfile::NamedTempFile> {
         let file = tempfile::Builder::new().suffix(".png").tempfile()?;
-        let png = oracle_guide_render::Rendered { width: 40, height: 20, pixels: [red, 90, 180, 255].repeat(800) }.to_png();
+        let png = oracle_layout_render::Rendered { width: 40, height: 20, pixels: [red, 90, 180, 255].repeat(800) }.to_png();
         std::fs::write(file.path(), png)?;
         Ok(file)
     }
@@ -1300,7 +1300,7 @@ mod image_place_tests {
             }
             let document = &session.doc()?.doc;
             let id = ItemId(selected["id"].as_u64().ok_or_else(|| crate::EngineError::Other("frame.create returned no numeric id".into()))?);
-            let item = document.item(id).ok_or(oracle_guide_doc::DocError::NoItem(id))?;
+            let item = document.item(id).ok_or(oracle_layout_doc::DocError::NoItem(id))?;
             assert_eq!(item.bounds(), Rect::new(100.0, 120.0, 200.0, 220.0));
             assert!(matches!(&item.content, Content::Graphic(_)), "placed frame must be graphic");
             let Content::Graphic(content) = &item.content else {
@@ -1385,7 +1385,7 @@ mod new_document_tests {
         let d = &s.doc().unwrap().doc;
         assert_eq!(d.page_count(), 4);
         assert!(!d.settings.facing_pages && d.settings.primary_text_frame);
-        assert_eq!(d.settings.horizontal_units, oracle_guide_geom::Unit::Millimeters);
+        assert_eq!(d.settings.horizontal_units, oracle_layout_geom::Unit::Millimeters);
         assert_eq!(d.settings.bleed, [9.0, 9.0, 0.0, 9.0]);
         assert_eq!(d.page(0).unwrap().margins.outside, 50.0);
         assert!(d.title.starts_with("Untitled-"), "the preset's name isn't the document's");
@@ -1410,8 +1410,8 @@ mod new_document_tests {
         let p = json!({"preset": "A4", "intent": "web", "units": "pixels", "startPage": 4, "bleed": [9, 0, 3, 6], "slug": 18});
         s.execute("file.new", &p).unwrap();
         let d = &s.doc().unwrap().doc;
-        assert_eq!(d.settings.intent, oracle_guide_doc::Intent::Web);
-        assert_eq!(d.settings.horizontal_units, oracle_guide_geom::Unit::Pixels);
+        assert_eq!(d.settings.intent, oracle_layout_doc::Intent::Web);
+        assert_eq!(d.settings.horizontal_units, oracle_layout_geom::Unit::Pixels);
         assert_eq!(d.settings.bleed, [9.0, 0.0, 3.0, 6.0]);
         assert_eq!(d.settings.slug, [18.0; 4]);
         assert_eq!(d.page_name(0), "4");
@@ -1485,7 +1485,7 @@ mod pdf_crop_tests {
         let size = |t: &mut Session, crop: &str| {
             t.execute("edit.deselectAll", &json!({})).unwrap();
             let r = t.execute("file.place", &json!({"base64": b64, "name": "a.pdf", "pdfCrop": crop, "width": 630, "x": 0, "y": 0})).unwrap();
-            let id = oracle_guide_doc::ItemId(r["id"].as_u64().unwrap());
+            let id = oracle_layout_doc::ItemId(r["id"].as_u64().unwrap());
             t.doc().unwrap().doc.item(id).unwrap().bounds()
         };
         let full = size(&mut t, "crop");
@@ -1513,17 +1513,17 @@ mod pdf_crop_tests {
         t.execute("file.new", &json!({})).unwrap();
         // `width` is the whole page's (630 pt with its bleed): half size.
         let r = t.execute("file.place", &json!({"base64": b64, "name": "a.pdf", "pdfCrop": "trim", "width": 315, "x": 100, "y": 100})).unwrap();
-        let id = oracle_guide_doc::ItemId(r["id"].as_u64().unwrap());
+        let id = oracle_layout_doc::ItemId(r["id"].as_u64().unwrap());
         let d = t.doc().unwrap().doc.clone();
         let it = d.item(id).unwrap();
         let g = it.graphic().unwrap().clone();
         let a = &d.assets[&g.asset];
-        assert_eq!(a.pdf_crop, oracle_guide_doc::PdfCrop::Trim);
+        assert_eq!(a.pdf_crop, oracle_layout_doc::PdfCrop::Trim);
         let b = a.shown_box().unwrap();
         let want = [9.0 / 630.0, 9.0 / 810.0, 621.0 / 630.0, 801.0 / 810.0];
         assert!(b.iter().zip(want).all(|(x, y)| (x - y).abs() < 1e-4), "{b:?}");
         assert!((g.size.0 - 612.0).abs() < 1e-3 && (g.size.1 - 792.0).abs() < 1e-3, "{:?}", g.size);
-        let shown = (it.xf * g.xf).transform_rect_bbox(oracle_guide_geom::Rect::new(0.0, 0.0, g.size.0, g.size.1));
+        let shown = (it.xf * g.xf).transform_rect_bbox(oracle_layout_geom::Rect::new(0.0, 0.0, g.size.0, g.size.1));
         let fb = it.bounds();
         for (x, y) in [(shown.x0, 100.0), (shown.y0, 100.0), (shown.x1, 406.0), (shown.y1, 496.0), (fb.x1, 406.0), (fb.y1, 496.0)] {
             assert!((x - y).abs() < 1e-3, "{shown:?} {fb:?}");
@@ -1531,12 +1531,12 @@ mod pdf_crop_tests {
 
         // A frame larger than the graphic still shows only the trim box.
         t.edit(|d, _| {
-            d.item_mut(id).unwrap().path = oracle_guide_geom::shapes::rectangle(oracle_guide_geom::Rect::new(90.0, 90.0, 416.0, 506.0));
+            d.item_mut(id).unwrap().path = oracle_layout_geom::shapes::rectangle(oracle_layout_geom::Rect::new(90.0, 90.0, 416.0, 506.0));
             Ok(())
         })
         .unwrap();
         let d = t.doc().unwrap().doc.clone();
-        let mut rr = oracle_guide_render::Renderer::new();
+        let mut rr = oracle_layout_render::Renderer::new();
         rr.threads = 0;
         let img = rr.render_page(&d, &t.cache, 0, 1.0, false, &Default::default()).unwrap();
         let dark = |x: u32, y: u32| img.pixel(x, y)[0] < 60;
@@ -1556,12 +1556,12 @@ mod pdf_crop_tests {
         let mut t = Session::new();
         t.execute("file.new", &json!({})).unwrap();
         let r = t.execute("file.place", &json!({"base64": b64, "name": "a.pdf", "width": 100.4, "x": 0, "y": 0})).unwrap();
-        let id = oracle_guide_doc::ItemId(r["id"].as_u64().unwrap());
+        let id = oracle_layout_doc::ItemId(r["id"].as_u64().unwrap());
         let d = &t.doc().unwrap().doc;
         let it = d.item(id).unwrap();
         let b = it.bounds();
         assert!((b.width() - 100.4).abs() < 1e-3 && (b.height() - 50.4).abs() < 1e-3, "{b:?}");
-        let oracle_guide_doc::Content::Graphic(g) = &it.content else { panic!("not a graphic") };
+        let oracle_layout_doc::Content::Graphic(g) = &it.content else { panic!("not a graphic") };
         assert!((g.size.0 - 100.4).abs() < 1e-3 && (g.size.1 - 50.4).abs() < 1e-3, "{:?}", g.size);
     }
 }
@@ -1578,14 +1578,14 @@ mod layout_place_tests {
         a.execute("file.new", &json!({"pages": 2})).unwrap();
         a.execute("frame.create", &json!({"rect": [100, 100, 200, 150], "content": "text", "text": "From page one", "caret": false})).unwrap();
         a.execute("frame.create", &json!({"rect": [300, 400, 350, 450]})).unwrap();
-        let idml = oracle_guide_idml::export_idml(&a.doc().unwrap().doc);
+        let idml = oracle_layout_idml::export_idml(&a.doc().unwrap().doc);
         let b64 = super::base64_encode(&idml);
         let mut b = Session::new();
         b.execute("file.new", &json!({})).unwrap();
         let r = b.execute("file.place", &json!({"base64": b64, "name": "src.idml", "layoutPage": 1, "x": 0, "y": 0})).unwrap();
         assert_eq!(r["items"], 2);
         let d = &b.doc().unwrap().doc;
-        let g = d.item(oracle_guide_doc::ItemId(r["id"].as_u64().unwrap())).unwrap();
+        let g = d.item(oracle_layout_doc::ItemId(r["id"].as_u64().unwrap())).unwrap();
         assert_eq!(g.children().len(), 2, "one group");
         let bb = g.bounds();
         assert!((bb.x0 - 100.0).abs() < 1e-6 && (bb.y0 - 100.0).abs() < 1e-6, "page top-left at 0,0: {bb:?}");
@@ -1606,7 +1606,7 @@ mod save_tests {
         let dir = std::env::temp_dir().join(format!("dc-save-atomic-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("doc.oracle-guide");
+        let path = dir.join("doc.oracle-layout");
         std::fs::write(&path, vec![b'x'; 1 << 20]).unwrap();
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
@@ -1616,9 +1616,9 @@ mod save_tests {
         let saved = super::from_bytes(&std::fs::read(&path).unwrap()).unwrap();
         assert!(saved.stories.values().any(|st| st.text == "Saved whole"));
         let names: Vec<_> = std::fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name()).collect();
-        assert_eq!(names, ["doc.oracle-guide"], "no temporary file is left");
+        assert_eq!(names, ["doc.oracle-layout"], "no temporary file is left");
         // A folder that doesn't exist: an error naming the path.
-        let missing = dir.join("missing").join("doc.oracle-guide");
+        let missing = dir.join("missing").join("doc.oracle-layout");
         let e = s.execute("file.save", &json!({"path": missing.to_string_lossy()})).unwrap_err();
         assert!(e.to_string().contains("missing"), "{e}");
         let _ = std::fs::remove_dir_all(&dir);
@@ -1631,7 +1631,7 @@ mod save_tests {
         let dir = std::env::temp_dir().join(format!("dc-save-fails-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("doc.oracle-guide");
+        let path = dir.join("doc.oracle-layout");
         let recovery = dir.join("recovery");
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
@@ -1639,13 +1639,13 @@ mod save_tests {
         let before = std::fs::read(&path).unwrap();
         s.execute("frame.create", &json!({"rect": [36, 36, 300, 200], "content": "text", "text": "Unsaved", "caret": false})).unwrap();
         s.execute("file.recovery.save", &json!({"dir": recovery.to_string_lossy()})).unwrap();
-        let checkpoint = recovery.join(format!("{}.oracle-guide", s.doc().unwrap().uid));
+        let checkpoint = recovery.join(format!("{}.oracle-layout", s.doc().unwrap().uid));
         assert!(checkpoint.exists());
 
         super::FAIL_TO_BYTES.with(|f| f.set(true));
         let save = s.execute("file.save", &json!({}));
-        let copy = s.execute("file.saveACopy", &json!({"path": dir.join("copy.oracle-guide").to_string_lossy()}));
-        let save_as = s.execute("file.saveAs", &json!({"path": dir.join("other.oracle-guide").to_string_lossy()}));
+        let copy = s.execute("file.saveACopy", &json!({"path": dir.join("copy.oracle-layout").to_string_lossy()}));
+        let save_as = s.execute("file.saveAs", &json!({"path": dir.join("other.oracle-layout").to_string_lossy()}));
         let serialized = s.execute("file.serialize", &json!({}));
         super::FAIL_TO_BYTES.with(|f| f.set(false));
 
@@ -1653,9 +1653,9 @@ mod save_tests {
         assert!(e.to_string().contains("could not write the document"), "{e}");
         assert!(copy.is_err() && serialized.is_err(), "no empty copy and no empty download");
         assert_eq!(std::fs::read(&path).unwrap(), before, "the saved file is untouched");
-        assert!(!dir.join("copy.oracle-guide").exists());
-        assert!(save_as.is_err() && !dir.join("other.oracle-guide").exists());
-        assert!(!s.prefs.recent_files.iter().any(|p| p.ends_with("other.oracle-guide")), "a failed Save As isn't a recent file");
+        assert!(!dir.join("copy.oracle-layout").exists());
+        assert!(save_as.is_err() && !dir.join("other.oracle-layout").exists());
+        assert!(!s.prefs.recent_files.iter().any(|p| p.ends_with("other.oracle-layout")), "a failed Save As isn't a recent file");
         assert!(s.doc().unwrap().is_dirty(), "the document still has unsaved changes");
         assert!(checkpoint.exists(), "the recovery checkpoint stays");
         let _ = std::fs::remove_dir_all(&dir);
@@ -1675,13 +1675,13 @@ mod save_tests {
         let dir = std::env::temp_dir().join(format!("dc-save-non-finite-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("doc.oracle-guide");
+        let path = dir.join("doc.oracle-layout");
         s.execute("file.save", &json!({"path": path.to_string_lossy()})).unwrap();
         let before = std::fs::read(&path).unwrap();
-        let id = oracle_guide_doc::ItemId(s.execute("frame.create", &json!({"rect": [36, 36, 300, 200]})).unwrap()["id"].as_u64().unwrap());
+        let id = oracle_layout_doc::ItemId(s.execute("frame.create", &json!({"rect": [36, 36, 300, 200]})).unwrap()["id"].as_u64().unwrap());
         let st = s.doc_mut().unwrap();
-        let infinite = oracle_guide_geom::Rect::new(36.0, 36.0, f64::INFINITY, 200.0);
-        std::sync::Arc::make_mut(&mut st.doc).item_mut(id).unwrap().path = oracle_guide_geom::shapes::rectangle(infinite);
+        let infinite = oracle_layout_geom::Rect::new(36.0, 36.0, f64::INFINITY, 200.0);
+        std::sync::Arc::make_mut(&mut st.doc).item_mut(id).unwrap().path = oracle_layout_geom::shapes::rectangle(infinite);
         let e = s.execute("file.save", &json!({})).unwrap_err();
         assert!(e.to_string().contains("not a finite number"), "{e}");
         assert_eq!(std::fs::read(&path).unwrap(), before, "the saved file is untouched");
@@ -1694,8 +1694,8 @@ mod save_tests {
 mod document_fonts_tests {
     use std::path::{Path, PathBuf};
 
-    use oracle_guide_fonts::testing::font_with;
-    use oracle_guide_fonts::{DOCUMENT_FONTS_FOLDER, FaceRef, FontDb, FontSource};
+    use oracle_layout_fonts::testing::font_with;
+    use oracle_layout_fonts::{DOCUMENT_FONTS_FOLDER, FaceRef, FontDb, FontSource};
     use serde_json::{Value, json};
 
     use crate::Session;
@@ -1724,7 +1724,7 @@ mod document_fonts_tests {
         let mut s = Session::new();
         new_document(&mut s, family, text);
         if path.extension().is_some_and(|e| e == "idml") {
-            std::fs::write(path, oracle_guide_idml::export_idml(&s.doc().unwrap().doc)).unwrap();
+            std::fs::write(path, oracle_layout_idml::export_idml(&s.doc().unwrap().doc)).unwrap();
         } else {
             s.execute("file.save", &json!({"path": path.to_string_lossy()})).unwrap();
         }
@@ -1755,11 +1755,11 @@ mod document_fonts_tests {
     #[test]
     fn opening_a_document_loads_its_document_fonts() {
         const FAMILY: &str = "DocFont Open Test";
-        let dir = temp_dir("oracle-guide");
+        let dir = temp_dir("oracle-layout");
         let fonts = dir.join(DOCUMENT_FONTS_FOLDER);
         std::fs::write(fonts.join("open.ttf"), font_with(FAMILY, &['H', 'e', 'l', 'o']).unwrap()).unwrap();
         std::fs::write(fonts.join("broken.otf"), b"not a font").unwrap();
-        let path = dir.join("Brochure.oracle-guide");
+        let path = dir.join("Brochure.oracle-layout");
         write_document(&path, FAMILY);
         assert!(!FontDb::global().has_family(FAMILY));
 
@@ -1792,7 +1792,7 @@ mod document_fonts_tests {
         // The extension decides (any case), not the bytes: no InDesign-made file is needed.
         let dir = temp_dir("indd");
         let path = dir.join("Brochure.INDD");
-        std::fs::write(&path, b"not a Oracle Brand Guide document").unwrap();
+        std::fs::write(&path, b"not a Oracle Layout document").unwrap();
         let mut s = Session::new();
         let e = s.execute("file.open", &json!({"path": path.to_string_lossy()})).unwrap_err().to_string();
         assert!(e.contains("InDesign Markup (IDML)") && !e.contains("expected value"), "{e}");
@@ -1825,8 +1825,8 @@ mod document_fonts_tests {
         let dir = std::env::temp_dir().join(format!("dc-open-docfonts-none-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("Plain.oracle-guide");
-        write_document(&path, oracle_guide_fonts::DEFAULT_FAMILY);
+        let path = dir.join("Plain.oracle-layout");
+        write_document(&path, oracle_layout_fonts::DEFAULT_FAMILY);
         let r = Session::new().execute("file.open", &json!({"path": path.to_string_lossy()})).unwrap();
         assert_eq!((r["documentFonts"].clone(), r["warnings"].clone()), (json!(0), json!([])), "{r}");
         let _ = std::fs::remove_dir_all(&dir);
@@ -1836,12 +1836,12 @@ mod document_fonts_tests {
         const FAMILY: &str = "DocFont Scoped";
         let (a, b) = (temp_dir("scoped-a"), temp_dir("scoped-b"));
         std::fs::write(a.join(DOCUMENT_FONTS_FOLDER).join("scoped.ttf"), font_with(FAMILY, &['H', 'e', 'l', 'o']).unwrap()).unwrap();
-        write_document(&a.join("A.oracle-guide"), FAMILY);
-        write_document(&b.join("B.oracle-guide"), FAMILY);
+        write_document(&a.join("A.oracle-layout"), FAMILY);
+        write_document(&b.join("B.oracle-layout"), FAMILY);
 
         let mut s = Session::new();
-        assert_eq!(open(&mut s, &a.join("A.oracle-guide"))["documentFonts"], 1);
-        assert_eq!(open(&mut s, &b.join("B.oracle-guide"))["documentFonts"], 0);
+        assert_eq!(open(&mut s, &a.join("A.oracle-layout"))["documentFonts"], 1);
+        assert_eq!(open(&mut s, &b.join("B.oracle-layout"))["documentFonts"], 0);
         // B, open at the same time, doesn't have A's font.
         assert_eq!(font_entry(&mut s, FAMILY)["missing"], true);
         assert!(glyph_faces(&s).iter().all(|(_, f)| f.family != FAMILY), "{:?}", glyph_faces(&s));
@@ -1861,12 +1861,12 @@ mod document_fonts_tests {
         std::fs::write(&a_font, font_with(FAMILY, &['a', 'b']).unwrap()).unwrap();
         std::fs::write(&b_font, font_with(FAMILY, &['b']).unwrap()).unwrap();
         // The same words in both: the word cache must not hand one document's shaping to the other.
-        write_document_with(&a.join("A.oracle-guide"), FAMILY, "ab ab ab");
-        write_document_with(&b.join("B.oracle-guide"), FAMILY, "ab ab ab");
+        write_document_with(&a.join("A.oracle-layout"), FAMILY, "ab ab ab");
+        write_document_with(&b.join("B.oracle-layout"), FAMILY, "ab ab ab");
 
         let mut s = Session::new();
-        open(&mut s, &a.join("A.oracle-guide"));
-        open(&mut s, &b.join("B.oracle-guide"));
+        open(&mut s, &a.join("A.oracle-layout"));
+        open(&mut s, &b.join("B.oracle-layout"));
         // Fallback fonts for the `a` B's font lacks: never A's font.
         s.execute("document.preferences", &json!({"glyphFallback": true})).unwrap();
         let in_b = glyph_faces(&s);
@@ -1891,7 +1891,7 @@ mod document_fonts_tests {
         const FAMILY: &str = "DocFont Closed";
         let dir = temp_dir("closed");
         std::fs::write(dir.join(DOCUMENT_FONTS_FOLDER).join("closed.ttf"), font_with(FAMILY, &['H', 'e', 'l', 'o']).unwrap()).unwrap();
-        let path = dir.join("Closed.oracle-guide");
+        let path = dir.join("Closed.oracle-layout");
         write_document(&path, FAMILY);
 
         let mut s = Session::new();
@@ -1914,7 +1914,7 @@ mod document_fonts_tests {
         const FAMILY: &str = "DocFont Reverted";
         let dir = temp_dir("revert");
         std::fs::write(dir.join(DOCUMENT_FONTS_FOLDER).join("revert.ttf"), font_with(FAMILY, &['H', 'e', 'l', 'o']).unwrap()).unwrap();
-        let path = dir.join("Revert.oracle-guide");
+        let path = dir.join("Revert.oracle-layout");
         write_document(&path, FAMILY);
 
         let mut s = Session::new();
@@ -1931,7 +1931,7 @@ mod document_fonts_tests {
         const FAMILY: &str = "DocFont Linked";
         let dir = temp_dir("linked");
         std::fs::write(dir.join(DOCUMENT_FONTS_FOLDER).join("linked.ttf"), font_with(FAMILY, &['H', 'e', 'l', 'o']).unwrap()).unwrap();
-        let path = dir.join("Linked.oracle-guide");
+        let path = dir.join("Linked.oracle-layout");
         write_document(&path, FAMILY);
 
         let mut s = Session::new();
@@ -1956,9 +1956,9 @@ mod extension_tests {
 
     #[test]
     fn the_document_extension_is_added_when_missing_or_different() {
-        assert_eq!(with_document_extension("/a/Brochure"), "/a/Brochure.oracle-guide");
-        assert_eq!(with_document_extension("/a/Brochure.idml"), "/a/Brochure.idml.oracle-guide");
-        assert_eq!(with_document_extension("/a/v1.2 Brochure"), "/a/v1.2 Brochure.oracle-guide");
+        assert_eq!(with_document_extension("/a/Brochure"), "/a/Brochure.oracle-layout");
+        assert_eq!(with_document_extension("/a/Brochure.idml"), "/a/Brochure.idml.oracle-layout");
+        assert_eq!(with_document_extension("/a/v1.2 Brochure"), "/a/v1.2 Brochure.oracle-layout");
         assert_eq!(with_document_extension("/a/Brochure.Oracle-Guide"), "/a/Brochure.Oracle-Guide");
         assert_eq!(with_document_extension("/a/.."), "/a/..");
     }
@@ -1972,13 +1972,13 @@ mod extension_tests {
         s.execute("file.new", &json!({})).unwrap();
 
         let bare = dir.join("Brochure");
-        let written = dir.join("Brochure.oracle-guide");
+        let written = dir.join("Brochure.oracle-layout");
         let r = s.execute("file.saveAs", &json!({"path": bare.to_string_lossy()})).unwrap();
         assert_eq!(r["path"], json!(written.to_string_lossy()), "{r}");
         assert!(written.is_file() && !bare.exists());
         assert_eq!(s.doc().unwrap().path.as_deref(), written.to_str());
         let r = s.execute("file.saveACopy", &json!({"path": dir.join("Copy").to_string_lossy()})).unwrap();
-        assert_eq!(r["path"], json!(dir.join("Copy.oracle-guide").to_string_lossy()), "{r}");
+        assert_eq!(r["path"], json!(dir.join("Copy.oracle-layout").to_string_lossy()), "{r}");
 
         // A native file without the extension opens, and Save writes back to that same file.
         std::fs::rename(&written, &bare).unwrap();
@@ -1990,7 +1990,7 @@ mod extension_tests {
 
         // An IDML package without the extension opens as IDML, unsaved.
         let idml = dir.join("Package");
-        std::fs::write(&idml, oracle_guide_idml::export_idml(&s.doc().unwrap().doc)).unwrap();
+        std::fs::write(&idml, oracle_layout_idml::export_idml(&s.doc().unwrap().doc)).unwrap();
         assert!(is_document(&std::fs::read(&idml).unwrap()) && is_document(&std::fs::read(&bare).unwrap()));
         // The start of the file is enough.
         for path in [&idml, &bare] {
@@ -2004,7 +2004,7 @@ mod extension_tests {
         std::fs::write(&notes, b"plain text").unwrap();
         assert!(!is_document(b"plain text"));
         let e = t.execute("file.open", &json!({"path": notes.to_string_lossy()})).unwrap_err();
-        assert!(e.to_string().contains("not a Oracle Brand Guide or IDML file"), "{e}");
+        assert!(e.to_string().contains("not a Oracle Layout or IDML file"), "{e}");
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
@@ -2033,15 +2033,15 @@ mod recent_tests {
     fn open_and_save_order_the_list_without_duplicates() {
         let dir = temp_dir("order");
         let mut s = Session::new();
-        let a = saved(&mut s, &dir.join("a.oracle-guide"));
-        let b = saved(&mut s, &dir.join("b.oracle-guide"));
+        let a = saved(&mut s, &dir.join("a.oracle-layout"));
+        let b = saved(&mut s, &dir.join("b.oracle-layout"));
         assert_eq!(s.prefs.recent_files, [b.clone(), a.clone()]);
         s.execute("file.open", &json!({"path": a})).unwrap();
         assert_eq!(s.prefs.recent_files, [a.clone(), b.clone()], "reopening moves it to the front, once");
-        s.execute("file.saveACopy", &json!({"path": dir.join("copy.oracle-guide").to_string_lossy()})).unwrap();
+        s.execute("file.saveACopy", &json!({"path": dir.join("copy.oracle-layout").to_string_lossy()})).unwrap();
         assert_eq!(s.prefs.recent_files, [a.clone(), b.clone()], "a copy isn't a recent file");
         let rows = s.execute("file.recentFiles", &json!({})).unwrap();
-        assert_eq!(rows[0], json!({"path": a, "name": "a.oracle-guide", "exists": true}));
+        assert_eq!(rows[0], json!({"path": a, "name": "a.oracle-layout", "exists": true}));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -2049,8 +2049,8 @@ mod recent_tests {
     fn open_recent_reopens_and_a_missing_file_is_an_error_that_keeps_it_listed() {
         let dir = temp_dir("open");
         let mut s = Session::new();
-        let a = saved(&mut s, &dir.join("a.oracle-guide"));
-        let b = saved(&mut s, &dir.join("b.oracle-guide"));
+        let a = saved(&mut s, &dir.join("a.oracle-layout"));
+        let b = saved(&mut s, &dir.join("b.oracle-layout"));
         let r = s.execute("file.openRecent", &json!({"index": 1})).unwrap();
         assert_eq!(s.documents()[r["index"].as_u64().unwrap() as usize].path.as_deref(), Some(a.as_str()));
         assert_eq!(s.prefs.recent_files, [a.clone(), b.clone()]);
@@ -2075,18 +2075,18 @@ mod recent_tests {
     fn saved_files_carry_a_first_page_preview() {
         let dir = temp_dir("preview");
         let mut s = Session::new();
-        let a = saved(&mut s, &dir.join("a.oracle-guide"));
+        let a = saved(&mut s, &dir.join("a.oracle-layout"));
         let p = super::recent_preview(&a).expect("a preview");
         assert_eq!(p.width.max(p.height), super::PREVIEW_PX as u32);
         assert_eq!(p.rgba.len(), (p.width * p.height * 4) as usize);
         assert!(p.rgba.as_chunks::<4>().0.iter().any(|px| px[3] == 255), "the page is drawn, not left transparent");
-        let copy = dir.join("copy.oracle-guide");
+        let copy = dir.join("copy.oracle-layout");
         s.execute("file.saveACopy", &json!({"path": copy.to_string_lossy()})).unwrap();
         assert!(super::recent_preview(&copy.to_string_lossy()).is_some(), "Save a Copy has one too");
         // Files without one (saved before previews), missing files and other files have none.
-        let old = dir.join("old.oracle-guide");
+        let old = dir.join("old.oracle-layout");
         std::fs::write(&old, super::to_bytes(&s.doc().unwrap().doc).unwrap()).unwrap();
-        for path in [old, dir.join("gone.oracle-guide"), dir.clone()] {
+        for path in [old, dir.join("gone.oracle-layout"), dir.clone()] {
             assert!(super::recent_preview(&path.to_string_lossy()).is_none(), "{path:?}");
         }
         let _ = std::fs::remove_dir_all(&dir);
@@ -2096,16 +2096,16 @@ mod recent_tests {
     fn the_list_keeps_at_most_the_preferred_count() {
         let mut s = Session::new();
         for i in 0..30 {
-            s.prefs.note_recent_file(&format!("/work/{i}.oracle-guide"));
+            s.prefs.note_recent_file(&format!("/work/{i}.oracle-layout"));
         }
         assert_eq!(s.prefs.recent_files.len(), 20, "default: 20");
-        assert_eq!(s.prefs.recent_files[0], "/work/29.oracle-guide");
+        assert_eq!(s.prefs.recent_files[0], "/work/29.oracle-layout");
         s.execute("prefs.set", &json!({"recentFilesMax": 3})).unwrap();
-        assert_eq!(s.prefs.recent_files, ["/work/29.oracle-guide", "/work/28.oracle-guide", "/work/27.oracle-guide"]);
+        assert_eq!(s.prefs.recent_files, ["/work/29.oracle-layout", "/work/28.oracle-layout", "/work/27.oracle-layout"]);
         assert_eq!(s.execute("prefs.set", &json!({"recentFilesMax": 4_000_000_000u64})).unwrap()["recentFilesMax"], crate::MAX_RECENT_FILES);
         assert!(s.execute("prefs.set", &json!({"recentFilesMax": -1})).is_err());
         s.execute("prefs.set", &json!({"recentFilesMax": 0})).unwrap();
-        s.prefs.note_recent_file("/work/new.oracle-guide");
+        s.prefs.note_recent_file("/work/new.oracle-layout");
         assert!(s.prefs.recent_files.is_empty(), "0 keeps no list");
     }
 
@@ -2113,10 +2113,10 @@ mod recent_tests {
     #[test]
     fn the_list_survives_a_restart() {
         let mut s = Session::new();
-        s.prefs.note_recent_file("/work/a.oracle-guide");
+        s.prefs.note_recent_file("/work/a.oracle-layout");
         let saved = serde_json::to_vec(&s.prefs).unwrap();
         let back: crate::Prefs = serde_json::from_slice(&saved).unwrap();
-        assert_eq!(back.recent_files, ["/work/a.oracle-guide"]);
+        assert_eq!(back.recent_files, ["/work/a.oracle-layout"]);
         assert_eq!(back.recent_files_max, 20);
         let old: crate::Prefs = serde_json::from_slice(br#"{"recoveryMinutes": 2.0}"#).unwrap();
         assert!(old.recent_files.is_empty(), "older prefs.json without the list still load");

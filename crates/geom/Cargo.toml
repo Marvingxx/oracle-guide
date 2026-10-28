@@ -1,9 +1,9 @@
 [package]
-name = "oracle-guide-geom"
+name = "oracle-layout-geom"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide geometry: anchor paths, shapes, units and measurements, hit testing"
+description = "Oracle Layout geometry: anchor paths, shapes, units and measurements, hit testing"
 
 [lints]
 workspace = true

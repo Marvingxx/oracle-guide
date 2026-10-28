@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use oracle_guide_geom::Rect;
+use oracle_layout_geom::Rect;
 use serde::{Deserialize, Serialize};
 
 use crate::attrs::NumberStyle;

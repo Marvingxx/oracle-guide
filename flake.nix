@@ -1,9 +1,9 @@
 {
-  description = "Oracle Brand Guide — page layout and publishing, a free alternative to InDesign, in pure Rust";
+  description = "Oracle Layout — page layout and publishing, a free alternative to InDesign, in pure Rust";
 
   inputs = {
-    # Oracle Brand Guide needs edition 2024 and rustc ≥ 1.95, so the flake tracks unstable. Consumers on a
-    # release channel can retarget it: `inputs.oracle-guide.inputs.nixpkgs.follows = "nixpkgs";`
+    # Oracle Layout needs edition 2024 and rustc ≥ 1.95, so the flake tracks unstable. Consumers on a
+    # release channel can retarget it: `inputs.oracle-layout.inputs.nixpkgs.follows = "nixpkgs";`
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # Optional build input of the repository: the fonts that the build embeds when `CRAFT_FONTS_DIR`
@@ -52,24 +52,24 @@
       packages = forAllSystems (
         pkgs: _:
         let
-          oracle-guide = pkgs.callPackage ./nix/package.nix packageArgs;
+          oracle-layout = pkgs.callPackage ./nix/package.nix packageArgs;
         in
         {
-          inherit oracle-guide;
-          default = oracle-guide;
+          inherit oracle-layout;
+          default = oracle-layout;
         }
       );
 
-      # `nixpkgs.overlays = [ inputs.oracle-guide.overlays.default ]` → `pkgs.oracle-guide` everywhere.
+      # `nixpkgs.overlays = [ inputs.oracle-layout.overlays.default ]` → `pkgs.oracle-layout` everywhere.
       overlays.default = final: _prev: {
-        oracle-guide = final.callPackage ./nix/package.nix packageArgs;
+        oracle-layout = final.callPackage ./nix/package.nix packageArgs;
       };
 
       apps = forAllSystems (
         _: system: {
           default = {
             type = "app";
-            program = lib.getExe self.packages.${system}.oracle-guide;
+            program = lib.getExe self.packages.${system}.oracle-layout;
           };
         }
       );
@@ -77,13 +77,13 @@
       devShells = forAllSystems (
         pkgs: system:
         let
-          oracle-guide = self.packages.${system}.oracle-guide;
+          oracle-layout = self.packages.${system}.oracle-layout;
         in
         {
           default = pkgs.mkShell (
             {
               # The package's own native inputs, so `cargo build` in the shell needs no extra setup.
-              inputsFrom = [ oracle-guide ];
+              inputsFrom = [ oracle-layout ];
               packages = with pkgs; [
                 cargo
                 rustc
@@ -92,7 +92,7 @@
                 rust-analyzer
               ];
               # `cargo run` dlopens the Vulkan loader, libwayland and libxkbcommon like the packaged binary.
-              LD_LIBRARY_PATH = lib.makeLibraryPath oracle-guide.passthru.runtimeLibs;
+              LD_LIBRARY_PATH = lib.makeLibraryPath oracle-layout.passthru.runtimeLibs;
               RUST_BACKTRACE = "1";
             }
             // lib.optionalAttrs (craft-fonts != null) {
@@ -105,11 +105,11 @@
 
       checks = forAllSystems (
         pkgs: system: {
-          oracle-guide = self.packages.${system}.oracle-guide;
+          oracle-layout = self.packages.${system}.oracle-layout;
 
           # `nix fmt` formats the flake; this keeps it formatted.
           formatting =
-            pkgs.runCommand "oracle-guide-nix-formatting" { nativeBuildInputs = [ pkgs.nixfmt ]; }
+            pkgs.runCommand "oracle-layout-nix-formatting" { nativeBuildInputs = [ pkgs.nixfmt ]; }
               ''
                 nixfmt --check ${./flake.nix} ${./nix}
                 touch $out

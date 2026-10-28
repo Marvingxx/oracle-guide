@@ -10,8 +10,8 @@
 //! (0.9222, 0.0843, 0, 0.9759). The pivot (em box centre) and the horizontal-text rotation (the
 //! glyph's horizontal axis stays horizontal) are not measured.
 
-use oracle_guide_doc::CharProps;
-use oracle_guide_geom::{Affine, Point};
+use oracle_layout_doc::CharProps;
+use oracle_layout_geom::{Affine, Point};
 
 use crate::{PlacedGlyph, RunStyle};
 

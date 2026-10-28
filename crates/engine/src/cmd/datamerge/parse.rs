@@ -6,9 +6,9 @@
 
 use std::path::{Path, PathBuf};
 
-use oracle_guide_doc::{DataField, DataFieldKind, Delimiter, Fingerprint, SourceStatus};
-use oracle_guide_geom::Rect;
-use oracle_guide_textimport::{DATA_MERGE_MAX_COLS, DATA_MERGE_MAX_ROWS};
+use oracle_layout_doc::{DataField, DataFieldKind, Delimiter, Fingerprint, SourceStatus};
+use oracle_layout_geom::Rect;
+use oracle_layout_textimport::{DATA_MERGE_MAX_COLS, DATA_MERGE_MAX_ROWS};
 use serde_json::Value;
 
 /// A parsed table. `rows` does not include the header. Every row matches `fields` in length.

@@ -6,10 +6,10 @@
 </p>
 
 <p align="center">
-  <img src="assets/app-icon/hicolor/256x256/apps/app.oracle.oracle-guide.png" width="128" height="128" alt="Oracle Brand Guide icon">
+  <img src="assets/app-icon/hicolor/256x256/apps/app.oracle.oracle-layout.png" width="128" height="128" alt="Oracle Layout icon">
 </p>
 
-<h1 align="center">Oracle Brand Guide</h1>
+<h1 align="center">Oracle Layout</h1>
 
 <p align="center">
   <b>Page layout and publishing; an open-source, modern desktop publishing and page layout studio, built in pure Rust.</b>
@@ -29,7 +29,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Marvingxx/oracle-guide/releases/latest"><b>Download Oracle Brand Guide</b></a> ·
+  <a href="https://github.com/Marvingxx/oracle-guide/releases/latest"><b>Download Oracle Layout</b></a> ·
   <a href="https://github.com/Marvingxx/oracle-suite">Oracle Suite</a>
 </p>
 
@@ -37,14 +37,14 @@
 <br>
 
 <p align="center">
-  <img src="docs/images/ui-spread.png" alt="Oracle Brand Guide with the sample magazine open on its cover, the tools on the left and the Properties panel on the right" width="100%">
-  <br><sub><b>Quarterly, Spring Issue</b>: threaded three-column body text, a wrapped pull quote and parent-page folios, all set by Oracle Brand Guide's own paragraph composer.</sub>
+  <img src="docs/images/ui-spread.png" alt="Oracle Layout with the sample magazine open on its cover, the tools on the left and the Properties panel on the right" width="100%">
+  <br><sub><b>Quarterly, Spring Issue</b>: threaded three-column body text, a wrapped pull quote and parent-page folios, all set by Oracle Layout's own paragraph composer.</sub>
 </p>
 
 
 <p align="center">
   <a href="#the-sample-magazine">The sample magazine</a> ·
-  <a href="#why-oracle-guide">Why Oracle Brand Guide</a> ·
+  <a href="#why-oracle-layout">Why Oracle Layout</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#web">Web</a> ·
   <a href="#architecture">Architecture</a> ·
@@ -55,7 +55,7 @@
 
 ## The sample magazine
 
-Every page below was laid out by Oracle Brand Guide from code (`crates/engine/src/sample.rs`) and exported
+Every page below was laid out by Oracle Layout from code (`crates/engine/src/sample.rs`) and exported
 by its own renderer. Try it yourself with `File → New → Sample Document`, or start the app with
 `--sample`.
 
@@ -70,7 +70,7 @@ by its own renderer. Try it yourself with `File → New → Sample Document`, or
 </tr>
 </table>
 
-## Why Oracle Brand Guide
+## Why Oracle Layout
 
 - **Familiar.** A familiar layout, tools, menus, panels and shortcuts: spreads and parent pages,
   master pages, text frames, threaded text, paragraph and character styles, tables, text wrap and
@@ -97,12 +97,12 @@ by its own renderer. Try it yourself with `File → New → Sample Document`, or
 The egui frontend requires Rust 1.95 or newer (including its shared `craft-ui` components).
 
 ```sh
-cargo run --release -p oracle-guide                         # desktop app (start screen)
-cargo run --release -p oracle-guide -- --sample             # open the sample magazine
-cargo run --release -p oracle-guide -- --sample --control 7979   # + JSON control channel
-cargo run --release -p oracle-guide-cli -- run --sample --all-pages out/       # headless: render every page to PNG
-cargo run --release -p oracle-guide-cli -- commands         # list every command
-cargo run --release -p oracle-guide-cli -- script --help    # command script syntax (docs/agents.md)
+cargo run --release -p oracle-layout                         # desktop app (start screen)
+cargo run --release -p oracle-layout -- --sample             # open the sample magazine
+cargo run --release -p oracle-layout -- --sample --control 7979   # + JSON control channel
+cargo run --release -p oracle-layout-cli -- run --sample --all-pages out/       # headless: render every page to PNG
+cargo run --release -p oracle-layout-cli -- commands         # list every command
+cargo run --release -p oracle-layout-cli -- script --help    # command script syntax (docs/agents.md)
 cargo xtask ci                                             # fmt, clippy, tests, assets, layering, wasm
 ```
 
@@ -116,7 +116,7 @@ for the shared standard):
 
 ```sh
 git clone https://github.com/Marvingxx/craft-fonts ../craft-fonts
-CRAFT_FONTS_DIR="$PWD/../craft-fonts" cargo run --release -p oracle-guide   # absolute path
+CRAFT_FONTS_DIR="$PWD/../craft-fonts" cargo run --release -p oracle-layout   # absolute path
 ```
 
 Without it, Japanese falls back to the system's fonts (none on the web). Release builds always
@@ -127,40 +127,40 @@ To drive a running app, send JSON lines to `127.0.0.1:7979`. The protocol is des
 
 ### Logs
 
-The desktop app writes its `log` records to standard error and to `logs/oracle-guide.log` in the
-settings directory, beside `ui.json` and `prefs.json` (Linux `~/.config/oracle-guide/logs/`, or
-`$XDG_CONFIG_HOME/oracle-guide/logs/`; macOS `~/Library/Application Support/Oracle Brand Guide/logs/`;
-Windows `%APPDATA%\Oracle Brand Guide\logs\`). A start launched from a desktop menu or the Dock has no
+The desktop app writes its `log` records to standard error and to `logs/oracle-layout.log` in the
+settings directory, beside `ui.json` and `prefs.json` (Linux `~/.config/oracle-layout/logs/`, or
+`$XDG_CONFIG_HOME/oracle-layout/logs/`; macOS `~/Library/Application Support/Oracle Layout/logs/`;
+Windows `%APPDATA%\Oracle Layout\logs\`). A start launched from a desktop menu or the Dock has no
 terminal, so this file is what to attach to a bug report: the graphics adapters found and the
 one drawing, why the app stopped (also when its window never opened), the crash guard's panic
-report and a failed crash-recovery save land there. Each launch moves the previous log to `oracle-guide.1.log`
-(and that one to `oracle-guide.2.log`), so the log of a run that crashed survives the next start.
+report and a failed crash-recovery save land there. Each launch moves the previous log to `oracle-layout.1.log`
+(and that one to `oracle-layout.2.log`), so the log of a run that crashed survives the next start.
 The file stops growing at 16 MiB. `--version` writes no file.
 
 | Variable | Effect |
 |---|---|
-| `RUST_LOG` | Log levels for standard error and the log file. Default: `info` for Oracle Brand Guide's own crates, `warn` for everything else. env_logger-style directives replace that, e.g. `RUST_LOG=debug`, `RUST_LOG=warn,oracle_guide_render=trace` or `RUST_LOG=info,wgpu_core=warn`; a directive ending in `*` covers every target starting with it (`oracle_guide*=debug`). |
+| `RUST_LOG` | Log levels for standard error and the log file. Default: `info` for Oracle Layout's own crates, `warn` for everything else. env_logger-style directives replace that, e.g. `RUST_LOG=debug`, `RUST_LOG=warn,oracle_layout_render=trace` or `RUST_LOG=info,wgpu_core=warn`; a directive ending in `*` covers every target starting with it (`oracle_layout*=debug`). |
 | `WGPU_BACKEND` | The graphics backend that composites the window: `dx12`, `vulkan`, `gl` or `metal` (a comma-separated list lets wgpu choose among them). Default: DirectX 12 on Windows, Vulkan on Linux, Metal on macOS, with OpenGL as the fallback. Setting it also turns off the start-up fallback described below. |
 | `WGPU_POWER_PREF` | The kind of GPU that draws the window: `low` (integrated), `high` (discrete) or `none` (the system's order). Default: the GPU that drives the primary display, then `low` on Windows and macOS and `none` elsewhere. |
 | `WGPU_ADAPTER_NAME` | The graphics adapter by (part of) its name, any case (`nvidia`, `radv`, `intel`); the log lists the names. |
-| `WGPU_VALIDATION_INDIRECT_CALL` | `1` turns wgpu's check of indirect draw arguments back on. Oracle Brand Guide draws nothing indirectly and turns it off: the compute shader it needs failed to compile on an Intel Mac and lost the graphics device (#334). |
+| `WGPU_VALIDATION_INDIRECT_CALL` | `1` turns wgpu's check of indirect draw arguments back on. Oracle Layout draws nothing indirectly and turns it off: the compute shader it needs failed to compile on an Intel Mac and lost the graphics device (#334). |
 
-The logger is `apps/oracle-guide/src/logging.rs`; the web build logs to the browser console instead.
+The logger is `apps/oracle-layout/src/logging.rs`; the web build logs to the browser console instead.
 
 ### Portable mode
 
-A file named `portable.txt` next to the executable (on macOS, next to `Oracle Brand Guide.app`) makes the install portable: settings, logs and
-crash recovery are kept in a `Oracle Brand GuideData` folder beside it instead of the per-user folders
-above. The Windows portable zip ships with one; delete it to go back to `%APPDATA%\Oracle Brand Guide`.
-If `Oracle Brand GuideData` cannot be written (a copy unzipped into Program Files), the per-user folders
+A file named `portable.txt` next to the executable (on macOS, next to `Oracle Layout.app`) makes the install portable: settings, logs and
+crash recovery are kept in a `Oracle LayoutData` folder beside it instead of the per-user folders
+above. The Windows portable zip ships with one; delete it to go back to `%APPDATA%\Oracle Layout`.
+If `Oracle LayoutData` cannot be written (a copy unzipped into Program Files), the per-user folders
 are used instead and the log and the status bar say so.
-`ORACLE_GUIDE_CONFIG_DIR` still takes precedence. The code is `apps/oracle-guide/src/profile.rs`.
+`ORACLE_LAYOUT_CONFIG_DIR` still takes precedence. The code is `apps/oracle-layout/src/profile.rs`.
 
 ### Graphics backend and processor
 
 The canvas is rendered on the CPU; the GPU only composites the interface, through wgpu, so any
-adapter that can show the window will do. The code is `apps/oracle-guide/src/gpu.rs` (the adapter)
-and `apps/oracle-guide/src/gpu/backend.rs` (the backend).
+adapter that can show the window will do. The code is `apps/oracle-layout/src/gpu.rs` (the adapter)
+and `apps/oracle-layout/src/gpu/backend.rs` (the backend).
 
 - **Backend.** A graphics driver that faults takes the process down before any Rust code can
   catch it, so each start creates its wgpu instance with one backend, chosen before the window
@@ -174,7 +174,7 @@ and `apps/oracle-guide/src/gpu/backend.rs` (the backend).
   records the backend being tried until the first frame has been presented. A record left behind
   means that backend crashed (or the app was killed) at start-up, so the next start tries the next
   backend and says so in the status bar. The list starts over once every backend has failed, or
-  with a new Oracle Brand Guide version; delete the file or set `WGPU_BACKEND` to start afresh.
+  with a new Oracle Layout version; delete the file or set `WGPU_BACKEND` to start afresh.
 - **Adapter.** Among the adapters of those backends, the app picks the one that draws the window
   (eframe's `native_adapter_selector`): adapters that report they can't present to the window are
   never tried; then the one `WGPU_ADAPTER_NAME` names; hardware before software (llvmpipe, WARP);
@@ -191,7 +191,7 @@ and `apps/oracle-guide/src/gpu/backend.rs` (the backend).
 - **If the window fails on its adapter while starting up** (an error from wgpu, such as a lost
   device, or a panic inside wgpu, egui-wgpu or naga during the first frames), the app starts
   again without that adapter and tries the next one, telling which in the status bar; the run that
-  failed keeps its log as `oracle-guide.1.log`. When no adapter of the start's backends is left, it
+  failed keeps its log as `oracle-layout.1.log`. When no adapter of the start's backends is left, it
   starts again with the next backend. Software renderers (WARP, llvmpipe) come last: they are
   passed over while another backend is left to try, and allowed once no graphics processor could
   show the window. On Unix the new app replaces the process (an AppImage stays mounted); on
@@ -205,7 +205,7 @@ and `apps/oracle-guide/src/gpu/backend.rs` (the backend).
 - **If the window's first frame is late** (20 seconds after the app was created and the files
   named at the start opened), the log and the status bar say so. The adapter counts as hanging,
   and the app starts again without it, only when the UI thread has been stuck in the graphics
-  stack, outside Oracle Brand Guide's own code, for 60 seconds while the window wasn't known to be
+  stack, outside Oracle Layout's own code, for 60 seconds while the window wasn't known to be
   minimized, covered or in the background. A large document composing on a slow machine never
   counts.
 - **The log** lists the GPUs that drive a display (`display GPUs (PCI vendor:device): 10de:2204
@@ -219,8 +219,8 @@ and `apps/oracle-guide/src/gpu/backend.rs` (the backend).
 ### Web
 
 ```sh
-cd apps/oracle-guide-web && trunk build --release          # → dist/web (serve it with any static server)
-cd apps/oracle-guide-web && trunk serve --release          # http://127.0.0.1:8767
+cd apps/oracle-layout-web && trunk build --release          # → dist/web (serve it with any static server)
+cd apps/oracle-layout-web && trunk serve --release          # http://127.0.0.1:8767
 ```
 
 You need [trunk](https://trunkrs.dev) and the `wasm32-unknown-unknown` target. The same app runs
@@ -230,7 +230,7 @@ Save and Export download the file. The web build has no control channel.
 
 ## Architecture
 
-Oracle Brand Guide is an engine-first Cargo workspace with enforced layering (`cargo xtask layers`). The
+Oracle Layout is an engine-first Cargo workspace with enforced layering (`cargo xtask layers`). The
 egui frontend is a separate crate, so the UI can be swapped without touching the engine.
 
 | Layer | Crates |
@@ -242,16 +242,16 @@ egui frontend is a separate crate, so the UI can be swapped without touching the
 | L4 | `tools` (pointer events → commands + overlays) |
 | L5 | `engine` (session, history, command registry) |
 | L6 | `ui-egui` (publishing UI, control channel) |
-| L7 | `apps/oracle-guide`, `apps/oracle-guide-cli`, `apps/oracle-guide-web` |
+| L7 | `apps/oracle-layout`, `apps/oracle-layout-cli`, `apps/oracle-layout-web` |
 
 - **Status and milestones:** [ROADMAP.md](ROADMAP.md) (stage: pre-alpha); feature assessment: [`docs/target-app-parity.md`](docs/target-app-parity.md); known gaps: [`docs/gaps.md`](docs/gaps.md)
 - **Contributor and agent rules** (clean-room, asset policy, quality gates): [`AGENTS.md`](AGENTS.md)
 - **Bundled assets:** every one is listed with its licence in [`ASSETS.md`](ASSETS.md)
-- **App icon and colour:** a calico cat in a polka-dot scarf on Oracle Brand Guide green `#7bb51c`; see [`assets/app-icon/`](assets/app-icon/README.md)
+- **App icon and colour:** a calico cat in a polka-dot scarf on Oracle Layout green `#7bb51c`; see [`assets/app-icon/`](assets/app-icon/README.md)
 
 ## Downloads
 
-**New to Oracle Brand Guide?** Download it from the [Oracle Brand Guide releases on GitHub](https://github.com/Marvingxx/oracle-guide). That's the easiest way to install it.
+**New to Oracle Layout?** Download it from the [Oracle Layout releases on GitHub](https://github.com/Marvingxx/oracle-guide). That's the easiest way to install it.
 
 **Want a specific build or format?** On GitHub, the [latest release](https://github.com/Marvingxx/oracle-guide/releases/latest) has every build listed below, and [all releases](https://github.com/Marvingxx/oracle-guide/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
 
@@ -259,9 +259,9 @@ egui frontend is a separate crate, so the UI can be swapped without touching the
 
 | Build | Installer | Portable |
 |---|---|---|
-| x64 (64-bit Intel/AMD) | `oracle-guide-<ver>-windows-x64.msi` | `oracle-guide-<ver>-windows-x64-portable.zip` |
-| arm64 (Snapdragon and other ARM PCs) | `oracle-guide-<ver>-windows-arm64.msi` | `oracle-guide-<ver>-windows-arm64-portable.zip` |
-| x86 (32-bit) | `oracle-guide-<ver>-windows-x86.msi` | `oracle-guide-<ver>-windows-x86-portable.zip` |
+| x64 (64-bit Intel/AMD) | `oracle-layout-<ver>-windows-x64.msi` | `oracle-layout-<ver>-windows-x64-portable.zip` |
+| arm64 (Snapdragon and other ARM PCs) | `oracle-layout-<ver>-windows-arm64.msi` | `oracle-layout-<ver>-windows-arm64-portable.zip` |
+| x86 (32-bit) | `oracle-layout-<ver>-windows-x86.msi` | `oracle-layout-<ver>-windows-x86-portable.zip` |
 
 Installers and executables are code-signed.
 
@@ -269,51 +269,51 @@ Installers and executables are code-signed.
 
 | Build | File | Notes |
 |---|---|---|
-| App, universal (Apple silicon + Intel) | `oracle-guide-<ver>-macos-universal.dmg` | Signed and notarized |
-| Command-line tool, universal | `oracle-guide-cli-<ver>-macos-universal.zip` | Signed and notarized |
+| App, universal (Apple silicon + Intel) | `oracle-layout-<ver>-macos-universal.dmg` | Signed and notarized |
+| Command-line tool, universal | `oracle-layout-cli-<ver>-macos-universal.zip` | Signed and notarized |
 
 ### Linux
 
 | Format | x86_64 | aarch64 (ARM64) | Notes |
 |---|---|---|---|
-| AppImage | `oracle-guide-<ver>-linux-x86_64.AppImage` | `oracle-guide-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
-| Flatpak | `oracle-guide-<ver>-linux-x86_64.flatpak` | `oracle-guide-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
-| Debian/Ubuntu | `oracle-guide-<ver>-linux-x86_64.deb` | `oracle-guide-<ver>-linux-aarch64.deb` | |
-| Fedora/RHEL/openSUSE | `oracle-guide-<ver>-linux-x86_64.rpm` | `oracle-guide-<ver>-linux-aarch64.rpm` | |
-| Arch Linux/Manjaro | `oracle-guide-<ver>-linux-x86_64.pkg.tar.zst` | `oracle-guide-<ver>-linux-aarch64.pkg.tar.zst` | `sudo pacman -U <file>`; installs as `app.oracle.oracle-guide`, replacing an AUR package |
-| Tarball | `oracle-guide-<ver>-linux-x86_64.tar.gz` | `oracle-guide-<ver>-linux-aarch64.tar.gz` | Unpack anywhere |
+| AppImage | `oracle-layout-<ver>-linux-x86_64.AppImage` | `oracle-layout-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
+| Flatpak | `oracle-layout-<ver>-linux-x86_64.flatpak` | `oracle-layout-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
+| Debian/Ubuntu | `oracle-layout-<ver>-linux-x86_64.deb` | `oracle-layout-<ver>-linux-aarch64.deb` | |
+| Fedora/RHEL/openSUSE | `oracle-layout-<ver>-linux-x86_64.rpm` | `oracle-layout-<ver>-linux-aarch64.rpm` | |
+| Arch Linux/Manjaro | `oracle-layout-<ver>-linux-x86_64.pkg.tar.zst` | `oracle-layout-<ver>-linux-aarch64.pkg.tar.zst` | `sudo pacman -U <file>`; installs as `app.oracle.oracle-layout`, replacing an AUR package |
+| Tarball | `oracle-layout-<ver>-linux-x86_64.tar.gz` | `oracle-layout-<ver>-linux-aarch64.tar.gz` | Unpack anywhere |
 
-RISC-V (riscv64): `oracle-guide-<ver>-linux-riscv64.tar.gz` only, cross-compiled; needs glibc 2.39+ (Ubuntu 24.04 or newer).
+RISC-V (riscv64): `oracle-layout-<ver>-linux-riscv64.tar.gz` only, cross-compiled; needs glibc 2.39+ (Ubuntu 24.04 or newer).
 
 #### Community packages
 
-These packages are maintained by community members, not by the Oracle Brand Guide team.
+These packages are maintained by community members, not by the Oracle Layout team.
 
 On Gentoo, the [::snakebyte overlay](https://github.com/switch87/snakebyte-overlay) packages the
-Linux release as `media-gfx/oracle-guide-bin` (prebuilt) and `media-gfx/oracle-guide` (built from source):
+Linux release as `media-gfx/oracle-layout-bin` (prebuilt) and `media-gfx/oracle-layout` (built from source):
 
 ```sh
 eselect repository add snakebyte git https://github.com/switch87/snakebyte-overlay.git
 emaint sync -r snakebyte
-echo 'media-gfx/oracle-guide-bin ~amd64' >> /etc/portage/package.accept_keywords/oracle-guide
-emerge --ask media-gfx/oracle-guide-bin
+echo 'media-gfx/oracle-layout-bin ~amd64' >> /etc/portage/package.accept_keywords/oracle-layout
+emerge --ask media-gfx/oracle-layout-bin
 ```
 
 ### FreeBSD
 
 | Build | File |
 |---|---|
-| x86_64 | `oracle-guide-<ver>-freebsd-x86_64.tar.gz` |
+| x86_64 | `oracle-layout-<ver>-freebsd-x86_64.tar.gz` |
 
 ### Web (WebAssembly)
 
 | Build | File | Notes |
 |---|---|---|
-| Static site | `oracle-guide-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
+| Static site | `oracle-layout-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
 
 ## The Oracle suite
 
-Oracle Brand Guide is part of **Oracle**, a personal creative suite, free and local:
+Oracle Layout is part of **Oracle**, a personal creative suite, free and local:
 
 | App | What it's for | Code |
 |---|---|---|
@@ -321,19 +321,19 @@ Oracle Brand Guide is part of **Oracle**, a personal creative suite, free and lo
 | **Oracle Edit** | Image editing | [oracle-edit](https://github.com/Marvingxx/oracle-edit) |
 | **Oracle Vector** | Vector illustration | [oracle-vector](https://github.com/Marvingxx/oracle-vector) |
 | **Oracle Brand Kit** · **Oracle Mockup Studio** | Brand identities and client deliveries · 2D mockups | [oracle-brand](https://github.com/Marvingxx/oracle-brand) |
-| **Oracle Brand Guide** | Brand guidelines and page layout | [oracle-guide](https://github.com/Marvingxx/oracle-guide) |
+| **Oracle Layout** | Brand guidelines and page layout | [oracle-layout](https://github.com/Marvingxx/oracle-guide) |
 
 
 ## Sources
 
-Oracle Brand Guide is built on [DesignCraft](https://github.com/storytold/designcraft) by storytold (MIT OR
+Oracle Layout is built on [DesignCraft](https://github.com/storytold/designcraft) by storytold (MIT OR
 Apache-2.0), taken on 22 October 2026 and developed separately since; its code, rewritten or not, keeps
 that licence and the original notices (`NOTICE`, `LICENSE-*`). Every other source (fonts, icons,
 libraries, images) is listed with its author and licence in the attribution file.
 
 ## License and credits
 
-Oracle Brand Guide is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
+Oracle Layout is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
 Required notices are in [NOTICE](NOTICE).
 
 Bundled fonts, icons, images and other assets keep their own open licenses; each one is listed

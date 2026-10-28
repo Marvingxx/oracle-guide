@@ -2,10 +2,10 @@
 
 use std::sync::Arc;
 
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::{Document, ParaFormat, SpreadRef};
-use oracle_guide_geom::Rect;
-use oracle_guide_render::{RenderOptions, Renderer};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::{Document, ParaFormat, SpreadRef};
+use oracle_layout_geom::Rect;
+use oracle_layout_render::{RenderOptions, Renderer};
 
 fn serial_renderer() -> Renderer {
     let mut renderer = Renderer::new();
@@ -13,7 +13,7 @@ fn serial_renderer() -> Renderer {
     renderer
 }
 
-fn document() -> (Document, oracle_guide_doc::StoryId) {
+fn document() -> (Document, oracle_layout_doc::StoryId) {
     let mut doc = Document::new(&Default::default());
     let layer = doc.default_layer();
     let (_, story) = doc

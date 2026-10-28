@@ -14,8 +14,8 @@
 //!   is composed again with the objects where the previous pass placed them until they stop
 //!   moving, at most [`MAX_PASSES`] more times.
 
-use oracle_guide_doc::{AnchorPosition, AnchoredObject, Document, Item, OBJECT_MARK, PageSide, SpreadRef, Story, StoryId, WrapMode};
-use oracle_guide_geom::Affine;
+use oracle_layout_doc::{AnchorPosition, AnchoredObject, Document, Item, OBJECT_MARK, PageSide, SpreadRef, Story, StoryId, WrapMode};
+use oracle_layout_geom::Affine;
 
 use crate::{ComposeOptions, ComposedStory, Exclusion, FrameSpec};
 

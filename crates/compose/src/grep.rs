@@ -17,7 +17,7 @@
 use std::fmt;
 use std::ops::Range;
 
-use oracle_guide_doc::story;
+use oracle_layout_doc::story;
 
 /// Longest pattern accepted, in bytes.
 pub const MAX_PATTERN: usize = 4096;

@@ -9,7 +9,7 @@
 
 use std::path::{Path, PathBuf};
 
-use oracle_guide_doc::{BrandLink, Content, ItemId, Selection, vars::VarKind};
+use oracle_layout_doc::{BrandLink, Content, ItemId, Selection, vars::VarKind};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, bad, cmd, has_doc, str_param};
@@ -334,7 +334,7 @@ fn is_brand_variable(name: &str) -> bool {
 
 /// The linked brand, from the document's link (its absolute path, else relative to the
 /// document's folder).
-fn linked_brand(s: &Session) -> std::result::Result<Option<(Brand, BrandLink)>, String> {
+pub(super) fn linked_brand(s: &Session) -> std::result::Result<Option<(Brand, BrandLink)>, String> {
     let st = s.active().ok_or("aucun document ouvert")?;
     let Some(link) = st.doc.settings.brand.clone() else { return Ok(None) };
     let abs = PathBuf::from(&link.path);
@@ -387,7 +387,7 @@ struct Change {
 
 /// The swatch showing brand colour `i`: its own, else (a guide reused for another brand) the
 /// swatch at the same position in the palette, when no other colour of this brand holds it.
-fn swatch_for(link: &BrandLink, d: &oracle_guide_doc::Document, brand: &Brand, i: usize) -> Option<String> {
+pub(super) fn swatch_for(link: &BrandLink, d: &oracle_layout_doc::Document, brand: &Brand, i: usize) -> Option<String> {
     let c = brand.colors.get(i)?;
     let exists = |n: &String| d.swatches.iter().any(|sw| &sw.name == n);
     if let Some(n) = link.swatches.get(&c.id).filter(|n| exists(n)) {
@@ -398,7 +398,7 @@ fn swatch_for(link: &BrandLink, d: &oracle_guide_doc::Document, brand: &Brand, i
 }
 
 /// Frames labelled for the brand: (frame, kind, id, linked asset, its link path).
-fn labelled_frames(s: &Session) -> Vec<(ItemId, &'static str, String, Option<oracle_guide_doc::AssetId>, Option<String>)> {
+fn labelled_frames(s: &Session) -> Vec<(ItemId, &'static str, String, Option<oracle_layout_doc::AssetId>, Option<String>)> {
     let Some(st) = s.active() else { return Vec::new() };
     let d = &st.doc;
     let mut out = Vec::new();
@@ -470,7 +470,7 @@ fn changes(s: &mut Session, brand: &Brand, link: &BrandLink) -> Result<Vec<Chang
         let mapped = mapped.as_ref();
         let current = mapped.or(Some(&c.name)).and_then(|n| d.swatches.iter().find(|sw| &sw.name == n));
         let current_hex = current.and_then(|sw| match &sw.value {
-            oracle_guide_color::SwatchValue::Color { color, .. } => Some(color.to_hex()),
+            oracle_layout_color::SwatchValue::Color { color, .. } => Some(color.to_hex()),
             _ => None,
         });
         let renamed = mapped.is_some_and(|n| *n != c.name);
@@ -485,7 +485,7 @@ fn changes(s: &mut Session, brand: &Brand, link: &BrandLink) -> Result<Vec<Chang
     }
     // Linked frames.
     let statuses: Vec<Value> = s.execute("links.list", &json!({})).ok().and_then(|v| v.as_array().cloned()).unwrap_or_default();
-    let status_of = |aid: oracle_guide_doc::AssetId| statuses.iter().find(|r| r["asset"].as_u64() == Some(aid.0)).and_then(|r| r["status"].as_str().map(str::to_string));
+    let status_of = |aid: oracle_layout_doc::AssetId| statuses.iter().find(|r| r["asset"].as_u64() == Some(aid.0)).and_then(|r| r["status"].as_str().map(str::to_string));
     for (frame, kind, tag, asset, path) in labelled_frames(s) {
         // `<id>@<role>` (logos) or `<id>@<scene name>` (mockups); older labels have no `@`.
         let (id, alt) = tag.rsplit_once('@').map(|(i, r)| (i.to_string(), r.to_string())).unwrap_or((tag.clone(), String::new()));
@@ -671,13 +671,13 @@ fn place_into(s: &mut Session, frame: ItemId, file: &Path) -> Result<()> {
             s.execute("file.place", &json!({"path": path, "frame": frame.0, "link": true}))?;
         }
     }
-    s.execute("object.fittingOptions", &json!({"autoFit": true, "fitting": "fitProportionally", "ids": [frame.0]}))?;
+    s.execute("object.fittingOptions", &json!({"autoFit": true, "fitting": "fitProportionally", "align": 4, "ids": [frame.0]}))?;
     s.execute("object.fit", &json!({"mode": "fitProportionally", "ids": [frame.0]}))?;
     Ok(())
 }
 
 /// How many frames show asset `aid`.
-fn labelled_or_not_uses(s: &Session, aid: oracle_guide_doc::AssetId) -> usize {
+fn labelled_or_not_uses(s: &Session, aid: oracle_layout_doc::AssetId) -> usize {
     let Some(st) = s.active() else { return 0 };
     let mut n = 0;
     for sp in st.doc.spreads.iter().chain(st.doc.parents.iter()) {
@@ -694,7 +694,7 @@ fn labelled_or_not_uses(s: &Session, aid: oracle_guide_doc::AssetId) -> usize {
 
 // --- Placing brand blocks ------------------------------------------------------------------------
 
-fn rect_param(p: &Value, cmd: &str) -> Result<[f64; 4]> {
+pub(super) fn rect_param(p: &Value, cmd: &str) -> Result<[f64; 4]> {
     let r = p.get("rect").and_then(Value::as_array).ok_or_else(|| bad(cmd, "missing rect"))?;
     let v: Vec<f64> = r.iter().filter_map(Value::as_f64).filter(|x| x.is_finite()).collect();
     match v[..] {
@@ -703,7 +703,7 @@ fn rect_param(p: &Value, cmd: &str) -> Result<[f64; 4]> {
     }
 }
 
-fn new_frame(s: &mut Session, spread: &Value, rect: [f64; 4], content: &str, text: Option<&str>) -> Result<ItemId> {
+pub(super) fn new_frame(s: &mut Session, spread: &Value, rect: [f64; 4], content: &str, text: Option<&str>) -> Result<ItemId> {
     let mut params = json!({"rect": rect, "content": content});
     if !spread.is_null() {
         params["spread"] = spread.clone();
@@ -745,7 +745,7 @@ fn place_linked(s: &mut Session, p: &Value, cmd: &'static str) -> Result<Value> 
     };
     label(s, &[frame], &format!("{prefix}{id}"))?;
     s.execute("file.place", &json!({"path": file.display().to_string(), "frame": frame.0, "link": true}))?;
-    s.execute("object.fittingOptions", &json!({"autoFit": true, "fitting": "fitProportionally", "ids": [frame.0]}))?;
+    s.execute("object.fittingOptions", &json!({"autoFit": true, "fitting": "fitProportionally", "align": 4, "ids": [frame.0]}))?;
     s.execute("object.fit", &json!({"mode": "fitProportionally", "ids": [frame.0]}))?;
     Ok(json!({"id": frame.0}))
 }
@@ -777,7 +777,7 @@ fn with_variables(s: &Session, template: &str) -> Result<String> {
             break;
         };
         let name = &after[..end];
-        match d.variable(name).and_then(oracle_guide_doc::vars::var_char) {
+        match d.variable(name).and_then(oracle_layout_doc::vars::var_char) {
             Some(c) => out.push(c),
             None => return Err(bad("brand", format!("variable « {name} » absente : synchronisez d'abord"))),
         }
@@ -866,7 +866,7 @@ fn place_types(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// Whether a font family the document uses is available (bundled, installed or document fonts).
-fn font_installed(s: &mut Session, family: &str) -> bool {
+pub(super) fn font_installed(s: &mut Session, family: &str) -> bool {
     let list = s.execute("font.list", &json!({})).ok();
     !list.as_ref().and_then(Value::as_array).is_some_and(|l| {
         l.iter().any(|f| f["family"].as_str().is_some_and(|n| n.eq_ignore_ascii_case(family)) && f["missing"].as_bool() == Some(true))

@@ -4,7 +4,7 @@
 
 use std::collections::BTreeMap;
 
-use oracle_guide_doc::{CharFormat, ParaFormat, Story, StoryId, Table};
+use oracle_layout_doc::{CharFormat, ParaFormat, Story, StoryId, Table};
 
 use crate::docx::{El, parse, part};
 use crate::{ImportError, Imported};

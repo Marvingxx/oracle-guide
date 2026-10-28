@@ -33,7 +33,7 @@ fn link_review_and_update_from_the_panel() {
         "fonts": [{"id": "f1", "family": "Inter", "usage": "Texte courant"}]});
     std::fs::write(dir.join("brand.json"), brand.to_string()).unwrap();
 
-    let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+    let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
     app.run("file.new", json!({})).unwrap();
     let mut h = harness(app);
     h.run_steps(3);
@@ -54,5 +54,30 @@ fn link_review_and_update_from_the_panel() {
     let labelled = d.spreads.iter().flat_map(|s| s.items.iter()).filter(|i| i.label == "oracle:logo:logo-a@primaryLogo").count();
     assert_eq!(labelled, 1, "the logo is placed, linked and labelled");
     shot(&mut h, "brand-in-sync");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn the_guide_is_generated_from_the_panel() {
+    let dir = std::env::temp_dir().join(format!("og-brand-panel-gen-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("logo.svg"), r##"<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><rect width="80" height="80" fill="#C82029"/><rect x="100" y="20" width="100" height="40" fill="#1D1D1B"/></svg>"##).unwrap();
+    let brand = json!({"schemaVersion": 1, "projectId": "p", "brandName": "Marque Exemple", "version": "v1",
+        "assets": [{"id": "logo-a", "role": "primaryLogo", "label": "Logo principal", "source": "logo.svg"}],
+        "colors": [{"id": "c1", "name": "Rouge principal", "hex": "#C82029"}, {"id": "c2", "name": "Papier", "hex": "#F4F1EA"}],
+        "fonts": [{"id": "f1", "family": "Inter", "usage": "Texte courant"}]});
+    std::fs::write(dir.join("brand.json"), brand.to_string()).unwrap();
+    let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
+    app.run("file.new", json!({})).unwrap();
+    app.run("brand.link", json!({"path": dir.join("brand.json").display().to_string()})).unwrap();
+    let mut h = harness(app);
+    h.run_steps(3);
+    shot(&mut h, "brand-generate");
+    h.get_by_label("Charte graphique complète").click();
+    h.run_steps(4);
+    let d = &h.state().session.doc().unwrap().doc;
+    assert!(d.page_count() >= 8, "a whole guide: {} pages", d.page_count());
+    assert!(d.spreads.iter().flat_map(|s| s.items.iter()).any(|i| i.label.ends_with("@construction")));
     let _ = std::fs::remove_dir_all(&dir);
 }

@@ -49,7 +49,7 @@ fn chapters(b: &Book) -> Result<Vec<String>> {
     b.documents.iter().map(|path| chapter(b, path)).collect()
 }
 
-fn load(path: &str) -> Result<oracle_guide_doc::Document> {
+fn load(path: &str) -> Result<oracle_layout_doc::Document> {
     #[cfg(not(target_arch = "wasm32"))]
     let bytes = crate::io::read_file(path).map_err(EngineError::Other)?;
     #[cfg(target_arch = "wasm32")]
@@ -83,17 +83,17 @@ impl ChapterBatch {
             return Err(bad(command, format!("a book update supports at most {MAX_BATCH_CHAPTERS} chapters")));
         }
         let directory = tempfile::Builder::new()
-            .prefix(".oracle-guide-book-")
+            .prefix(".oracle-layout-book-")
             .tempdir()
             .map_err(|e| EngineError::Other(format!("{command}: cannot stage chapter changes: {e}")))?;
         Ok(Self { directory, chapters: Vec::with_capacity(chapters), command })
     }
 
-    fn stage(&mut self, path: &str, doc: &oracle_guide_doc::Document) -> Result<()> {
+    fn stage(&mut self, path: &str, doc: &oracle_layout_doc::Document) -> Result<()> {
         use std::io::Write;
 
         // Propagate serialization errors; an empty fallback must never replace a chapter.
-        let bytes = oracle_guide_format::save(doc).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
+        let bytes = oracle_layout_format::save(doc).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
         let mut file = tempfile::Builder::new()
             .prefix("chapter-")
             .tempfile_in(self.directory.path())
@@ -131,7 +131,7 @@ fn writable_chapter(s: &Session, path: &str, command: &'static str) -> Result<()
     use std::path::Path;
 
     if Path::new(path).extension().and_then(|ext| ext.to_str()).is_some_and(|ext| ext.eq_ignore_ascii_case("idml")) {
-        return Err(bad(command, format!("cannot change imported IDML chapter {path}; convert it to a native Oracle Brand Guide document first")));
+        return Err(bad(command, format!("cannot change imported IDML chapter {path}; convert it to a native Oracle Layout document first")));
     }
     let target = crate::io::canonicalize(path).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     if s.docs.iter().any(|doc| doc.path.as_ref().is_some_and(|open| crate::io::canonicalize(open).is_ok_and(|open| open == target))) {
@@ -144,7 +144,7 @@ fn writable_chapter(s: &Session, path: &str, command: &'static str) -> Result<()
     // writable directory even when an in-place write would be permitted.
     crate::io::writable(&target).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     let parent = target.parent().ok_or_else(|| bad(command, format!("chapter {path} has no parent folder")))?;
-    tempfile::Builder::new().prefix(".oracle-guide-book-check-").tempfile_in(parent).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
+    tempfile::Builder::new().prefix(".oracle-layout-book-check-").tempfile_in(parent).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     Ok(())
 }
 
@@ -165,9 +165,9 @@ fn paginate(s: &Session) -> Result<Value> {
         let pages = u32::try_from(d.page_count()).map_err(|_| bad("book.paginate", "too many pages for continuous numbering"))?;
         next = next.checked_add(pages).ok_or_else(|| bad("book.paginate", "too many pages for continuous numbering"))?;
         chapter = match d.settings.chapter_source {
-            oracle_guide_doc::ChapterSource::Automatic => chapter.saturating_add(1),
-            oracle_guide_doc::ChapterSource::UserDefined => d.settings.chapter_number.max(1),
-            oracle_guide_doc::ChapterSource::SameAsPrevious => chapter.max(1),
+            oracle_layout_doc::ChapterSource::Automatic => chapter.saturating_add(1),
+            oracle_layout_doc::ChapterSource::UserDefined => d.settings.chapter_number.max(1),
+            oracle_layout_doc::ChapterSource::SameAsPrevious => chapter.max(1),
         };
         d.settings.chapter_number = chapter;
         chapters.push(d.chapter_label());
@@ -235,11 +235,11 @@ mod safety_tests;
 
 /// Make page numbering of `d` start at `n` (the first section).
 #[cfg(not(target_arch = "wasm32"))]
-fn start_at(d: &mut oracle_guide_doc::Document, n: u32) {
+fn start_at(d: &mut oracle_layout_doc::Document, n: u32) {
     if !d.sections.iter().any(|x| x.start == 0) {
         d.sections.insert(
             0,
-            oracle_guide_doc::Section {
+            oracle_layout_doc::Section {
                 start: 0,
                 start_number: None,
                 style: Default::default(),
@@ -338,14 +338,14 @@ pub fn specs() -> Vec<CommandSpec> {
                 let mut d = load(path)?;
                 // The chapter's own fonts, for this export (skipped font files are logged).
                 let _fonts = super::file::load_document_fonts(&mut d, path).0;
-                let cache = oracle_guide_compose::Cache::new();
-                let r = oracle_guide_pdf::export_pdf_with_report(&super::interchange::with_pdf_boxes(&d), &cache, &oracle_guide_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?;
-                let n = oracle_guide_render::pdf_page_count(&r.bytes).unwrap_or(0);
-                let sizes: Vec<(f32, f32)> = (0..n).filter_map(|i| oracle_guide_render::pdf_page_size(&r.bytes, i)).map(|(w, h)| (w as f32, h as f32)).collect();
+                let cache = oracle_layout_compose::Cache::new();
+                let r = oracle_layout_pdf::export_pdf_with_report(&super::interchange::with_pdf_boxes(&d), &cache, &oracle_layout_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?;
+                let n = oracle_layout_render::pdf_page_count(&r.bytes).unwrap_or(0);
+                let sizes: Vec<(f32, f32)> = (0..n).filter_map(|i| oracle_layout_render::pdf_page_size(&r.bytes, i)).map(|(w, h)| (w as f32, h as f32)).collect();
                 parts.push((r.bytes, sizes));
             }
             let pages: usize = parts.iter().map(|p| p.1.len()).sum();
-            let bytes = oracle_guide_pdf::merge_pdfs(&parts, None).map_err(|e| EngineError::Other(e.to_string()))?;
+            let bytes = oracle_layout_pdf::merge_pdfs(&parts, None).map_err(|e| EngineError::Other(e.to_string()))?;
             match str_param(p, "path") {
                 Some(path) => {
                     #[cfg(not(target_arch = "wasm32"))]
@@ -372,11 +372,11 @@ mod tests {
         let mut s = Session::new();
         s.execute("book.new", &json!({"path": p("Field Guide.dcbook")})).unwrap();
         let chapters = [
-            ("a.oracle-guide", json!({"style": "upperRoman"})),
-            ("b.oracle-guide", json!({"source": "sameAsPrevious"})),
-            ("c.oracle-guide", json!({})),
-            ("d.oracle-guide", json!({"start": 7, "style": "lowerLetters"})),
-            ("e.oracle-guide", json!({})),
+            ("a.oracle-layout", json!({"style": "upperRoman"})),
+            ("b.oracle-layout", json!({"source": "sameAsPrevious"})),
+            ("c.oracle-layout", json!({})),
+            ("d.oracle-layout", json!({"start": 7, "style": "lowerLetters"})),
+            ("e.oracle-layout", json!({})),
         ];
         for (name, numbering) in &chapters {
             s.execute("file.new", &json!({})).unwrap();
@@ -391,9 +391,9 @@ mod tests {
         let r = s.execute("book.paginate", &json!({})).unwrap();
         // Same as previous takes the number, written in the document's own style.
         assert_eq!(r["chapters"], json!(["I", "1", "2", "g", "8"]));
-        assert_eq!(super::load(&p("e.oracle-guide")).unwrap().settings.chapter_number, 8);
+        assert_eq!(super::load(&p("e.oracle-layout")).unwrap().settings.chapter_number, 8);
         // An open chapter (e) names its book.
-        s.execute("file.open", &json!({"path": p("e.oracle-guide")})).unwrap();
+        s.execute("file.open", &json!({"path": p("e.oracle-layout")})).unwrap();
         assert_eq!(s.execute("layout.chapterNumbering", &json!({})).unwrap()["book"], "Field Guide");
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -404,26 +404,26 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let p = |n: &str| dir.join(n).to_string_lossy().to_string();
         let mut s = Session::new();
-        for (name, pages, style) in [("a.oracle-guide", 3, "Chapter Head"), ("b.oracle-guide", 2, "Other")] {
+        for (name, pages, style) in [("a.oracle-layout", 3, "Chapter Head"), ("b.oracle-layout", 2, "Other")] {
             s.execute("file.new", &json!({"pages": pages})).unwrap();
             s.execute("style.paragraph.create", &json!({"name": style, "chars": {"size": 20}})).unwrap();
             s.execute("file.saveAs", &json!({"path": p(name)})).unwrap();
             s.execute("file.close", &json!({})).unwrap();
         }
         s.execute("book.new", &json!({"path": p("book.dcbook")})).unwrap();
-        s.execute("book.add", &json!({"path": p("a.oracle-guide")})).unwrap();
-        s.execute("book.add", &json!({"path": p("b.oracle-guide")})).unwrap();
+        s.execute("book.add", &json!({"path": p("a.oracle-layout")})).unwrap();
+        s.execute("book.add", &json!({"path": p("b.oracle-layout")})).unwrap();
         let l = s.execute("book.list", &json!({})).unwrap();
         assert_eq!(l["documents"][1]["firstPage"], 4);
         assert_eq!(s.execute("book.paginate", &json!({})).unwrap()["pages"], 5);
-        let b = super::load(&p("b.oracle-guide")).unwrap();
+        let b = super::load(&p("b.oracle-layout")).unwrap();
         assert_eq!(b.page_name(0), "4", "continues after the first document");
         assert_eq!(s.execute("book.syncStyles", &json!({})).unwrap()["synced"], 1);
-        assert!(super::load(&p("b.oracle-guide")).unwrap().styles.para("Chapter Head").is_some());
+        assert!(super::load(&p("b.oracle-layout")).unwrap().styles.para("Chapter Head").is_some());
         let r = s.execute("book.exportPdf", &json!({})).unwrap();
         assert_eq!(r["pages"], 5);
         let bytes = super::super::file::base64_decode(r["base64"].as_str().unwrap());
-        assert_eq!(oracle_guide_render::pdf_page_count(&bytes), Some(5));
+        assert_eq!(oracle_layout_render::pdf_page_count(&bytes), Some(5));
         // A fresh session reopens the book.
         let mut t = Session::new();
         assert_eq!(t.execute("book.open", &json!({"path": p("book.dcbook")})).unwrap()["documents"], 2);

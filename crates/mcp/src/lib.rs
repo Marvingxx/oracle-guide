@@ -1,14 +1,14 @@
-//! Oracle Brand Guide's MCP server.
+//! Oracle Layout's MCP server.
 //!
 //! [Model Context Protocol](https://modelcontextprotocol.io) over stdio: newline-delimited
-//! JSON-RPC 2.0, hand-written (no async runtime). The server exposes Oracle Brand Guide as a set of MCP
+//! JSON-RPC 2.0, hand-written (no async runtime). The server exposes Oracle Layout as a set of MCP
 //! tools and resources and forwards everything to a [`Backend`]:
 //!
 //! - [`Remote`] talks to a running desktop app through its loopback JSON-lines control channel
-//!   (`oracle-guide --control 7979`): one `{"id","method","params"}` line in, one
+//!   (`oracle-layout --control 7979`): one `{"id","method","params"}` line in, one
 //!   `{"id","ok","result"|"error"}` line out (see `docs/control-protocol.md`).
-//! - [`Headless`] hosts an in-process [`oracle_guide_engine::Session`] and implements the
-//!   engine-level control-channel methods itself (rendering pages with `oracle-guide-render`), so
+//! - [`Headless`] hosts an in-process [`oracle_layout_engine::Session`] and implements the
+//!   engine-level control-channel methods itself (rendering pages with `oracle-layout-render`), so
 //!   agents can build layouts and look at them without a window.
 //!
 //! Entry points: [`Server::serve`] (stdio loop) and [`Server::handle_line`] (one message).

@@ -1,6 +1,6 @@
 //! Cross-command caret color and character-style regressions.
 use crate::Session;
-use oracle_guide_doc::StoryId;
+use oracle_layout_doc::StoryId;
 use serde_json::{Value, json};
 
 fn setup(text: &str) -> (Session, u64) {

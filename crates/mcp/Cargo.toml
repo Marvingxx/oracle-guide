@@ -1,18 +1,18 @@
 [package]
-name = "oracle-guide-mcp"
+name = "oracle-layout-mcp"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide MCP server: JSON-RPC 2.0 over stdio, driving a running app or a headless session"
+description = "Oracle Layout MCP server: JSON-RPC 2.0 over stdio, driving a running app or a headless session"
 
 [lints]
 workspace = true
 
 [dependencies]
-oracle-guide-engine = { workspace = true }
-oracle-guide-render = { workspace = true }
-oracle-guide-tools = { workspace = true }
-oracle-guide-geom = { workspace = true }
+oracle-layout-engine = { workspace = true }
+oracle-layout-render = { workspace = true }
+oracle-layout-tools = { workspace = true }
+oracle-layout-geom = { workspace = true }
 serde_json = { workspace = true }
 log = { workspace = true }
 

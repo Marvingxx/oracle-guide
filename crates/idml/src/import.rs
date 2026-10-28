@@ -4,17 +4,17 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::io::Read;
 use std::sync::Arc;
 
-use oracle_guide_color::cms::lab;
-use oracle_guide_color::{Color, ColorType, Gradient, GradientKind, GradientStop, Swatch, SwatchValue, swatch};
-use oracle_guide_doc::{
+use oracle_layout_color::cms::lab;
+use oracle_layout_color::{Color, ColorType, Gradient, GradientKind, GradientStop, Swatch, SwatchValue, swatch};
+use oracle_layout_doc::{
     Asset, AssetId, BaselineGrid, CellRange, CharAttrs, CharFormat, CharRun, CharacterStyle, Columns, ColumnsKind, Content, DirectionalFeather,
     DocSettings, Document, DropShadow, Effects, Fill, GradientFeather, GridAlign, GridRelative, Guide, Item, ItemId, Kerning, LAYER_COLORS, Layer,
     LayerId, ListType, Margins, ObjectStyle, Orientation, Page, PageId, PageSide, ParaAttrs, ParaFormat, ParagraphStyle, ParentInfo, RowHeightMode,
     Rule, Section, Shape, SpanColumns, Spread, SpreadId, Story, StoryId, Stroke, Styles, TabStop, Table, TextFrame, TextFrameOptions, TextWrap,
     story as st,
 };
-use oracle_guide_geom::corners::{Corner, CornerOptions};
-use oracle_guide_geom::{Affine, Anchor, PathData, Point, Rect, SubPath};
+use oracle_layout_geom::corners::{Corner, CornerOptions};
+use oracle_layout_geom::{Affine, Anchor, PathData, Point, Rect, SubPath};
 
 use crate::names::{self, CHAR_BUILTINS, OBJECT_BUILTINS, PARA_BUILTINS, unescape_id};
 use crate::xml::{El, Node, parse};
@@ -22,12 +22,12 @@ use crate::{IdmlError, MIMETYPE, Result, base64_decode, sniff_image};
 
 /// Preserve the legacy uniform field only when all four sides explicitly specify every
 /// property. Partial records must stay sparse so they can inherit from a parent style.
-fn uniform_cell_stroke(edges: &[oracle_guide_doc::CellStrokeAttrs; 4]) -> Option<oracle_guide_doc::CellStroke> {
+fn uniform_cell_stroke(edges: &[oracle_layout_doc::CellStrokeAttrs; 4]) -> Option<oracle_layout_doc::CellStroke> {
     let first = edges.first()?;
     if edges.iter().any(|edge| edge != first) {
         return None;
     }
-    let mut stroke = oracle_guide_doc::CellStroke {
+    let mut stroke = oracle_layout_doc::CellStroke {
         weight: first.weight?,
         color: first.color.clone()?,
         tint: first.tint?,
@@ -109,9 +109,9 @@ pub fn import_idml_report_with_previews(
     if im.repaired_tab_lists > 0 {
         warnings.push(format!(
             "tab lists repaired to fit the limits (at most {} stops, finite positions up to {} in, leaders of at most {} characters, one stop per position): {}",
-            oracle_guide_doc::MAX_TAB_STOPS,
-            oracle_guide_doc::MAX_TAB_POSITION / 72.0,
-            oracle_guide_doc::MAX_TAB_LEADER,
+            oracle_layout_doc::MAX_TAB_STOPS,
+            oracle_layout_doc::MAX_TAB_POSITION / 72.0,
+            oracle_layout_doc::MAX_TAB_LEADER,
             im.repaired_tab_lists,
         ));
     }
@@ -133,7 +133,7 @@ fn tab_list_repaired(read: &[TabStop], sanitized: &[TabStop]) -> bool {
         sanitized.iter().any(|o| {
             o.position == t.position
                 && o.leader == t.leader
-                && (o.align_on == t.align_on || (t.align_on.is_empty() && o.align == oracle_guide_doc::TabAlign::Char))
+                && (o.align_on == t.align_on || (t.align_on.is_empty() && o.align == oracle_layout_doc::TabAlign::Char))
         })
     };
     read.len() != sanitized.len() || !read.iter().all(kept)
@@ -247,7 +247,7 @@ fn xmp_date(xmp: &str, key: &str) -> Option<i64> {
         let rest = xmp.get(i + key.len() + 2..)?;
         rest.get(..rest.find('"')?)?
     };
-    oracle_guide_doc::vars::parse_iso_date(value)
+    oracle_layout_doc::vars::parse_iso_date(value)
 }
 
 struct ItemCtx {
@@ -269,18 +269,18 @@ struct Importer<'r> {
     hidden_colors: HashMap<String, Color>,
     /// Unnamed swatches (gradients) added on first use.
     hidden_swatches: HashMap<String, Swatch>,
-    color_groups: Vec<oracle_guide_doc::ColorGroup>,
-    conditions: Vec<oracle_guide_doc::Condition>,
+    color_groups: Vec<oracle_layout_doc::ColorGroup>,
+    conditions: Vec<oracle_layout_doc::Condition>,
     condition_names: HashMap<String, String>,
-    inks: oracle_guide_doc::InkManager,
-    stroke_styles: Vec<oracle_guide_doc::StrokeStyleDef>,
+    inks: oracle_layout_doc::InkManager,
+    stroke_styles: Vec<oracle_layout_doc::StrokeStyleDef>,
     styles: Styles,
     composite_names: HashMap<String, String>,
     mojikumi_names: HashMap<String, String>,
-    kinsoku: HashMap<String, oracle_guide_doc::cjk::Kinsoku>,
+    kinsoku: HashMap<String, oracle_layout_doc::cjk::Kinsoku>,
     para_names: HashMap<String, String>,
     char_names: HashMap<String, String>,
-    lists: Vec<oracle_guide_doc::NumberedList>,
+    lists: Vec<oracle_layout_doc::NumberedList>,
     object_names: HashMap<String, String>,
     cell_names: HashMap<String, String>,
     table_names: HashMap<String, String>,
@@ -302,29 +302,29 @@ struct Importer<'r> {
     assets: BTreeMap<AssetId, Arc<Asset>>,
     /// Assets read from a link path at a page and crop, so later placements of that path, page
     /// and crop reuse them unread.
-    linked_assets: HashMap<(String, u32, oracle_guide_doc::PdfCrop), AssetId>,
+    linked_assets: HashMap<(String, u32, oracle_layout_doc::PdfCrop), AssetId>,
     ctx: ItemCtx,
     sections: Vec<Section>,
-    footnote_options: oracle_guide_doc::FootnoteOptions,
+    footnote_options: oracle_layout_doc::FootnoteOptions,
     /// Text destination Self → anchor id.
     anchor_ids: HashMap<String, u64>,
     /// Cross-reference source Self → (story, index in its cross-references).
     xref_srcs: HashMap<String, (StoryId, usize)>,
     /// Cross-reference format Self → name.
     xref_format_names: HashMap<String, String>,
-    xref_formats: Vec<oracle_guide_doc::XrefFormat>,
+    xref_formats: Vec<oracle_layout_doc::XrefFormat>,
     /// Index topic Self → topic path and per-level sort keys; topic cross-references.
     index_topics: HashMap<String, IndexTopic>,
-    index_xrefs: Vec<oracle_guide_doc::IndexRef>,
+    index_xrefs: Vec<oracle_layout_doc::IndexRef>,
     /// The file's text variables (`None`: it defines none) and their Self → index.
-    text_vars: Option<Vec<oracle_guide_doc::vars::TextVariable>>,
+    text_vars: Option<Vec<oracle_layout_doc::vars::TextVariable>>,
     text_var_ids: HashMap<String, usize>,
     /// Creation and modification times (Unix seconds) from the package metadata.
     created: Option<i64>,
     modified: Option<i64>,
     /// Tab lists [`TabStop::sanitized_list`] had to repair (an import warning).
     repaired_tab_lists: usize,
-    toc: Option<oracle_guide_doc::Toc>,
+    toc: Option<oracle_layout_doc::Toc>,
 }
 
 /// IDML stores a sort key on each topic, rather than on its page references.
@@ -353,7 +353,7 @@ fn lab_to_color(l: f32, a: f32, b: f32) -> Color {
     Color::rgb(rgb[0], rgb[1], rgb[2])
 }
 
-fn mojikumi_row(e: &El) -> Result<oracle_guide_doc::cjk::MojikumiAki> {
+fn mojikumi_row(e: &El) -> Result<oracle_layout_doc::cjk::MojikumiAki> {
     let number = |key: &str| -> Result<f64> {
         let Some(raw) = e.prop(key) else {
             return Ok(0.0);
@@ -374,7 +374,7 @@ fn mojikumi_row(e: &El) -> Result<oracle_guide_doc::cjk::MojikumiAki> {
             _ => Err(IdmlError::Invalid(format!("Mojikumi row has invalid {key}"))),
         }
     };
-    let row = oracle_guide_doc::cjk::MojikumiAki {
+    let row = oracle_layout_doc::cjk::MojikumiAki {
         target_class: integer("TargetMojikumiClass")?,
         side_class: integer("SideMojikumiClass")?,
         after: boolean("SideIsAfterTarget")?,
@@ -481,7 +481,7 @@ fn corners(e: &El, prefix: &str) -> Option<[Corner; 4]> {
     }
     let mut out = [Corner::default(); 4];
     for (c, (shape, size)) in out.iter_mut().zip(shapes.iter().zip(sizes)) {
-        c.shape = shape.as_deref().map_or(oracle_guide_geom::corners::CornerShape::None, |s| names::corner_in(s.trim()));
+        c.shape = shape.as_deref().map_or(oracle_layout_geom::corners::CornerShape::None, |s| names::corner_in(s.trim()));
         c.size = size.filter(|v| v.is_finite()).map_or(12.0, |v| v.max(0.0));
     }
     Some(out)
@@ -494,7 +494,7 @@ fn tint(v: Option<f64>) -> Option<f32> {
 
 impl<'r> Importer<'r> {
     fn new(read_link: &'r dyn Fn(&str) -> Option<Vec<u8>>, previews: &'r HashMap<String, Arc<Vec<u8>>>) -> Self {
-        let specials: Vec<Swatch> = oracle_guide_color::default_swatches().into_iter().filter(|s| s.locked).collect();
+        let specials: Vec<Swatch> = oracle_layout_color::default_swatches().into_iter().filter(|s| s.locked).collect();
         let mut swatch_names = HashMap::new();
         swatch_names.insert("Swatch/None".to_string(), swatch::NONE.to_string());
         swatch_names.insert("Color/Paper".to_string(), swatch::PAPER.to_string());
@@ -548,7 +548,7 @@ impl<'r> Importer<'r> {
             anchor_ids: HashMap::new(),
             xref_srcs: HashMap::new(),
             xref_format_names: HashMap::new(),
-            xref_formats: oracle_guide_doc::xref::default_formats(),
+            xref_formats: oracle_layout_doc::xref::default_formats(),
             index_topics: HashMap::new(),
             index_xrefs: Vec::new(),
             text_vars: None,
@@ -572,7 +572,7 @@ impl<'r> Importer<'r> {
                 "DocumentPreference" => self.doc_prefs(e),
                 "TransparencyPreference" => {
                     if let Some(v) = e.get("BlendingSpace") {
-                        self.settings.blend_space = if v == "RGB" { oracle_guide_doc::BlendSpace::Rgb } else { oracle_guide_doc::BlendSpace::Cmyk };
+                        self.settings.blend_space = if v == "RGB" { oracle_layout_doc::BlendSpace::Rgb } else { oracle_layout_doc::BlendSpace::Cmyk };
                     }
                 }
                 "TextPreference" => {
@@ -603,9 +603,9 @@ impl<'r> Importer<'r> {
                         self.settings.keyboard_increment = v;
                     }
                     match e.get("RulerOrigin") {
-                        Some("PageOrigin") => self.settings.ruler_origin = oracle_guide_doc::RulerOrigin::Page,
-                        Some("SpineOrigin") => self.settings.ruler_origin = oracle_guide_doc::RulerOrigin::Spine,
-                        Some("SpreadOrigin") => self.settings.ruler_origin = oracle_guide_doc::RulerOrigin::Spread,
+                        Some("PageOrigin") => self.settings.ruler_origin = oracle_layout_doc::RulerOrigin::Page,
+                        Some("SpineOrigin") => self.settings.ruler_origin = oracle_layout_doc::RulerOrigin::Spine,
+                        Some("SpreadOrigin") => self.settings.ruler_origin = oracle_layout_doc::RulerOrigin::Spread,
                         _ => {}
                     }
                 }
@@ -630,7 +630,7 @@ impl<'r> Importer<'r> {
             }
             let entries = e
                 .find_all("CompositeFontEntry")
-                .map(|c| oracle_guide_doc::cjk::CompositeFontEntry {
+                .map(|c| oracle_layout_doc::cjk::CompositeFontEntry {
                     name: c.get("Name").unwrap_or("").into(),
                     characters: c.get("CustomCharacters").unwrap_or("").into(),
                     family: c.prop("AppliedFont").as_deref().and_then(names::font_family_in).unwrap_or_default(),
@@ -644,13 +644,13 @@ impl<'r> Importer<'r> {
                     scale_option: c.boolean("ScaleOption").unwrap_or(true),
                 })
                 .collect();
-            self.styles.composite_fonts.push(oracle_guide_doc::cjk::CompositeFont { name, entries });
+            self.styles.composite_fonts.push(oracle_layout_doc::cjk::CompositeFont { name, entries });
         }
         for e in top.iter().filter(|e| e.local() == "KinsokuTable") {
             if e.get("CantBeginLineChars").is_some() || e.get("CantEndLineChars").is_some() {
                 self.kinsoku.insert(
                     e.get("Self").unwrap_or("").into(),
-                    oracle_guide_doc::cjk::Kinsoku {
+                    oracle_layout_doc::cjk::Kinsoku {
                         name: e.get("Name").unwrap_or("").into(),
                         no_start: e.get("CantBeginLineChars").unwrap_or("").into(),
                         no_end: e.get("CantEndLineChars").unwrap_or("").into(),
@@ -669,7 +669,7 @@ impl<'r> Importer<'r> {
             } else {
                 Vec::new()
             };
-            self.styles.mojikumi_tables.push(oracle_guide_doc::cjk::MojikumiTable {
+            self.styles.mojikumi_tables.push(oracle_layout_doc::cjk::MojikumiTable {
                 name: unescape_id(e.get("Name").unwrap_or("")),
                 based_on: e.get("BasedOnMojikumiSet").unwrap_or("").into(),
                 overrides,
@@ -842,9 +842,9 @@ impl<'r> Importer<'r> {
         }
         if let Some(i) = e.get("Intent") {
             s.intent = match i {
-                "WebIntent" => oracle_guide_doc::Intent::Web,
-                "MobileIntent" => oracle_guide_doc::Intent::Mobile,
-                _ => oracle_guide_doc::Intent::Print,
+                "WebIntent" => oracle_layout_doc::Intent::Web,
+                "MobileIntent" => oracle_layout_doc::Intent::Mobile,
+                _ => oracle_layout_doc::Intent::Print,
             };
         }
         if let Some(v) = e.boolean("CreatePrimaryTextFrame") {
@@ -946,7 +946,7 @@ impl<'r> Importer<'r> {
         for e in top.iter().filter(|e| matches!(e.local(), "StripedStrokeStyle" | "DashedStrokeStyle" | "DottedStrokeStyle")) {
             let (Some(id), Some(name)) = (e.get("Self"), e.get("Name")) else { continue };
             let kind = match e.local() {
-                "StripedStrokeStyle" => oracle_guide_doc::StrokeType::Stripes {
+                "StripedStrokeStyle" => oracle_layout_doc::StrokeType::Stripes {
                     bands: finite_nums(e.get("StripeArray").unwrap_or(""))
                         .as_chunks::<2>()
                         .0
@@ -954,11 +954,11 @@ impl<'r> Importer<'r> {
                         .map(|c| (c[0] / 100.0, (c[1] - c[0]) / 100.0))
                         .collect(),
                 },
-                "DashedStrokeStyle" => oracle_guide_doc::StrokeType::Dashed { pattern: finite_nums(e.get("DashArray").unwrap_or("")) },
-                _ => oracle_guide_doc::StrokeType::Dotted,
+                "DashedStrokeStyle" => oracle_layout_doc::StrokeType::Dashed { pattern: finite_nums(e.get("DashArray").unwrap_or("")) },
+                _ => oracle_layout_doc::StrokeType::Dotted,
             };
             let _ = id;
-            self.stroke_styles.push(oracle_guide_doc::StrokeStyleDef { name: name.to_string(), kind });
+            self.stroke_styles.push(oracle_layout_doc::StrokeStyleDef { name: name.to_string(), kind });
         }
         // Ink Manager.
         for e in top.iter().filter(|e| e.local() == "Ink") {
@@ -1022,7 +1022,7 @@ impl<'r> Importer<'r> {
         for g in top.iter().filter(|e| e.local() == "ColorGroup" && e.get("IsRootColorGroup") != Some("true")) {
             let swatches: Vec<String> =
                 g.find_all("ColorGroupSwatch").filter_map(|s| s.get("SwatchItemRef")).filter_map(|r| self.swatch_names.get(r).cloned()).collect();
-            self.color_groups.push(oracle_guide_doc::ColorGroup { name: g.get("Name").unwrap_or("Color Group").to_string(), swatches });
+            self.color_groups.push(oracle_layout_doc::ColorGroup { name: g.get("Name").unwrap_or("Color Group").to_string(), swatches });
         }
     }
 
@@ -1042,7 +1042,7 @@ impl<'r> Importer<'r> {
                 SwatchValue::Tint { base, tint } => {
                     let mut all: Vec<Swatch> = self.swatches.clone();
                     all.extend(pending.iter().map(|(_, s)| s.clone()));
-                    return oracle_guide_color::swatch::resolve(&all, base, *tint).unwrap_or(Color::BLACK);
+                    return oracle_layout_color::swatch::resolve(&all, base, *tint).unwrap_or(Color::BLACK);
                 }
                 _ => {}
             }
@@ -1076,7 +1076,7 @@ impl<'r> Importer<'r> {
         }
         if let Some(c) = self.hidden_colors.get(r).copied() {
             let name = match c {
-                Color::Cmyk { c, m, y, k } => oracle_guide_color::swatch::cmyk_name(c, m, y, k),
+                Color::Cmyk { c, m, y, k } => oracle_layout_color::swatch::cmyk_name(c, m, y, k),
                 Color::Rgb { r, g, b } => format!("R={} G={} B={}", (r * 255.0).round(), (g * 255.0).round(), (b * 255.0).round()),
                 Color::Gray { k } => format!("K={}", (k * 100.0).round()),
             };
@@ -1110,13 +1110,13 @@ impl<'r> Importer<'r> {
                 .collect();
             let color = if nums.len() == 3 { [nums[0], nums[1], nums[2]] } else { [79, 153, 255] };
             self.condition_names.insert(id.to_string(), name.to_string());
-            self.conditions.push(oracle_guide_doc::Condition { name: name.to_string(), color, visible: e.get("Visible") != Some("false") });
+            self.conditions.push(oracle_layout_doc::Condition { name: name.to_string(), color, visible: e.get("Visible") != Some("false") });
         }
         for e in top.iter().filter(|e| e.local() == "NumberingList") {
             let name = e.get("Name").unwrap_or("").to_string();
             if !name.is_empty() && !name.starts_with("$ID/") && !self.lists.iter().any(|l| l.name == name) {
                 self.lists
-                    .push(oracle_guide_doc::NumberedList { name, continue_across_stories: e.get("ContinueNumbersAcrossStories") == Some("true") });
+                    .push(oracle_layout_doc::NumberedList { name, continue_across_stories: e.get("ContinueNumbersAcrossStories") == Some("true") });
             }
         }
         let mut paras: Vec<(String, El)> = Vec::new();
@@ -1161,7 +1161,7 @@ impl<'r> Importer<'r> {
         }
         for (_, e) in &paras {
             let name = names::style_name_in(PARA_BUILTINS, e.get("Name").unwrap_or(""));
-            let based_on = if name == oracle_guide_doc::NO_PARA_STYLE { None } else { self.based_on(e, true) };
+            let based_on = if name == oracle_layout_doc::NO_PARA_STYLE { None } else { self.based_on(e, true) };
             let next_style = e.get("NextStyle").map(|n| self.para_style_ref(n)).filter(|n| *n != name);
             let para = self.para_attrs(e);
             let chars = self.char_attrs(e);
@@ -1191,9 +1191,9 @@ impl<'r> Importer<'r> {
         }
         for (_, e) in &cell_styles {
             let name = names::style_name_in(names::CELL_BUILTINS, e.get("Name").unwrap_or(""));
-            let mut cs = oracle_guide_doc::CellStyle { name: name.clone(), ..Default::default() };
+            let mut cs = oracle_layout_doc::CellStyle { name: name.clone(), ..Default::default() };
             cs.based_on =
-                e.prop("BasedOn").map(|r| self.cell_style_ref(&r)).or_else(|| Some(oracle_guide_doc::NO_CELL_STYLE.into())).filter(|n| *n != name);
+                e.prop("BasedOn").map(|r| self.cell_style_ref(&r)).or_else(|| Some(oracle_layout_doc::NO_CELL_STYLE.into())).filter(|n| *n != name);
             cs.fill = e.prop("FillColor").map(|c| self.swatch_ref(&c));
             cs.fill_tint = tint(e.num("FillTint"));
             cs.inset_overrides = ["TopInset", "LeftInset", "BottomInset", "RightInset"].map(|k| e.num(k).map(|v| v.max(0.0)));
@@ -1209,7 +1209,7 @@ impl<'r> Importer<'r> {
                 cs.stroke = Some(stroke);
                 cs.strokes = Default::default();
             }
-            cs.paragraph_style = e.get("AppliedParagraphStyle").map(|r| self.para_style_ref(r)).filter(|n| n != oracle_guide_doc::NO_PARA_STYLE);
+            cs.paragraph_style = e.get("AppliedParagraphStyle").map(|r| self.para_style_ref(r)).filter(|n| n != oracle_layout_doc::NO_PARA_STYLE);
             match self.styles.cell.iter_mut().find(|c| c.name == name) {
                 Some(slot) => *slot = cs,
                 None => self.styles.cell.push(cs),
@@ -1217,16 +1217,16 @@ impl<'r> Importer<'r> {
         }
         for (_, e) in &table_styles {
             let name = names::style_name_in(names::TABLE_BUILTINS, e.get("Name").unwrap_or(""));
-            let mut ts = oracle_guide_doc::TableStyle { name: name.clone(), ..Default::default() };
+            let mut ts = oracle_layout_doc::TableStyle { name: name.clone(), ..Default::default() };
             ts.based_on =
-                e.prop("BasedOn").map(|r| self.table_style_ref(&r)).or_else(|| Some(oracle_guide_doc::NO_TABLE_STYLE.into())).filter(|n| *n != name);
-            ts.header = e.get("HeaderRegionCellStyle").map(|r| if r == "n" { oracle_guide_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
-            ts.body = e.get("BodyRegionCellStyle").map(|r| if r == "n" { oracle_guide_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
-            ts.footer = e.get("FooterRegionCellStyle").map(|r| if r == "n" { oracle_guide_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
+                e.prop("BasedOn").map(|r| self.table_style_ref(&r)).or_else(|| Some(oracle_layout_doc::NO_TABLE_STYLE.into())).filter(|n| *n != name);
+            ts.header = e.get("HeaderRegionCellStyle").map(|r| if r == "n" { oracle_layout_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
+            ts.body = e.get("BodyRegionCellStyle").map(|r| if r == "n" { oracle_layout_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
+            ts.footer = e.get("FooterRegionCellStyle").map(|r| if r == "n" { oracle_layout_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
             ts.left_column =
-                e.get("LeftColumnRegionCellStyle").map(|r| if r == "n" { oracle_guide_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
+                e.get("LeftColumnRegionCellStyle").map(|r| if r == "n" { oracle_layout_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
             ts.right_column =
-                e.get("RightColumnRegionCellStyle").map(|r| if r == "n" { oracle_guide_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
+                e.get("RightColumnRegionCellStyle").map(|r| if r == "n" { oracle_layout_doc::NO_CELL_STYLE.into() } else { self.cell_style_ref(r) });
             ts.header_same_as_body = e.boolean("HeaderRegionSameAsBodyRegion");
             ts.footer_same_as_body = e.boolean("FooterRegionSameAsBodyRegion");
             ts.left_column_same_as_body = e.boolean("LeftColumnRegionSameAsBodyRegion");
@@ -1255,7 +1255,7 @@ impl<'r> Importer<'r> {
                     .cloned()
                     .unwrap_or_else(|| names::style_name_in(OBJECT_BUILTINS, &unescape_id(b.trim_start_matches("ObjectStyle/"))))
             });
-            let based_on = based_on.filter(|b| *b != oracle_guide_doc::NO_OBJECT_STYLE && *b != name);
+            let based_on = based_on.filter(|b| *b != oracle_layout_doc::NO_OBJECT_STYLE && *b != name);
             let enabled = |k: &str, attr: &str| match e.get(k) {
                 Some(v) => v == "true",
                 None => e.get(attr).is_some(),
@@ -1318,12 +1318,12 @@ impl<'r> Importer<'r> {
                 let topic = prefix.child(t);
                 for x in t.find_all("CrossReference") {
                     let target = x.get("ReferencedTopic").and_then(|r| self.index_topics.get(r)).map(|t| t.path.join(": ")).unwrap_or_default();
-                    use oracle_guide_doc::index::IndexRange as R;
+                    use oracle_layout_doc::index::IndexRange as R;
                     let range = match x.get("CrossReferenceType") {
                         Some("SeeAlso") | Some("SeeAlsoHerein") => R::SeeAlso(target),
                         _ => R::See(target),
                     };
-                    self.index_xrefs.push(oracle_guide_doc::IndexRef { topics: topic.path.clone(), sort: topic.sort.clone(), range });
+                    self.index_xrefs.push(oracle_layout_doc::IndexRef { topics: topic.path.clone(), sort: topic.sort.clone(), range });
                 }
                 stack.push((t, topic));
             }
@@ -1334,7 +1334,7 @@ impl<'r> Importer<'r> {
     /// A `TextVariable` definition. Types that aren't computed here keep their settings and show
     /// the result of their first instance.
     fn text_variable(&mut self, e: &El) {
-        use oracle_guide_doc::vars::{TextVariable, Use, VAR_MAX, VarKind};
+        use oracle_layout_doc::vars::{TextVariable, Use, VAR_MAX, VarKind};
         let ty = e.get("VariableType").unwrap_or("");
         // Cross-reference internals; export writes its own.
         if ty.is_empty() || ty.starts_with("Xref") {
@@ -1396,7 +1396,7 @@ impl<'r> Importer<'r> {
     /// A `TextVariableInstance`: the variable's character, or its recorded text when the file
     /// doesn't define the variable.
     fn text_variable_instance(&mut self, e: &El) -> String {
-        use oracle_guide_doc::vars::{VarKind, var_char};
+        use oracle_layout_doc::vars::{VarKind, var_char};
         let result = e.get("ResultText").unwrap_or("");
         let found = e.get("AssociatedTextVariable").and_then(|r| self.text_var_ids.get(r)).copied();
         let var = found.and_then(|i| Some((i, self.text_vars.as_mut()?.get_mut(i)?)));
@@ -1440,13 +1440,13 @@ impl<'r> Importer<'r> {
         }
         match self.xref_formats.iter_mut().find(|f| f.name == name) {
             Some(f) => f.definition = def,
-            None => self.xref_formats.push(oracle_guide_doc::XrefFormat { name, definition: def }),
+            None => self.xref_formats.push(oracle_layout_doc::XrefFormat { name, definition: def }),
         }
     }
 
     /// Preferences › `FootnoteOption` (after styles: it names the footnote text and marker styles).
     fn footnote_option(&mut self, e: &El) {
-        let mut o = oracle_guide_doc::FootnoteOptions::default();
+        let mut o = oracle_layout_doc::FootnoteOptions::default();
         if let Some(v) = e.num("StartAt") {
             o.start_at = v.max(0.0) as u32;
         }
@@ -1494,8 +1494,8 @@ impl<'r> Importer<'r> {
 
     /// The table of contents: the TOC style a story is generated from (`AppliedTOCStyle`), with
     /// its entries. Styles the document doesn't have fall back to the generated TOC styles.
-    fn toc_of(&self, top: &[El]) -> Option<oracle_guide_doc::Toc> {
-        use oracle_guide_doc::{TocEntry, TocPageNumber};
+    fn toc_of(&self, top: &[El]) -> Option<oracle_layout_doc::Toc> {
+        use oracle_layout_doc::{TocEntry, TocPageNumber};
         let (ts, story) = top.iter().filter(|e| e.local() == "TOCStyle").find_map(|ts| {
             let id = ts.get("Self")?;
             let story = top.iter().find(|e| e.local() == "Story" && e.get("AppliedTOCStyle") == Some(id))?;
@@ -1504,7 +1504,7 @@ impl<'r> Importer<'r> {
         let known = |r: Option<&str>| r.map(|r| self.para_style_ref(r)).filter(|n| self.styles.para(n).is_some());
         // Character styles the document has; [None] is stored as no style.
         let known_chars = |r: Option<&str>| {
-            r.map(|r| self.char_style_ref(r)).filter(|n| n != oracle_guide_doc::NO_CHAR_STYLE && self.styles.char_style(n).is_some())
+            r.map(|r| self.char_style_ref(r)).filter(|n| n != oracle_layout_doc::NO_CHAR_STYLE && self.styles.char_style(n).is_some())
         };
         let entries: Vec<TocEntry> = ts
             .elements()
@@ -1534,7 +1534,7 @@ impl<'r> Importer<'r> {
         }
         let title: String = ts.get("Title").unwrap_or("").chars().filter(|c| !matches!(c, '\n' | '\r' | '\u{2029}')).take(1024).collect();
         let title_style = known(ts.get("TitleStyle")).filter(|n| n != "TOC Title");
-        Some(oracle_guide_doc::Toc { story, title, entries, page_numbers: true, title_style })
+        Some(oracle_layout_doc::Toc { story, title, entries, page_numbers: true, title_style })
     }
 
     fn para_style_ref(&self, r: &str) -> String {
@@ -1627,20 +1627,20 @@ impl<'r> Importer<'r> {
         // OpenType features (only when the element sets any).
         let mut otf_list: Vec<String> = Vec::new();
         let mut any = false;
-        for (tag, _, attr) in oracle_guide_doc::otf::TOGGLES {
+        for (tag, _, attr) in oracle_layout_doc::otf::TOGGLES {
             if let Some(on) = e.boolean(attr) {
-                oracle_guide_doc::otf::set(&mut otf_list, tag, on);
+                oracle_layout_doc::otf::set(&mut otf_list, tag, on);
                 any = true;
             }
         }
         if let Some(fig) = e.prop("OTFFigureStyle")
-            && let Some((id, ..)) = oracle_guide_doc::otf::FIGURES.iter().find(|f| f.3 == fig.trim())
+            && let Some((id, ..)) = oracle_layout_doc::otf::FIGURES.iter().find(|f| f.3 == fig.trim())
         {
-            oracle_guide_doc::otf::set_figures(&mut otf_list, id);
+            oracle_layout_doc::otf::set_figures(&mut otf_list, id);
             any = true;
         }
         if let Some(m) = e.num("OTFStylisticSets") {
-            oracle_guide_doc::otf::set_stylistic_sets(&mut otf_list, m.max(0.0) as u32);
+            oracle_layout_doc::otf::set_stylistic_sets(&mut otf_list, m.max(0.0) as u32);
             any = true;
         }
         if any {
@@ -1694,9 +1694,9 @@ impl<'r> Importer<'r> {
         let frac = |k: &str| e.num(k).map(|v| v / 100.0);
         a.align = e.prop("Justification").and_then(|v| names::align_in(v.trim()));
         a.kinsoku_hang = e.prop("KinsokuHangType").and_then(|v| match v.as_str() {
-            "None" => Some(oracle_guide_doc::cjk::KinsokuHang::None),
-            "KinsokuHangRegular" => Some(oracle_guide_doc::cjk::KinsokuHang::Regular),
-            "KinsokuHangForce" => Some(oracle_guide_doc::cjk::KinsokuHang::Force),
+            "None" => Some(oracle_layout_doc::cjk::KinsokuHang::None),
+            "KinsokuHangRegular" => Some(oracle_layout_doc::cjk::KinsokuHang::Regular),
+            "KinsokuHangForce" => Some(oracle_layout_doc::cjk::KinsokuHang::Force),
             _ => None,
         });
         a.mojikumi = e.prop("Mojikumi").map(|name| self.mojikumi_names.get(&name).cloned().unwrap_or_else(|| unescape_id(&name)));
@@ -1710,12 +1710,12 @@ impl<'r> Importer<'r> {
                 a.kinsoku = Some(Some(Default::default()));
             } else if let Some(set) = self.kinsoku.get(&k) {
                 a.kinsoku = Some(Some(set.clone()));
-            } else if let Some(set) = oracle_guide_doc::cjk::Kinsoku::named(&k) {
+            } else if let Some(set) = oracle_layout_doc::cjk::Kinsoku::named(&k) {
                 a.kinsoku = Some(Some(set));
             }
         }
         a.direction = e.prop("ParagraphDirection").map(|v| {
-            if v.trim() == "RightToLeftDirection" { oracle_guide_doc::TextDirection::RightToLeft } else { oracle_guide_doc::TextDirection::LeftToRight }
+            if v.trim() == "RightToLeftDirection" { oracle_layout_doc::TextDirection::RightToLeft } else { oracle_layout_doc::TextDirection::LeftToRight }
         });
         a.kashidas = e.prop("Kashidas").and_then(|s| crate::arabic::kashidas_in(&s));
         a.arabic_justification = e.prop("ParagraphJustification");
@@ -1736,12 +1736,12 @@ impl<'r> Importer<'r> {
         }
         // Nested and GREP styles.
         if let Some(l) = e.prop_el("AllNestedStyles") {
-            let v: Vec<oracle_guide_doc::NestedStyle> = l
+            let v: Vec<oracle_layout_doc::NestedStyle> = l
                 .find_all("ListItem")
                 .map(|it| {
                     let t = |k: &str| it.find(k).map(|x| x.text_content()).unwrap_or_default();
                     let d = it.find("Delimiter");
-                    oracle_guide_doc::NestedStyle {
+                    oracle_layout_doc::NestedStyle {
                         style: self.listed_char_style_ref(&t("AppliedCharacterStyle")),
                         through: t("Inclusive").trim() != "false",
                         count: t("Repetition").trim().parse().unwrap_or(1),
@@ -1755,11 +1755,11 @@ impl<'r> Importer<'r> {
             a.nested_styles = Some(v);
         }
         if let Some(l) = e.prop_el("AllNestedLineStyles") {
-            let v: Vec<oracle_guide_doc::NestedLineStyle> = l
+            let v: Vec<oracle_layout_doc::NestedLineStyle> = l
                 .find_all("ListItem")
                 .map(|it| {
                     let t = |k: &str| it.find(k).map(|x| x.text_content()).unwrap_or_default();
-                    oracle_guide_doc::NestedLineStyle {
+                    oracle_layout_doc::NestedLineStyle {
                         style: self.listed_char_style_ref(&t("AppliedCharacterStyle")),
                         lines: t("LineCount").trim().parse().unwrap_or(1),
                     }
@@ -1768,11 +1768,11 @@ impl<'r> Importer<'r> {
             a.nested_line_styles = Some(v);
         }
         if let Some(l) = e.prop_el("AllGREPStyles") {
-            let v: Vec<oracle_guide_doc::GrepStyle> = l
+            let v: Vec<oracle_layout_doc::GrepStyle> = l
                 .find_all("ListItem")
                 .map(|it| {
                     let t = |k: &str| it.find(k).map(|x| x.text_content()).unwrap_or_default();
-                    oracle_guide_doc::GrepStyle { style: self.listed_char_style_ref(&t("AppliedCharacterStyle")), pattern: t("GrepExpression") }
+                    oracle_layout_doc::GrepStyle { style: self.listed_char_style_ref(&t("AppliedCharacterStyle")), pattern: t("GrepExpression") }
                 })
                 .collect();
             a.grep_styles = Some(v);
@@ -1912,7 +1912,7 @@ impl<'r> Importer<'r> {
         a.shading_nonprinting = e.boolean("ParagraphShadingSuppressPrinting");
         a.span_space_before = e.num("SpanColumnMinSpaceBefore").filter(|v| v.is_finite());
         a.span_space_after = e.num("SpanColumnMinSpaceAfter").filter(|v| v.is_finite());
-        a.list_level = e.num("NumberingLevel").filter(|v| v.is_finite()).map(|v| v.round().clamp(1.0, oracle_guide_doc::LIST_LEVELS as f64) as u32);
+        a.list_level = e.num("NumberingLevel").filter(|v| v.is_finite()).map(|v| v.round().clamp(1.0, oracle_layout_doc::LIST_LEVELS as f64) as u32);
         if let Some(c) = e.prop("BulletsCharacterStyle") {
             a.bullet_char_style = Some(self.char_style_ref(c.trim()));
         }
@@ -1964,7 +1964,7 @@ impl<'r> Importer<'r> {
         r.right_indent = num(7).unwrap_or(0.0);
         if let Some(c) = get(2) {
             let c = c.trim();
-            if c == oracle_guide_doc::TEXT_COLOR {
+            if c == oracle_layout_doc::TEXT_COLOR {
                 r.color = c.to_string();
             } else if c.contains('/') {
                 r.color = self.swatch_ref(c);
@@ -2009,8 +2009,8 @@ impl<'r> Importer<'r> {
             .unwrap_or_else(|| names::style_name_in(names::TABLE_BUILTINS, &unescape_id(reference.trim_start_matches("TableStyle/"))))
     }
 
-    fn cell_stroke_attrs(&mut self, el: &El, prefix: &str) -> oracle_guide_doc::CellStrokeAttrs {
-        oracle_guide_doc::CellStrokeAttrs {
+    fn cell_stroke_attrs(&mut self, el: &El, prefix: &str) -> oracle_layout_doc::CellStrokeAttrs {
+        oracle_layout_doc::CellStrokeAttrs {
             weight: el.num(&format!("{prefix}StrokeWeight")).map(|v| v.max(0.0)),
             color: el.prop(&format!("{prefix}StrokeColor")).map(|v| self.swatch_ref(&v)),
             tint: tint(el.num(&format!("{prefix}StrokeTint"))),
@@ -2020,8 +2020,8 @@ impl<'r> Importer<'r> {
         }
     }
 
-    fn alt_fill_attrs(&mut self, el: &El, kind: &str) -> oracle_guide_doc::AltFillsAttrs {
-        oracle_guide_doc::AltFillsAttrs {
+    fn alt_fill_attrs(&mut self, el: &El, kind: &str) -> oracle_layout_doc::AltFillsAttrs {
+        oracle_layout_doc::AltFillsAttrs {
             first: el.num(&format!("Start{kind}FillCount")).map(|v| v.max(0.0) as u32),
             first_color: el.prop(&format!("Start{kind}FillColor")).map(|v| self.swatch_ref(&v)),
             first_tint: tint(el.num(&format!("Start{kind}FillTint"))),
@@ -2033,7 +2033,7 @@ impl<'r> Importer<'r> {
         }
     }
 
-    fn alt_stroke_attrs(&mut self, el: &El, kind: &str) -> oracle_guide_doc::AltStrokesAttrs {
+    fn alt_stroke_attrs(&mut self, el: &El, kind: &str) -> oracle_layout_doc::AltStrokesAttrs {
         let first_stroke = self.cell_stroke_attrs(el, &format!("Start{kind}"));
         let mut next_stroke = self.cell_stroke_attrs(el, &format!("End{kind}"));
         // IDML uses LineStyle for this one attribute (rather than StrokeType).
@@ -2042,7 +2042,7 @@ impl<'r> Importer<'r> {
         {
             next_stroke.kind = Some(names::stroke_type_in(&value));
         }
-        oracle_guide_doc::AltStrokesAttrs {
+        oracle_layout_doc::AltStrokesAttrs {
             first: el.num(&format!("Start{kind}StrokeCount")).map(|v| v.max(0.0) as u32),
             next: el.num(&format!("End{kind}StrokeCount")).map(|v| v.max(0.0) as u32),
             first_stroke,
@@ -2086,18 +2086,18 @@ impl<'r> Importer<'r> {
                 tables.insert(t.id, Arc::new(t));
             }
         }
-        let notes = notes.into_iter().enumerate().map(|(i, text)| Arc::new(oracle_guide_doc::Footnote { id: i as u64 + 1, text })).collect();
+        let notes = notes.into_iter().enumerate().map(|(i, text)| Arc::new(oracle_layout_doc::Footnote { id: i as u64 + 1, text })).collect();
         let mut anchor_list = Vec::new();
         for (k, (me, name)) in anchors.into_iter().enumerate() {
             let aid = (id.0 << 24) | (k as u64 + 1);
             self.anchor_ids.insert(me, aid);
-            anchor_list.push(Arc::new(oracle_guide_doc::TextAnchor { id: aid, name }));
+            anchor_list.push(Arc::new(oracle_layout_doc::TextAnchor { id: aid, name }));
         }
         let mut xref_list = Vec::new();
         for (k, (me, fmt)) in xrefs.into_iter().enumerate() {
             self.xref_srcs.insert(me, (id, k));
             let format = self.xref_format_names.get(&fmt).cloned().unwrap_or_else(|| "Full Paragraph & Page Number".into());
-            xref_list.push(Arc::new(oracle_guide_doc::CrossRef { target: 0, format }));
+            xref_list.push(Arc::new(oracle_layout_doc::CrossRef { target: 0, format }));
         }
         let mut st = Story {
             id,
@@ -2106,9 +2106,9 @@ impl<'r> Importer<'r> {
             chars,
             frames: vec![],
             direction: if e.find("StoryPreference").and_then(|p| p.get("StoryDirection")) == Some("RightToLeftDirection") {
-                oracle_guide_doc::TextDirection::RightToLeft
+                oracle_layout_doc::TextDirection::RightToLeft
             } else {
-                oracle_guide_doc::TextDirection::LeftToRight
+                oracle_layout_doc::TextDirection::LeftToRight
             },
             vertical: e.find("StoryPreference").and_then(|p| p.get("StoryOrientation")) == Some("Vertical"),
             rev: 0,
@@ -2144,9 +2144,9 @@ impl<'r> Importer<'r> {
         let nc = cols.len().max(1);
         let mut t = Table::new(id, nr, nc, 0, 0, 0.0);
         t.options.direction = if e.get("TableDirection") == Some("RightToLeftDirection") {
-            oracle_guide_doc::TextDirection::RightToLeft
+            oracle_layout_doc::TextDirection::RightToLeft
         } else {
-            oracle_guide_doc::TextDirection::LeftToRight
+            oracle_layout_doc::TextDirection::LeftToRight
         };
         for (r, re) in rows.iter().enumerate() {
             let auto = re.boolean("AutoGrow").unwrap_or(true);
@@ -2161,7 +2161,7 @@ impl<'r> Importer<'r> {
         if h.saturating_add(f) < nr {
             t.set_header_footer(h, f);
         }
-        let style_name = e.get("AppliedTableStyle").map(|r| self.table_style_ref(r)).unwrap_or_else(|| oracle_guide_doc::BASIC_TABLE.into());
+        let style_name = e.get("AppliedTableStyle").map(|r| self.table_style_ref(r)).unwrap_or_else(|| oracle_layout_doc::BASIC_TABLE.into());
         let style = self.styles.resolve_table_style(&style_name);
         style.apply_to(&mut t, &self.styles.cell);
         // IDML distinguishes an explicit AppliedCellStyle from the effective region style.
@@ -2207,11 +2207,11 @@ impl<'r> Importer<'r> {
             let rs = (span(ce, "RowSpan").max(1.0) as usize).min(nr - r);
             let cs = (span(ce, "ColumnSpan").max(1.0) as usize).min(nc - c);
             let mut cell = t.cell(r, c).cloned().unwrap_or_default();
-            let cell_style = ce.get("AppliedCellStyle").map(|r| self.cell_style_ref(r)).unwrap_or_else(|| oracle_guide_doc::NO_CELL_STYLE.into());
-            if cell_style != oracle_guide_doc::NO_CELL_STYLE {
-                oracle_guide_doc::resolve_cell_style(&self.styles.cell, &cell_style).apply_to(&mut cell);
+            let cell_style = ce.get("AppliedCellStyle").map(|r| self.cell_style_ref(r)).unwrap_or_else(|| oracle_layout_doc::NO_CELL_STYLE.into());
+            if cell_style != oracle_layout_doc::NO_CELL_STYLE {
+                oracle_layout_doc::resolve_cell_style(&self.styles.cell, &cell_style).apply_to(&mut cell);
             }
-            cell.style = if cell_style == oracle_guide_doc::NO_CELL_STYLE { String::new() } else { cell_style };
+            cell.style = if cell_style == oracle_layout_doc::NO_CELL_STYLE { String::new() } else { cell_style };
             let default_para = cell.text.paras.first().cloned().unwrap_or_default();
             cell.text = self.story_with_para(StoryId(0), ce, default_para);
             if let Some(fc) = ce.get("FillColor") {
@@ -2336,10 +2336,10 @@ impl<'r> Importer<'r> {
                     }
                     "HyperlinkTextDestination" | "ParagraphDestination" => {
                         b.anchors.push((c.get("Self").unwrap_or("").to_string(), c.get("Name").unwrap_or("Anchor").to_string()));
-                        b.push(&oracle_guide_doc::ANCHOR_MARK.to_string(), cf);
+                        b.push(&oracle_layout_doc::ANCHOR_MARK.to_string(), cf);
                     }
                     "PageReference" => {
-                        use oracle_guide_doc::index::IndexRange as R;
+                        use oracle_layout_doc::index::IndexRange as R;
                         let topic = c.get("ReferencedTopic").and_then(|r| self.index_topics.get(r)).cloned().unwrap_or_default();
                         let range = match c.get("PageReferenceType") {
                             Some("ToEndOfStory") | Some("ToEndOfDocument") | Some("ToEndOfSection") => R::ToEndOfStory,
@@ -2347,8 +2347,8 @@ impl<'r> Importer<'r> {
                             Some("SuppressPageNumbers") => R::SuppressPageRange,
                             _ => R::CurrentPage,
                         };
-                        b.index_refs.push(oracle_guide_doc::IndexRef { topics: topic.path, sort: topic.sort, range });
-                        b.push(&oracle_guide_doc::INDEX_MARK.to_string(), cf);
+                        b.index_refs.push(oracle_layout_doc::IndexRef { topics: topic.path, sort: topic.sort, range });
+                        b.push(&oracle_layout_doc::INDEX_MARK.to_string(), cf);
                     }
                     "CrossReferenceSource" => {
                         // The generated text is regenerated from the format.
@@ -2356,7 +2356,7 @@ impl<'r> Importer<'r> {
                         // A source at paragraph level wraps a range; inside a range it holds the
                         // text directly and takes that range's format.
                         let f = c.find("CharacterStyleRange").map_or_else(|| cf.clone(), |r| self.range_format(r, pchars, cf));
-                        b.push(&oracle_guide_doc::XREF_MARK.to_string(), &f);
+                        b.push(&oracle_layout_doc::XREF_MARK.to_string(), &f);
                     }
                     "Footnote" => {
                         // The text starts with the number marker (ACE 4, dropped) and the separator.
@@ -2369,12 +2369,12 @@ impl<'r> Importer<'r> {
                         // The reference's position comes from the footnote options.
                         let mut rcf = cf.clone();
                         rcf.over.position = None;
-                        b.push(&oracle_guide_doc::FOOTNOTE_REF.to_string(), &rcf);
+                        b.push(&oracle_layout_doc::FOOTNOTE_REF.to_string(), &rcf);
                     }
                     // Anchored page items, including groups containing text frames.
                     "Rectangle" | "Oval" | "Polygon" | "GraphicLine" | "Group" | "TextFrame" => {
-                        if let Some(item) = self.item(c, oracle_guide_geom::Affine::IDENTITY) {
-                            use oracle_guide_doc::anchored::AnchorAlign as A;
+                        if let Some(item) = self.item(c, oracle_layout_geom::Affine::IDENTITY) {
+                            use oracle_layout_doc::anchored::AnchorAlign as A;
                             // Each setting the item leaves unset comes from its object style chain,
                             // then from the IDML defaults.
                             let levels: Vec<&El> = std::iter::once(c).chain(self.object_style_chain(c)).collect();
@@ -2393,7 +2393,7 @@ impl<'r> Importer<'r> {
                             };
                             let get = |k: &str| s(k).trim().parse::<f64>().ok().filter(|v| v.is_finite()).unwrap_or(0.0);
                             let position = match s("AnchoredPosition") {
-                                "AboveLine" => oracle_guide_doc::AnchorPosition::AboveLine {
+                                "AboveLine" => oracle_layout_doc::AnchorPosition::AboveLine {
                                     align: match s("HorizontalAlignment") {
                                         "CenterAlign" => A::Center,
                                         "RightAlign" => A::Right,
@@ -2413,7 +2413,7 @@ impl<'r> Importer<'r> {
                                         "BottomAlign" => 2,
                                         _ => 0,
                                     };
-                                    oracle_guide_doc::AnchorPosition::Custom {
+                                    oracle_layout_doc::AnchorPosition::Custom {
                                         x_relative: names::anchor_rel_in(s("HorizontalReferencePoint")),
                                         y_relative: names::anchor_rel_in(s("VerticalReferencePoint")),
                                         // IDML measures a left-aligned object's X offset leftwards.
@@ -2424,10 +2424,10 @@ impl<'r> Importer<'r> {
                                         keep_within_column: s("PinPosition") == "true",
                                     }
                                 }
-                                _ => oracle_guide_doc::AnchorPosition::Inline { y_offset: get("AnchorYoffset") },
+                                _ => oracle_layout_doc::AnchorPosition::Inline { y_offset: get("AnchorYoffset") },
                             };
-                            b.objects.push(oracle_guide_doc::AnchoredObject::new(item, position));
-                            b.push(&oracle_guide_doc::OBJECT_MARK.to_string(), cf);
+                            b.objects.push(oracle_layout_doc::AnchoredObject::new(item, position));
+                            b.push(&oracle_layout_doc::OBJECT_MARK.to_string(), cf);
                         }
                     }
                     "TextVariableInstance" => {
@@ -2439,8 +2439,8 @@ impl<'r> Importer<'r> {
                         // room in the layout.
                         let mut ncf = cf.clone();
                         match c.get("ChangeType") {
-                            Some("DeletedText") => ncf.over.change = Some(oracle_guide_doc::ChangeMark::Deleted),
-                            Some("InsertedText" | "MovedText") => ncf.over.change = Some(oracle_guide_doc::ChangeMark::Inserted),
+                            Some("DeletedText") => ncf.over.change = Some(oracle_layout_doc::ChangeMark::Deleted),
+                            Some("InsertedText" | "MovedText") => ncf.over.change = Some(oracle_layout_doc::ChangeMark::Inserted),
                             _ => {}
                         }
                         self.walk_story(c, b, pf, pchars, &ncf, brk);
@@ -2469,11 +2469,11 @@ impl<'r> Importer<'r> {
                 let at = g.num("Location").filter(|v| v.is_finite() && v.abs() < 1e7)?;
                 let orientation = if g.get("Orientation") == Some("Horizontal") { Orientation::Horizontal } else { Orientation::Vertical };
                 let position = match (orientation, self.settings.ruler_origin) {
-                    (Orientation::Horizontal, oracle_guide_doc::RulerOrigin::Page) => page.y0 + at,
+                    (Orientation::Horizontal, oracle_layout_doc::RulerOrigin::Page) => page.y0 + at,
                     (Orientation::Horizontal, _) => at,
-                    (Orientation::Vertical, oracle_guide_doc::RulerOrigin::Page) => page.x0 + at,
-                    (Orientation::Vertical, oracle_guide_doc::RulerOrigin::Spine) => spine + at,
-                    (Orientation::Vertical, oracle_guide_doc::RulerOrigin::Spread) => at,
+                    (Orientation::Vertical, oracle_layout_doc::RulerOrigin::Page) => page.x0 + at,
+                    (Orientation::Vertical, oracle_layout_doc::RulerOrigin::Spine) => spine + at,
+                    (Orientation::Vertical, oracle_layout_doc::RulerOrigin::Spread) => at,
                 };
                 Some(Guide {
                     orientation,
@@ -2716,9 +2716,9 @@ impl<'r> Importer<'r> {
             fx.feather = f.num("Width").unwrap_or(9.0);
             fx.feather_options.choke = finite(f.num("ChokeAmount")).unwrap_or(0.0).clamp(0.0, 100.0);
             fx.feather_options.corners = match f.get("CornerType") {
-                Some("Sharp") => oracle_guide_doc::FeatherCorners::Sharp,
-                Some("Rounded") => oracle_guide_doc::FeatherCorners::Rounded,
-                _ => oracle_guide_doc::FeatherCorners::Diffused,
+                Some("Sharp") => oracle_layout_doc::FeatherCorners::Sharp,
+                Some("Rounded") => oracle_layout_doc::FeatherCorners::Rounded,
+                _ => oracle_layout_doc::FeatherCorners::Diffused,
             };
         }
         if let Some(g) = t.find("GradientFeatherSetting")
@@ -2841,7 +2841,7 @@ impl<'r> Importer<'r> {
                     .cloned()
                     .unwrap_or_else(|| names::style_name_in(OBJECT_BUILTINS, &unescape_id(r.trim_start_matches("ObjectStyle/"))))
             })
-            .unwrap_or_else(|| oracle_guide_doc::NO_OBJECT_STYLE.into());
+            .unwrap_or_else(|| oracle_layout_doc::NO_OBJECT_STYLE.into());
         // Fill and stroke.
         if tag != "Group" {
             if let Some(f) = self.attr_or_style(e, "FillColor") {
@@ -2928,13 +2928,13 @@ impl<'r> Importer<'r> {
             let story_self = tp.get("ParentStory").unwrap_or("n").to_string();
             if let Some(story) = self.story_ids.get(&story_self).copied() {
                 let options = TextFrameOptions {
-                    path: Some(oracle_guide_doc::PathType {
+                    path: Some(oracle_layout_doc::PathType {
                         start: tp.num("StartBracket").unwrap_or(0.0).max(0.0),
                         // At (or past) the path's length it is the path's end: no end bracket.
                         end: tp
                             .num("EndBracket")
                             .filter(|e| e.is_finite() && *e >= 0.0)
-                            .filter(|e| *e < oracle_guide_geom::warp::PathWarp::new(&it.path.to_bezpath(), false).length() - 0.01),
+                            .filter(|e| *e < oracle_layout_geom::warp::PathWarp::new(&it.path.to_bezpath(), false).length() - 0.01),
                         flip: tp.get("FlipPathEffect") == Some("Flipped"),
                         align: names::path_align_in(tp.get("TextAlignment").unwrap_or("")),
                     }),
@@ -3000,9 +3000,9 @@ impl<'r> Importer<'r> {
                         gr.crop = [ff.num("TopCrop"), ff.num("LeftCrop"), ff.num("BottomCrop"), ff.num("RightCrop")].map(|v| v.unwrap_or(0.0));
                         gr.fit_align = ff.get("FittingAlignment").map_or(4, names::anchor_in);
                         if ff.get("AutoFit") == Some("true") {
-                            gr.auto_fit = ff.get("FittingOnEmptyFrame").map_or(oracle_guide_doc::Fitting::FillProportionally, names::fitting_in);
-                            if gr.auto_fit == oracle_guide_doc::Fitting::None {
-                                gr.auto_fit = oracle_guide_doc::Fitting::FillProportionally;
+                            gr.auto_fit = ff.get("FittingOnEmptyFrame").map_or(oracle_layout_doc::Fitting::FillProportionally, names::fitting_in);
+                            if gr.auto_fit == oracle_layout_doc::Fitting::None {
+                                gr.auto_fit = oracle_layout_doc::Fitting::FillProportionally;
                             }
                         }
                     }
@@ -3051,7 +3051,7 @@ impl<'r> Importer<'r> {
         let link = g.find("Link");
         let uri = link.and_then(|k| k.get("LinkResourceURI")).map(uri_to_path);
         let graphic = |asset, size| {
-            Content::Graphic(oracle_guide_doc::Graphic {
+            Content::Graphic(oracle_layout_doc::Graphic {
                 asset,
                 size,
                 xf: gxf * Affine::translate((l, t)),
@@ -3068,7 +3068,7 @@ impl<'r> Importer<'r> {
         let mut data = g.prop_el("Contents").map(|c| base64_decode(&c.text_content())).unwrap_or_default();
         let page = pdf_page_in(g);
         // Where the box sits on the page needs the PDF parsed: the engine finds it after import.
-        let pdf_crop = pdf_attribute(g).and_then(|a| a.get("PDFCrop")).map_or(oracle_guide_doc::PdfCrop::Crop, names::pdf_crop_in);
+        let pdf_crop = pdf_attribute(g).and_then(|a| a.get("PDFCrop")).map_or(oracle_layout_doc::PdfCrop::Crop, names::pdf_crop_in);
         let mut read_from = None;
         if data.is_empty()
             && let Some(p) = &uri
@@ -3108,7 +3108,7 @@ impl<'r> Importer<'r> {
             uri.as_deref().and_then(|p| p.rsplit(['/', '\\']).next()).filter(|n| !n.is_empty()).map(str::to_string).unwrap_or_else(|| "image".into());
         let fresh = AssetId(self.alloc());
         let link_path = uri.filter(|p| p.contains('/') || p.contains('\\'));
-        let id = oracle_guide_doc::insert_asset(
+        let id = oracle_layout_doc::insert_asset(
             &mut self.assets,
             Asset {
                 page,
@@ -3193,7 +3193,7 @@ impl<'r> Importer<'r> {
     /// cap style (the list's leading "through 1 Dropcap" entry, read into the drop cap style). A
     /// list of its own without that entry clears an inherited drop cap style.
     fn clear_inherited_drop_cap_styles(&mut self) {
-        let clears = |a: &oracle_guide_doc::ParaAttrs| a.drop_cap_style.is_none() && a.nested_styles.is_some();
+        let clears = |a: &oracle_layout_doc::ParaAttrs| a.drop_cap_style.is_none() && a.nested_styles.is_some();
         let cleared: Vec<String> = self
             .styles
             .paragraph
@@ -3244,11 +3244,11 @@ impl<'r> Importer<'r> {
             user_words: vec![],
             hyphenation_exceptions: vec![],
             toc: self.toc.take(),
-            text_variables: self.text_vars.take().unwrap_or_else(oracle_guide_doc::vars::defaults),
+            text_variables: self.text_vars.take().unwrap_or_else(oracle_layout_doc::vars::defaults),
             footnote_options: std::mem::take(&mut self.footnote_options),
             xref_formats: std::mem::take(&mut self.xref_formats),
             index: None,
-            created: self.created.unwrap_or_else(oracle_guide_doc::vars::now),
+            created: self.created.unwrap_or_else(oracle_layout_doc::vars::now),
             modified: self.modified.unwrap_or(0),
             next_id: self.next_id,
             font_scope: 0,
@@ -3408,9 +3408,9 @@ struct StoryBuilder {
     notes: Vec<Story>,
     /// Text destinations (Self, name) and cross-reference sources (Self, format Self) in order.
     anchors: Vec<(String, String)>,
-    index_refs: Vec<oracle_guide_doc::IndexRef>,
+    index_refs: Vec<oracle_layout_doc::IndexRef>,
     xrefs: Vec<(String, String)>,
-    objects: Vec<oracle_guide_doc::AnchoredObject>,
+    objects: Vec<oracle_layout_doc::AnchoredObject>,
 }
 
 impl StoryBuilder {
@@ -3461,8 +3461,8 @@ fn ace_char(v: &str) -> Option<char> {
 }
 
 /// `HL Composer` and `HL Single`, their World-Ready (`… Optyca`) and Japanese (`… J`) forms.
-fn composer_in(name: &str) -> oracle_guide_doc::Composer {
-    use oracle_guide_doc::Composer as C;
+fn composer_in(name: &str) -> oracle_layout_doc::Composer {
+    use oracle_layout_doc::Composer as C;
     let name = name.trim().trim_start_matches("$ID/");
     match (name.contains("Single"), name.ends_with(" J") || name.contains("Japanese")) {
         (false, false) => C::Paragraph,
@@ -3475,14 +3475,14 @@ fn composer_in(name: &str) -> oracle_guide_doc::Composer {
 fn margins_of(m: &El) -> (Margins, Columns) {
     let g = |k: &str, d: f64| m.num(k).filter(|v| v.is_finite()).unwrap_or(d);
     let margins = Margins { top: g("Top", 36.0), bottom: g("Bottom", 36.0), inside: g("Left", 36.0), outside: g("Right", 36.0) };
-    let count = g("ColumnCount", 1.0).clamp(1.0, f64::from(oracle_guide_doc::MAX_COLUMNS)) as u32;
+    let count = g("ColumnCount", 1.0).clamp(1.0, f64::from(oracle_layout_doc::MAX_COLUMNS)) as u32;
     let gutter = g("ColumnGutter", 12.0);
     let positions = m.get("ColumnsPositions").and_then(|s| custom_columns(s, count, gutter));
     (margins, Columns { count, gutter, positions })
 }
 
 /// `ColumnsPositions` when the column guides have been dragged off the even split: `2 × count`
-/// offsets from the margin box's left edge, valid as [`oracle_guide_doc::valid_column_positions`]
+/// offsets from the margin box's left edge, valid as [`oracle_layout_doc::valid_column_positions`]
 /// over the box they span. InDesign writes the attribute whether or not they have been moved, so
 /// an even set is dropped: `positions` means "custom", and keeping an even copy would freeze the
 /// columns against a later change of count or gutter. Anything malformed is the even split; at
@@ -3491,7 +3491,7 @@ fn custom_columns(s: &str, count: u32, gutter: f64) -> Option<Vec<f64>> {
     let want = 2 * count as usize;
     let pos = s.split_whitespace().take(want + 1).map(|v| v.parse::<f64>().ok()).collect::<Option<Vec<f64>>>()?;
     let width = *pos.last()?;
-    if !oracle_guide_doc::valid_column_positions(&pos, count, width) {
+    if !oracle_layout_doc::valid_column_positions(&pos, count, width) {
         return None;
     }
     let even = Columns { count, gutter, positions: None }.edges(width);
@@ -3666,18 +3666,18 @@ fn inset_spacing(e: &El) -> Option<[f64; 4]> {
 /// A graphic's `ClippingPathSettings` with its saved geometry, moved into graphic space by
 /// `to_graphic`. `None` for type None, an unknown type, or no geometry (the outline is never
 /// traced here).
-fn clipping_path(g: &El, to_graphic: Affine) -> Option<Arc<oracle_guide_doc::ClippingPath>> {
+fn clipping_path(g: &El, to_graphic: Affine) -> Option<Arc<oracle_layout_doc::ClippingPath>> {
     let cs = g.find("ClippingPathSettings")?;
     let kind = names::clipping_kind_in(cs.get("ClippingType").unwrap_or("None"))?;
     let geometry = cs.prop_el("ClippingPathGeometry").or_else(|| cs.find("ClippingPathGeometry")).or_else(|| g.prop_el("ClippingPathGeometry"))?;
-    let mut path = path_capped(geometry, oracle_guide_doc::MAX_CLIP_ANCHORS);
+    let mut path = path_capped(geometry, oracle_layout_doc::MAX_CLIP_ANCHORS);
     path.subpaths.retain(|sp| sp.anchors.len() > 1 && sp.anchors.iter().all(|a| a.p.is_finite() && a.h_in.is_finite() && a.h_out.is_finite()));
     if path.is_empty() {
         return None;
     }
     path.transform(to_graphic);
     let finite = |v: Option<f64>, def: f64| v.filter(|v| v.is_finite()).unwrap_or(def);
-    let mut c = oracle_guide_doc::ClippingPath::new(kind, path);
+    let mut c = oracle_layout_doc::ClippingPath::new(kind, path);
     c.invert = cs.boolean("InvertPath").unwrap_or(false);
     c.include_inside_edges = cs.boolean("IncludeInsideEdges").unwrap_or(false);
     c.restrict_to_frame = cs.boolean("RestrictToFrame").unwrap_or(false);
@@ -3992,9 +3992,9 @@ mod frame_preference_safety_tests {
         let o = text_frame_options(&[&local, &base]);
         assert_eq!(o.columns_kind, ColumnsKind::FlexibleWidth);
         assert!(o.balance_columns && o.ignore_wrap && o.column_rule);
-        assert_eq!(o.vertical_justification, oracle_guide_doc::VerticalJustification::Bottom);
-        assert_eq!(o.first_baseline, oracle_guide_doc::FirstBaseline::Fixed);
-        assert_eq!(o.auto_size, oracle_guide_doc::AutoSize::HeightAndWidth);
+        assert_eq!(o.vertical_justification, oracle_layout_doc::VerticalJustification::Bottom);
+        assert_eq!(o.first_baseline, oracle_layout_doc::FirstBaseline::Fixed);
+        assert_eq!(o.auto_size, oracle_layout_doc::AutoSize::HeightAndWidth);
         assert_eq!(o.auto_size_ref, 8);
         let fixed = pref(&[], &[("UseFixedColumnWidth", "true")]);
         assert_eq!(text_frame_options(&[&fixed, &local, &base]).columns_kind, ColumnsKind::FixedWidth);
@@ -4118,9 +4118,9 @@ mod frame_preference_scalar_tests {
             let expected = text_frame_options(&[&clean]);
             assert_eq!(expected.columns_kind, if fixed { ColumnsKind::FixedWidth } else { ColumnsKind::FlexibleWidth });
             assert!(expected.balance_columns && expected.ignore_wrap && expected.column_rule);
-            assert_eq!(expected.vertical_justification, oracle_guide_doc::VerticalJustification::Bottom);
-            assert_eq!(expected.first_baseline, oracle_guide_doc::FirstBaseline::Fixed);
-            assert_eq!(expected.auto_size, oracle_guide_doc::AutoSize::HeightAndWidth);
+            assert_eq!(expected.vertical_justification, oracle_layout_doc::VerticalJustification::Bottom);
+            assert_eq!(expected.first_baseline, oracle_layout_doc::FirstBaseline::Fixed);
+            assert_eq!(expected.auto_size, oracle_layout_doc::AutoSize::HeightAndWidth);
             assert_eq!(expected.auto_size_ref, 8);
             for properties in [false, true] {
                 let padded = preference(properties, true, fixed);

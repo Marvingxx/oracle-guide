@@ -1,11 +1,11 @@
 //! Paste vector art copied in another app (Illustrator, VectorCraft, Figma, Inkscape) as editable
 //! paths, as InDesign pastes Illustrator art. Those apps put the copied objects on the system
-//! clipboard as SVG markup; each path becomes a Oracle Brand Guide path with its fill and stroke, groups
+//! clipboard as SVG markup; each path becomes a Oracle Layout path with its fill and stroke, groups
 //! stay groups, and text comes in as outlines.
 
-use oracle_guide_doc::{Content, Fill, Item, ItemId, Selection, Shape, Stroke, StrokeType};
-use oracle_guide_geom::{Affine, BezPath, PathData, Point, Rect};
-use oracle_guide_images::usvg;
+use oracle_layout_doc::{Content, Fill, Item, ItemId, Selection, Shape, Stroke, StrokeType};
+use oracle_layout_geom::{Affine, BezPath, PathData, Point, Rect};
+use oracle_layout_images::usvg;
 use serde_json::{Value, json};
 
 use super::*;
@@ -24,7 +24,7 @@ pub fn specs() -> Vec<CommandSpec> {
 
 /// Is `text` SVG markup (rather than text to paste as text)?
 pub fn is_svg_markup(text: &str) -> bool {
-    oracle_guide_images::is_svg(text.as_bytes())
+    oracle_layout_images::is_svg(text.as_bytes())
 }
 
 /// Nesting deeper than this is flattened into its parent (hostile input can't exhaust the stack).
@@ -53,8 +53,8 @@ struct Paint {
 
 struct StrokeStyle {
     width: f64,
-    cap: oracle_guide_doc::Cap,
-    join: oracle_guide_doc::Join,
+    cap: oracle_layout_doc::Cap,
+    join: oracle_layout_doc::Join,
     miter: f64,
     dashes: Option<Vec<f64>>,
 }
@@ -72,7 +72,7 @@ fn paint(p: &usvg::Paint, opacity: f32, notes: &mut Notes) -> Option<Paint> {
     let rgb = match p {
         usvg::Paint::Color(c) => [c.red, c.green, c.blue],
         // Gradients and patterns come in as their first colour (InDesign keeps Illustrator
-        // gradients; Oracle Brand Guide's swatch gradients can't be made from SVG stops yet).
+        // gradients; Oracle Layout's swatch gradients can't be made from SVG stops yet).
         usvg::Paint::LinearGradient(g) => {
             notes.gradients += 1;
             g.stops().first().map(|s| [s.color().red, s.color().green, s.color().blue])?
@@ -96,7 +96,7 @@ fn round(v: f64) -> f64 {
 
 /// `t` (SVG px space) then px → pt.
 fn to_affine(t: usvg::Transform) -> Affine {
-    let pt = oracle_guide_images::PT_PER_PX;
+    let pt = oracle_layout_images::PT_PER_PX;
     Affine::scale(pt) * Affine::new([f64::from(t.sx), f64::from(t.ky), f64::from(t.kx), f64::from(t.sy), f64::from(t.tx), f64::from(t.ty)])
 }
 
@@ -134,14 +134,14 @@ fn convert(g: &usvg::Group, depth: usize, notes: &mut Notes, out: &mut Vec<Art>)
                     let style = StrokeStyle {
                         width,
                         cap: match s.linecap() {
-                            usvg::LineCap::Butt => oracle_guide_doc::Cap::Butt,
-                            usvg::LineCap::Round => oracle_guide_doc::Cap::Round,
-                            usvg::LineCap::Square => oracle_guide_doc::Cap::Projecting,
+                            usvg::LineCap::Butt => oracle_layout_doc::Cap::Butt,
+                            usvg::LineCap::Round => oracle_layout_doc::Cap::Round,
+                            usvg::LineCap::Square => oracle_layout_doc::Cap::Projecting,
                         },
                         join: match s.linejoin() {
-                            usvg::LineJoin::Round => oracle_guide_doc::Join::Round,
-                            usvg::LineJoin::Bevel => oracle_guide_doc::Join::Bevel,
-                            _ => oracle_guide_doc::Join::Miter,
+                            usvg::LineJoin::Round => oracle_layout_doc::Join::Round,
+                            usvg::LineJoin::Bevel => oracle_layout_doc::Join::Bevel,
+                            _ => oracle_layout_doc::Join::Miter,
                         },
                         miter: f64::from(s.miterlimit().get()),
                         dashes,
@@ -195,7 +195,7 @@ fn convert(g: &usvg::Group, depth: usize, notes: &mut Notes, out: &mut Vec<Art>)
 fn bounds(art: &[Art]) -> Option<Rect> {
     art.iter()
         .filter_map(|a| match a {
-            Art::Path { path, .. } => Some(oracle_guide_geom::Shape::bounding_box(path)),
+            Art::Path { path, .. } => Some(oracle_layout_geom::Shape::bounding_box(path)),
             Art::Group(items, _) => bounds(items),
         })
         .reduce(|a, b| a.union(b))
@@ -203,17 +203,17 @@ fn bounds(art: &[Art]) -> Option<Rect> {
 
 /// The swatch holding exactly `rgb`: an existing process colour, else a new unnamed one (hidden
 /// from the Swatches panel until Add to Swatches), as InDesign does for pasted colours.
-fn swatch_for(d: &mut oracle_guide_doc::Document, rgb: [u8; 3]) -> String {
-    use oracle_guide_color::swatch::{Swatch, SwatchValue};
-    let color = oracle_guide_color::Color::rgb8(rgb[0], rgb[1], rgb[2]);
+fn swatch_for(d: &mut oracle_layout_doc::Document, rgb: [u8; 3]) -> String {
+    use oracle_layout_color::swatch::{Swatch, SwatchValue};
+    let color = oracle_layout_color::Color::rgb8(rgb[0], rgb[1], rgb[2]);
     if let Some(w) = d.swatches.iter().find(|w| matches!(&w.value, SwatchValue::Color { color: c, .. } if *c == color)) {
         return w.name.clone();
     }
     let base = format!("R={} G={} B={}", rgb[0], rgb[1], rgb[2]);
-    let name = oracle_guide_doc::Styles::unique_name(|n| d.swatch(n).is_some(), &base);
+    let name = oracle_layout_doc::Styles::unique_name(|n| d.swatch(n).is_some(), &base);
     d.swatches.push(Swatch {
         name: name.clone(),
-        value: SwatchValue::Color { color, color_type: oracle_guide_color::ColorType::Process },
+        value: SwatchValue::Color { color, color_type: oracle_layout_color::ColorType::Process },
         locked: false,
         named: false,
         hidden: true,
@@ -221,7 +221,7 @@ fn swatch_for(d: &mut oracle_guide_doc::Document, rgb: [u8; 3]) -> String {
     name
 }
 
-fn build(d: &mut oracle_guide_doc::Document, art: Vec<Art>, layer: oracle_guide_doc::LayerId, shift: Affine) -> Vec<Item> {
+fn build(d: &mut oracle_layout_doc::Document, art: Vec<Art>, layer: oracle_layout_doc::LayerId, shift: Affine) -> Vec<Item> {
     let mut out = Vec::new();
     for a in art {
         match a {
@@ -232,7 +232,7 @@ fn build(d: &mut oracle_guide_doc::Document, art: Vec<Art>, layer: oracle_guide_
                 }
                 let anchors: usize = data.subpaths.iter().map(|s| s.anchors.len()).sum();
                 // A straight two-point segment is a graphic line (Line tool); anything else a path.
-                let straight = |a: &oracle_guide_geom::Anchor| a.h_in == a.p && a.h_out == a.p;
+                let straight = |a: &oracle_layout_geom::Anchor| a.h_in == a.p && a.h_out == a.p;
                 let line = data.subpaths.len() == 1 && anchors == 2 && data.subpaths.iter().all(|s| !s.closed && s.anchors.iter().all(straight));
                 // The object's opacity: its own times the paint's. Items have no separate fill and
                 // stroke opacity, so a path with both takes the fill's (`Notes::mixed_opacity`).
@@ -279,7 +279,7 @@ fn paste_svg(s: &mut Session, p: &Value) -> Result<Value> {
     if !is_svg_markup(svg) {
         return Err(bad(ID, "the clipboard doesn't hold SVG markup"));
     }
-    let tree = oracle_guide_images::svg_tree(svg.as_bytes()).ok_or_else(|| bad(ID, "the SVG on the clipboard can't be read"))?;
+    let tree = oracle_layout_images::svg_tree(svg.as_bytes()).ok_or_else(|| bad(ID, "the SVG on the clipboard can't be read"))?;
     let mut notes = Notes::default();
     let mut art = Vec::new();
     convert(tree.root(), 0, &mut notes, &mut art);
@@ -327,7 +327,7 @@ fn paste_svg(s: &mut Session, p: &Value) -> Result<Value> {
 mod tests {
     use super::*;
     use crate::Session;
-    use oracle_guide_doc::SpreadRef;
+    use oracle_layout_doc::SpreadRef;
 
     const SPIRAL: &str = r##"<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400pt" height="400pt">
@@ -356,7 +356,7 @@ mod tests {
         assert!(it.fill.is_none());
         assert_eq!(it.stroke.weight, 1.0, "a 1-unit stroke in a pt-sized SVG is 1 pt");
         let c = st.doc.swatch(&it.stroke.swatch).unwrap();
-        assert!(matches!(&c.value, oracle_guide_color::swatch::SwatchValue::Color { color, .. } if color.to_rgb() == [0.0, 0.0, 0.0]));
+        assert!(matches!(&c.value, oracle_layout_color::swatch::SwatchValue::Color { color, .. } if color.to_rgb() == [0.0, 0.0, 0.0]));
         // Centred on `at`, at its own size (100 × 120 user units of a 400 pt viewBox).
         let b = it.bounds();
         assert!((b.center().x - 300.0).abs() < 0.01 && (b.center().y - 400.0).abs() < 0.01, "{b:?}");
@@ -384,7 +384,7 @@ mod tests {
         assert!((rect.opacity - 0.5).abs() < 1e-3);
         // CSS pixels: 8 px = 6 pt, the 200 px art is 150 pt wide.
         assert!((circle.stroke.weight - 6.0).abs() < 1e-6);
-        assert_eq!(circle.stroke.cap, oracle_guide_doc::Cap::Round);
+        assert_eq!(circle.stroke.cap, oracle_layout_doc::Cap::Round);
         assert!(matches!(&circle.stroke.kind, StrokeType::Dashed { pattern } if (pattern[0] - 3.0).abs() < 1e-6));
         assert_eq!(st.doc.item(ids[1]).unwrap().shape, Shape::GraphicLine);
         let all = g.bounds().union(st.doc.item(ids[1]).unwrap().bounds());

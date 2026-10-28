@@ -3,13 +3,13 @@
 //!
 //! Goldens live in `tests/golden/*.png` and are compared with a tolerance (antialiasing and blur
 //! rounding may differ by a few levels between SIMD levels). Regenerate them after an intended
-//! change with `ORACLE_GUIDE_BLESS=1 cargo test -p oracle-guide-render --test effects`.
+//! change with `ORACLE_LAYOUT_BLESS=1 cargo test -p oracle-layout-render --test effects`.
 
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::build::NewDocument;
-use oracle_guide_doc::{Document, Fill, Item, ItemId, ParaFormat, Shape, SpreadRef};
-use oracle_guide_geom::{Affine, Rect, Vec2, shapes};
-use oracle_guide_render::{Placed, RenderOptions, Rendered, Renderer};
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::build::NewDocument;
+use oracle_layout_doc::{Document, Fill, Item, ItemId, ParaFormat, Shape, SpreadRef};
+use oracle_layout_geom::{Affine, Rect, Vec2, shapes};
+use oracle_layout_render::{Placed, RenderOptions, Rendered, Renderer};
 
 const SIZE: u32 = 160;
 
@@ -46,7 +46,7 @@ const WHITE: u32 = 765;
 /// Tolerant comparison with `tests/golden/{name}.png` (written when missing or when blessing).
 fn golden(name: &str, img: &Rendered) {
     let path = format!("{}/tests/golden/{name}.png", env!("CARGO_MANIFEST_DIR"));
-    let bless = std::env::var_os("ORACLE_GUIDE_BLESS").is_some();
+    let bless = std::env::var_os("ORACLE_LAYOUT_BLESS").is_some();
     let Ok(bytes) = std::fs::read(&path).map_err(|_| ()).and_then(|b| if bless { Err(()) } else { Ok(b) }) else {
         std::fs::create_dir_all(format!("{}/tests/golden", env!("CARGO_MANIFEST_DIR"))).unwrap();
         std::fs::write(&path, img.to_png()).unwrap();
@@ -68,7 +68,7 @@ fn golden(name: &str, img: &Rendered) {
     let n = (img.width * img.height) as usize;
     let mean = sum as f64 / n as f64;
     if bad * 200 > n || mean > 1.0 {
-        let out = std::env::temp_dir().join(format!("oracle-guide-golden-{name}.png"));
+        let out = std::env::temp_dir().join(format!("oracle-layout-golden-{name}.png"));
         let _ = std::fs::write(&out, img.to_png());
         panic!("{name}: {bad} pixels differ by > 8 (worst {worst}, mean {mean:.2}); got {}", out.display());
     }
@@ -219,7 +219,7 @@ fn a_wide_feather_keeps_the_object_sharp_at_high_zoom() {
         fill: Fill::swatch("[Black]"),
         ..Item::new(ItemId(d.alloc()), d.default_layer(), Shape::Rectangle, shapes::rectangle(Rect::new(78.0, 78.0, 82.0, 82.0)))
     };
-    d.item_mut(id).unwrap().content = oracle_guide_doc::Content::Group { items: vec![std::sync::Arc::new(kid)] };
+    d.item_mut(id).unwrap().content = oracle_layout_doc::Content::Group { items: vec![std::sync::Arc::new(kid)] };
     let plain = render_zoomed(&d);
     // 3σ of a 1,000 pt feather is 6,000 px here, so its mask is drawn at about 1/6 resolution.
     d.item_mut(id).unwrap().effects.feather = 1000.0;
@@ -293,7 +293,7 @@ fn pasted_into(d: &mut Document) -> ItemId {
         fill: Fill::swatch("[Black]"),
         ..Item::new(ItemId(d.alloc()), d.default_layer(), Shape::Rectangle, shapes::rectangle(Rect::new(0.0, 0.0, 160.0, 160.0)))
     };
-    d.item_mut(id).unwrap().content = oracle_guide_doc::Content::Group { items: vec![std::sync::Arc::new(kid)] };
+    d.item_mut(id).unwrap().content = oracle_layout_doc::Content::Group { items: vec![std::sync::Arc::new(kid)] };
     assert!(d.item(id).unwrap().has_nested_items());
     id
 }
@@ -346,11 +346,11 @@ fn inner_glow_mode_and_technique() {
     // Screen (the default) can't darken white paper; Multiply can.
     let screen = render(&d);
     assert!(lum(screen.pixel(32, 80)) > 740, "{:?}", screen.pixel(32, 80));
-    d.item_mut(id).unwrap().effects.inner_glow.mode = oracle_guide_color::BlendMode::Multiply;
+    d.item_mut(id).unwrap().effects.inner_glow.mode = oracle_layout_color::BlendMode::Multiply;
     let soft = render(&d);
     assert!(lum(soft.pixel(32, 80)) + 150 < lum(screen.pixel(32, 80)), "a dark edge: {:?}", soft.pixel(32, 80));
     // Precise keeps the glow nearer the edge than Softer.
-    d.item_mut(id).unwrap().effects.inner_glow.technique = oracle_guide_doc::GlowTechnique::Precise;
+    d.item_mut(id).unwrap().effects.inner_glow.technique = oracle_layout_doc::GlowTechnique::Precise;
     let precise = render(&d);
     assert!(lum(precise.pixel(42, 80)) > lum(soft.pixel(42, 80)) + 30, "{:?} vs {:?}", precise.pixel(42, 80), soft.pixel(42, 80));
 }
@@ -368,9 +368,9 @@ fn feather_choke_and_corners() {
     assert!(lum(choked.pixel(38, 80)) + 60 < lum(diffused.pixel(38, 80)), "{:?} vs {:?}", choked.pixel(38, 80), diffused.pixel(38, 80));
     assert!(lum(choked.pixel(30, 80)) > 500, "still transparent at the path");
     // Sharp corners keep more of the corner than Rounded ones (past the fade, near the corner).
-    d.item_mut(id).unwrap().effects.feather_options = oracle_guide_doc::FeatherOptions { choke: 0.0, corners: oracle_guide_doc::FeatherCorners::Sharp };
+    d.item_mut(id).unwrap().effects.feather_options = oracle_layout_doc::FeatherOptions { choke: 0.0, corners: oracle_layout_doc::FeatherCorners::Sharp };
     let sharp = render(&d);
-    d.item_mut(id).unwrap().effects.feather_options.corners = oracle_guide_doc::FeatherCorners::Rounded;
+    d.item_mut(id).unwrap().effects.feather_options.corners = oracle_layout_doc::FeatherCorners::Rounded;
     let rounded = render(&d);
     assert!(lum(sharp.pixel(41, 41)) + 20 < lum(rounded.pixel(41, 41)), "{:?} vs {:?}", sharp.pixel(41, 41), rounded.pixel(41, 41));
 }

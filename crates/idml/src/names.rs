@@ -1,12 +1,12 @@
-//! Name and enumeration mappings between the Oracle Brand Guide model and IDML.
+//! Name and enumeration mappings between the Oracle Layout model and IDML.
 
-use oracle_guide_color::BlendMode;
-use oracle_guide_doc::{
+use oracle_layout_color::BlendMode;
+use oracle_layout_doc::{
     Align, Arrowhead, AutoSize, Cap, Capitalization, ClippingKind, ContourType, FirstBaseline, Join, Leading, NumberStyle, Position, StartParagraph,
     StrokeAlign, StrokeType, TabAlign, VerticalJustification, WrapMode, WrapSide,
 };
-use oracle_guide_geom::Unit;
-use oracle_guide_geom::corners::CornerShape;
+use oracle_layout_geom::Unit;
+use oracle_layout_geom::corners::CornerShape;
 
 /// `%` → `%25`, `:` → `%3a` (IDML Self-id escaping).
 const ANCHORS: [&str; 9] = [
@@ -21,8 +21,8 @@ const ANCHORS: [&str; 9] = [
     "BottomRightAnchor",
 ];
 
-pub fn anchor_rel_out(r: oracle_guide_doc::anchored::AnchorRelative, vertical: bool) -> &'static str {
-    use oracle_guide_doc::anchored::AnchorRelative as R;
+pub fn anchor_rel_out(r: oracle_layout_doc::anchored::AnchorRelative, vertical: bool) -> &'static str {
+    use oracle_layout_doc::anchored::AnchorRelative as R;
     match r {
         R::Anchor if vertical => "LineBaseline",
         R::Anchor => "AnchorLocation",
@@ -33,8 +33,8 @@ pub fn anchor_rel_out(r: oracle_guide_doc::anchored::AnchorRelative, vertical: b
     }
 }
 
-pub fn anchor_rel_in(s: &str) -> oracle_guide_doc::anchored::AnchorRelative {
-    use oracle_guide_doc::anchored::AnchorRelative as R;
+pub fn anchor_rel_in(s: &str) -> oracle_layout_doc::anchored::AnchorRelative {
+    use oracle_layout_doc::anchored::AnchorRelative as R;
     match s {
         "TextFrame" => R::TextFrame,
         "ColumnEdge" => R::ColumnEdge,
@@ -45,8 +45,8 @@ pub fn anchor_rel_in(s: &str) -> oracle_guide_doc::anchored::AnchorRelative {
 }
 
 /// `PDFAttribute` `PDFCrop` for a placed PDF's crop choice.
-pub fn pdf_crop_out(c: oracle_guide_doc::PdfCrop) -> &'static str {
-    use oracle_guide_doc::PdfCrop as C;
+pub fn pdf_crop_out(c: oracle_layout_doc::PdfCrop) -> &'static str {
+    use oracle_layout_doc::PdfCrop as C;
     match c {
         C::Crop => "CropPDF",
         C::Art => "CropArt",
@@ -59,8 +59,8 @@ pub fn pdf_crop_out(c: oracle_guide_doc::PdfCrop) -> &'static str {
 }
 
 /// A placed PDF's crop choice from `PDFCrop` (the crop box when unknown).
-pub fn pdf_crop_in(s: &str) -> oracle_guide_doc::PdfCrop {
-    use oracle_guide_doc::PdfCrop as C;
+pub fn pdf_crop_in(s: &str) -> oracle_layout_doc::PdfCrop {
+    use oracle_layout_doc::PdfCrop as C;
     C::ALL.into_iter().find(|c| pdf_crop_out(*c) == s).unwrap_or(C::Crop)
 }
 
@@ -72,8 +72,8 @@ pub fn anchor_in(s: &str) -> u8 {
     ANCHORS.iter().position(|a| *a == s).unwrap_or(4) as u8
 }
 
-pub fn fitting_out(f: oracle_guide_doc::Fitting) -> &'static str {
-    use oracle_guide_doc::Fitting as F;
+pub fn fitting_out(f: oracle_layout_doc::Fitting) -> &'static str {
+    use oracle_layout_doc::Fitting as F;
     match f {
         F::None => "None",
         F::FillProportionally => "FillProportionally",
@@ -83,8 +83,8 @@ pub fn fitting_out(f: oracle_guide_doc::Fitting) -> &'static str {
     }
 }
 
-pub fn fitting_in(s: &str) -> oracle_guide_doc::Fitting {
-    use oracle_guide_doc::Fitting as F;
+pub fn fitting_in(s: &str) -> oracle_layout_doc::Fitting {
+    use oracle_layout_doc::Fitting as F;
     match s {
         "FillProportionally" => F::FillProportionally,
         "Proportionally" => F::FitProportionally,
@@ -94,8 +94,8 @@ pub fn fitting_in(s: &str) -> oracle_guide_doc::Fitting {
     }
 }
 
-pub fn liquid_rule_out(rule: oracle_guide_doc::LiquidRule) -> &'static str {
-    use oracle_guide_doc::LiquidRule as R;
+pub fn liquid_rule_out(rule: oracle_layout_doc::LiquidRule) -> &'static str {
+    use oracle_layout_doc::LiquidRule as R;
     match rule {
         R::Off => "Off",
         R::Scale => "Scale",
@@ -106,8 +106,8 @@ pub fn liquid_rule_out(rule: oracle_guide_doc::LiquidRule) -> &'static str {
     }
 }
 
-pub fn liquid_rule_in(s: &str) -> oracle_guide_doc::LiquidRule {
-    use oracle_guide_doc::LiquidRule as R;
+pub fn liquid_rule_in(s: &str) -> oracle_layout_doc::LiquidRule {
+    use oracle_layout_doc::LiquidRule as R;
     match s {
         "Off" => R::Off,
         "Scale" => R::Scale,
@@ -386,60 +386,60 @@ pub fn arrow_in(s: &str) -> Arrowhead {
     .unwrap_or(Arrowhead::None)
 }
 
-pub fn box_width_out(w: oracle_guide_doc::BoxWidth) -> &'static str {
+pub fn box_width_out(w: oracle_layout_doc::BoxWidth) -> &'static str {
     match w {
-        oracle_guide_doc::BoxWidth::Column => "ColumnWidth",
-        oracle_guide_doc::BoxWidth::Text => "TextWidth",
+        oracle_layout_doc::BoxWidth::Column => "ColumnWidth",
+        oracle_layout_doc::BoxWidth::Text => "TextWidth",
     }
 }
-pub fn box_width_in(s: &str) -> oracle_guide_doc::BoxWidth {
-    if s == "TextWidth" { oracle_guide_doc::BoxWidth::Text } else { oracle_guide_doc::BoxWidth::Column }
+pub fn box_width_in(s: &str) -> oracle_layout_doc::BoxWidth {
+    if s == "TextWidth" { oracle_layout_doc::BoxWidth::Text } else { oracle_layout_doc::BoxWidth::Column }
 }
 
-pub fn box_top_out(t: oracle_guide_doc::BoxTop) -> &'static str {
+pub fn box_top_out(t: oracle_layout_doc::BoxTop) -> &'static str {
     match t {
-        oracle_guide_doc::BoxTop::Ascent => "AscentTopOrigin",
-        oracle_guide_doc::BoxTop::Baseline => "BaselineTopOrigin",
-        oracle_guide_doc::BoxTop::EmBox => "EmBoxTopOrigin",
-        oracle_guide_doc::BoxTop::Leading => "LeadingTopOrigin",
+        oracle_layout_doc::BoxTop::Ascent => "AscentTopOrigin",
+        oracle_layout_doc::BoxTop::Baseline => "BaselineTopOrigin",
+        oracle_layout_doc::BoxTop::EmBox => "EmBoxTopOrigin",
+        oracle_layout_doc::BoxTop::Leading => "LeadingTopOrigin",
     }
 }
-pub fn box_top_in(s: &str) -> oracle_guide_doc::BoxTop {
+pub fn box_top_in(s: &str) -> oracle_layout_doc::BoxTop {
     match s {
-        "BaselineTopOrigin" => oracle_guide_doc::BoxTop::Baseline,
-        "EmBoxTopOrigin" => oracle_guide_doc::BoxTop::EmBox,
-        "LeadingTopOrigin" => oracle_guide_doc::BoxTop::Leading,
-        _ => oracle_guide_doc::BoxTop::Ascent,
+        "BaselineTopOrigin" => oracle_layout_doc::BoxTop::Baseline,
+        "EmBoxTopOrigin" => oracle_layout_doc::BoxTop::EmBox,
+        "LeadingTopOrigin" => oracle_layout_doc::BoxTop::Leading,
+        _ => oracle_layout_doc::BoxTop::Ascent,
     }
 }
 
-pub fn box_bottom_out(b: oracle_guide_doc::BoxBottom) -> &'static str {
+pub fn box_bottom_out(b: oracle_layout_doc::BoxBottom) -> &'static str {
     match b {
-        oracle_guide_doc::BoxBottom::Descent => "DescentBottomOrigin",
-        oracle_guide_doc::BoxBottom::Baseline => "BaselineBottomOrigin",
-        oracle_guide_doc::BoxBottom::EmBox => "EmBoxBottomOrigin",
+        oracle_layout_doc::BoxBottom::Descent => "DescentBottomOrigin",
+        oracle_layout_doc::BoxBottom::Baseline => "BaselineBottomOrigin",
+        oracle_layout_doc::BoxBottom::EmBox => "EmBoxBottomOrigin",
     }
 }
-pub fn box_bottom_in(s: &str) -> oracle_guide_doc::BoxBottom {
+pub fn box_bottom_in(s: &str) -> oracle_layout_doc::BoxBottom {
     match s {
-        "BaselineBottomOrigin" => oracle_guide_doc::BoxBottom::Baseline,
-        "EmBoxBottomOrigin" => oracle_guide_doc::BoxBottom::EmBox,
-        _ => oracle_guide_doc::BoxBottom::Descent,
+        "BaselineBottomOrigin" => oracle_layout_doc::BoxBottom::Baseline,
+        "EmBoxBottomOrigin" => oracle_layout_doc::BoxBottom::EmBox,
+        _ => oracle_layout_doc::BoxBottom::Descent,
     }
 }
 
-pub fn list_align_out(a: oracle_guide_doc::ListAlign) -> &'static str {
+pub fn list_align_out(a: oracle_layout_doc::ListAlign) -> &'static str {
     match a {
-        oracle_guide_doc::ListAlign::Left => "LeftAlign",
-        oracle_guide_doc::ListAlign::Center => "CenterAlign",
-        oracle_guide_doc::ListAlign::Right => "RightAlign",
+        oracle_layout_doc::ListAlign::Left => "LeftAlign",
+        oracle_layout_doc::ListAlign::Center => "CenterAlign",
+        oracle_layout_doc::ListAlign::Right => "RightAlign",
     }
 }
-pub fn list_align_in(s: &str) -> oracle_guide_doc::ListAlign {
+pub fn list_align_in(s: &str) -> oracle_layout_doc::ListAlign {
     match s {
-        "CenterAlign" => oracle_guide_doc::ListAlign::Center,
-        "RightAlign" => oracle_guide_doc::ListAlign::Right,
-        _ => oracle_guide_doc::ListAlign::Left,
+        "CenterAlign" => oracle_layout_doc::ListAlign::Center,
+        "RightAlign" => oracle_layout_doc::ListAlign::Right,
+        _ => oracle_layout_doc::ListAlign::Left,
     }
 }
 
@@ -670,10 +670,10 @@ pub fn unit_in(s: &str) -> Unit {
 
 /// IDML layer colour enumeration names for our layer colour table.
 pub fn layer_color_out(c: [u8; 3]) -> Option<String> {
-    oracle_guide_doc::LAYER_COLORS.iter().find(|(_, v)| *v == c).map(|(n, _)| n.replace(' ', ""))
+    oracle_layout_doc::LAYER_COLORS.iter().find(|(_, v)| *v == c).map(|(n, _)| n.replace(' ', ""))
 }
 pub fn layer_color_in(s: &str) -> Option<[u8; 3]> {
-    oracle_guide_doc::LAYER_COLORS.iter().find(|(n, _)| n.replace(' ', "") == s).map(|(_, v)| *v)
+    oracle_layout_doc::LAYER_COLORS.iter().find(|(n, _)| n.replace(' ', "") == s).map(|(_, v)| *v)
 }
 
 /// Format a number compactly (no trailing zeros, no `-0`).
@@ -739,17 +739,17 @@ pub fn note_style_in(s: &str) -> NumberStyle {
         s => number_style_in(s),
     }
 }
-pub const NOTE_RESTART: [(oracle_guide_doc::notes::NoteRestart, &str); 4] = [
-    (oracle_guide_doc::notes::NoteRestart::Never, "DontRestart"),
-    (oracle_guide_doc::notes::NoteRestart::Page, "PageRestart"),
-    (oracle_guide_doc::notes::NoteRestart::Spread, "SpreadRestart"),
-    (oracle_guide_doc::notes::NoteRestart::Section, "SectionRestart"),
+pub const NOTE_RESTART: [(oracle_layout_doc::notes::NoteRestart, &str); 4] = [
+    (oracle_layout_doc::notes::NoteRestart::Never, "DontRestart"),
+    (oracle_layout_doc::notes::NoteRestart::Page, "PageRestart"),
+    (oracle_layout_doc::notes::NoteRestart::Spread, "SpreadRestart"),
+    (oracle_layout_doc::notes::NoteRestart::Section, "SectionRestart"),
 ];
-pub const NOTE_AFFIX: [(oracle_guide_doc::notes::AffixIn, &str); 4] = [
-    (oracle_guide_doc::notes::AffixIn::None, "NoPrefixSuffix"),
-    (oracle_guide_doc::notes::AffixIn::Reference, "PrefixSuffixReference"),
-    (oracle_guide_doc::notes::AffixIn::Text, "PrefixSuffixMarker"),
-    (oracle_guide_doc::notes::AffixIn::Both, "PrefixSuffixBoth"),
+pub const NOTE_AFFIX: [(oracle_layout_doc::notes::AffixIn, &str); 4] = [
+    (oracle_layout_doc::notes::AffixIn::None, "NoPrefixSuffix"),
+    (oracle_layout_doc::notes::AffixIn::Reference, "PrefixSuffixReference"),
+    (oracle_layout_doc::notes::AffixIn::Text, "PrefixSuffixMarker"),
+    (oracle_layout_doc::notes::AffixIn::Both, "PrefixSuffixBoth"),
 ];
 pub fn note_marker_out(p: Position) -> &'static str {
     match p {
@@ -767,8 +767,8 @@ pub fn note_marker_in(s: &str) -> Position {
 }
 
 /// Nested-style delimiter → (property type, value).
-pub fn nested_until_out(u: &oracle_guide_doc::NestedUntil) -> (&'static str, String) {
-    use oracle_guide_doc::NestedUntil as N;
+pub fn nested_until_out(u: &oracle_layout_doc::NestedUntil) -> (&'static str, String) {
+    use oracle_layout_doc::NestedUntil as N;
     let e = |v: &str| ("enumeration", v.to_string());
     match u {
         N::Sentences => e("Sentence"),
@@ -785,8 +785,8 @@ pub fn nested_until_out(u: &oracle_guide_doc::NestedUntil) -> (&'static str, Str
     }
 }
 
-pub fn nested_until_in(ty: &str, v: &str) -> oracle_guide_doc::NestedUntil {
-    use oracle_guide_doc::NestedUntil as N;
+pub fn nested_until_in(ty: &str, v: &str) -> oracle_layout_doc::NestedUntil {
+    use oracle_layout_doc::NestedUntil as N;
     if ty == "string" {
         return N::Chars(v.to_string());
     }
@@ -804,26 +804,26 @@ pub fn nested_until_in(ty: &str, v: &str) -> oracle_guide_doc::NestedUntil {
     }
 }
 
-pub fn path_align_out(a: oracle_guide_doc::PathAlign) -> &'static str {
+pub fn path_align_out(a: oracle_layout_doc::PathAlign) -> &'static str {
     match a {
-        oracle_guide_doc::PathAlign::Baseline => "BaselineAlignment",
-        oracle_guide_doc::PathAlign::Ascender => "AscenderAlignment",
-        oracle_guide_doc::PathAlign::Descender => "DescenderAlignment",
-        oracle_guide_doc::PathAlign::Center => "CenterAlignment",
+        oracle_layout_doc::PathAlign::Baseline => "BaselineAlignment",
+        oracle_layout_doc::PathAlign::Ascender => "AscenderAlignment",
+        oracle_layout_doc::PathAlign::Descender => "DescenderAlignment",
+        oracle_layout_doc::PathAlign::Center => "CenterAlignment",
     }
 }
 
-pub fn path_align_in(v: &str) -> oracle_guide_doc::PathAlign {
+pub fn path_align_in(v: &str) -> oracle_layout_doc::PathAlign {
     match v {
-        "AscenderAlignment" => oracle_guide_doc::PathAlign::Ascender,
-        "DescenderAlignment" => oracle_guide_doc::PathAlign::Descender,
-        "CenterAlignment" => oracle_guide_doc::PathAlign::Center,
-        _ => oracle_guide_doc::PathAlign::Baseline,
+        "AscenderAlignment" => oracle_layout_doc::PathAlign::Ascender,
+        "DescenderAlignment" => oracle_layout_doc::PathAlign::Descender,
+        "CenterAlignment" => oracle_layout_doc::PathAlign::Center,
+        _ => oracle_layout_doc::PathAlign::Baseline,
     }
 }
 
-pub fn digits_out(d: oracle_guide_doc::Digits) -> &'static str {
-    use oracle_guide_doc::Digits;
+pub fn digits_out(d: oracle_layout_doc::Digits) -> &'static str {
+    use oracle_layout_doc::Digits;
     match d {
         Digits::Default => "DefaultDigits",
         Digits::Arabic => "ArabicDigits",
@@ -832,8 +832,8 @@ pub fn digits_out(d: oracle_guide_doc::Digits) -> &'static str {
         Digits::Native => "NativeDigits",
     }
 }
-pub fn digits_in(s: &str) -> Option<oracle_guide_doc::Digits> {
-    use oracle_guide_doc::Digits;
+pub fn digits_in(s: &str) -> Option<oracle_layout_doc::Digits> {
+    use oracle_layout_doc::Digits;
     [Digits::Default, Digits::Arabic, Digits::Hindi, Digits::Farsi, Digits::Native].into_iter().find(|d| digits_out(*d) == s)
 }
 

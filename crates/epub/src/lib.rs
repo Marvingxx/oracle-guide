@@ -13,8 +13,8 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::io::Write;
 
-use oracle_guide_doc::geom::{Affine, Rect};
-use oracle_guide_doc::{
+use oracle_layout_doc::geom::{Affine, Rect};
+use oracle_layout_doc::{
     Align, AnchorPosition, AnchoredObject, CharAttrs, CharProps, Content, Document, ENDNOTE_REF, FOOTNOTE_REF, Item, ItemId, OBJECT_MARK, ParaProps,
     SpreadRef, Story, StoryId, Styles, Table, story,
 };
@@ -54,7 +54,7 @@ pub fn stylesheet_fonts(doc: &Document) -> Vec<(String, String)> {
     let st: &Styles = &doc.styles;
     let mut out: Vec<(String, String)> = Vec::new();
     for ps in &st.paragraph {
-        if ps.name == oracle_guide_doc::NO_PARA_STYLE {
+        if ps.name == oracle_layout_doc::NO_PARA_STYLE {
             continue;
         }
         let (_, cp) = st.resolve_para_style(&ps.name);
@@ -127,7 +127,7 @@ fn font_file(k: usize, f: &EmbeddedFont) -> (String, &'static str) {
 /// instant is moved into range by whole cycles and only the year is carried (matches the old
 /// `civil_from_days`), rather than resetting to the epoch.
 fn iso8601(t: i64) -> String {
-    let (y, dt) = oracle_guide_doc::time::utc_parts(t, 0);
+    let (y, dt) = oracle_layout_doc::time::utc_parts(t, 0);
     // `{:04}` rather than `%Y`, which writes a `+` before years past 9999.
     format!("{y:04}-{}", dt.format("%m-%dT%H:%M:%SZ"))
 }
@@ -242,7 +242,7 @@ fn package_opf(h: &PackageHead, prefix: &str, meta: &str, manifest: &str, spine:
     let PackageHead { lang, id, title, author, modified } = h;
     let author = author.map(|a| format!("<dc:creator>{}</dc:creator>", xml_text(a))).unwrap_or_default();
     format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"bookid\" xml:lang=\"{lang}\"{prefix}>\n<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n<dc:identifier id=\"bookid\">{}</dc:identifier>\n<dc:title>{}</dc:title>\n<dc:language>{lang}</dc:language>{author}\n<meta property=\"dcterms:modified\">{modified}</meta>{meta}\n<meta name=\"generator\" content=\"Oracle Brand Guide\"/>\n</metadata>\n<manifest>\n{manifest}</manifest>\n<spine>\n{spine}</spine>\n</package>\n",
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"bookid\" xml:lang=\"{lang}\"{prefix}>\n<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n<dc:identifier id=\"bookid\">{}</dc:identifier>\n<dc:title>{}</dc:title>\n<dc:language>{lang}</dc:language>{author}\n<meta property=\"dcterms:modified\">{modified}</meta>{meta}\n<meta name=\"generator\" content=\"Oracle Layout\"/>\n</metadata>\n<manifest>\n{manifest}</manifest>\n<spine>\n{spine}</spine>\n</package>\n",
         xml_text(id),
         xml_text(title)
     )
@@ -444,8 +444,8 @@ fn char_css(doc: &Document, c: &CharProps, base_size: f64, generics: &BTreeMap<S
         let _ = write!(out, "letter-spacing: {:.3}em; ", c.tracking / 1000.0);
     }
     match c.capitalization {
-        oracle_guide_doc::Capitalization::AllCaps => out.push_str("text-transform: uppercase; "),
-        oracle_guide_doc::Capitalization::SmallCaps | oracle_guide_doc::Capitalization::OpenTypeAllSmallCaps => {
+        oracle_layout_doc::Capitalization::AllCaps => out.push_str("text-transform: uppercase; "),
+        oracle_layout_doc::Capitalization::SmallCaps | oracle_layout_doc::Capitalization::OpenTypeAllSmallCaps => {
             out.push_str("font-variant: small-caps; ")
         }
         _ => {}
@@ -510,13 +510,13 @@ fn stylesheet_with(doc: &Document, generics: &BTreeMap<String, String>, fonts: &
     );
     let (pc, cc) = (para_classes(st), char_classes(st));
     for ps in &st.paragraph {
-        if ps.name == oracle_guide_doc::NO_PARA_STYLE {
+        if ps.name == oracle_layout_doc::NO_PARA_STYLE {
             continue;
         }
         let (pp, cp) = st.resolve_para_style(&ps.name);
         let lead = match cp.leading {
-            oracle_guide_doc::Leading::Auto => pp.auto_leading,
-            oracle_guide_doc::Leading::Points(v) => v / cp.size.max(1.0),
+            oracle_layout_doc::Leading::Auto => pp.auto_leading,
+            oracle_layout_doc::Leading::Points(v) => v / cp.size.max(1.0),
         };
         let mut rule = String::new();
         para_css(&pp, base, lead, &mut rule);
@@ -576,7 +576,7 @@ fn override_css(doc: &Document, o: &CharAttrs) -> String {
     if o.underline == Some(true) {
         s.push_str("text-decoration: underline; ");
     }
-    if o.capitalization == Some(oracle_guide_doc::Capitalization::AllCaps) {
+    if o.capitalization == Some(oracle_layout_doc::Capitalization::AllCaps) {
         s.push_str("text-transform: uppercase; ");
     }
     s.trim_end().to_string()
@@ -723,15 +723,15 @@ impl<'a, 'f> StoryWriter<'a, 'f> {
                 // Export Tagging: the style's element and class.
                 let (tag, class) = export_mapping(&doc.styles, &pf.style, false, &self.pc);
                 let props = doc.styles.resolve_para(pf).0;
-                let rtl = props.direction == oracle_guide_doc::TextDirection::RightToLeft;
+                let rtl = props.direction == oracle_layout_doc::TextDirection::RightToLeft;
                 let continues_pre = tag == "pre" && pre.as_ref() == Some(&(class.clone(), rtl));
                 if !continues_pre && pre.take().is_some() {
                     out.push_str("</pre>\n");
                 }
                 let list_tag = (tag == "li").then_some(match props.list_type {
-                    oracle_guide_doc::ListType::Numbers => "ol",
-                    oracle_guide_doc::ListType::Bullets => "ul",
-                    oracle_guide_doc::ListType::None => "ul style=\"list-style:none\"",
+                    oracle_layout_doc::ListType::Numbers => "ol",
+                    oracle_layout_doc::ListType::Bullets => "ul",
+                    oracle_layout_doc::ListType::None => "ul style=\"list-style:none\"",
                 });
                 if list != list_tag {
                     close_list(&mut list, out);
@@ -795,7 +795,7 @@ impl<'a, 'f> StoryWriter<'a, 'f> {
                 continue;
             }
             // Hidden conditional text isn't exported.
-            if f.over.conditions.as_deref().is_some_and(|c| doc.conditions_hide(c)) || f.over.change == Some(oracle_guide_doc::ChangeMark::Deleted) {
+            if f.over.conditions.as_deref().is_some_and(|c| doc.conditions_hide(c)) || f.over.change == Some(oracle_layout_doc::ChangeMark::Deleted) {
                 continue;
             }
             let Some(raw) = st.text.get(a..b) else { continue };
@@ -853,9 +853,9 @@ impl<'a, 'f> StoryWriter<'a, 'f> {
         match &o.position {
             AnchorPosition::AboveLine { align, .. } if !out.is_empty() => {
                 let align = match align {
-                    oracle_guide_doc::anchored::AnchorAlign::Left => "left",
-                    oracle_guide_doc::anchored::AnchorAlign::Center => "center",
-                    oracle_guide_doc::anchored::AnchorAlign::Right => "right",
+                    oracle_layout_doc::anchored::AnchorAlign::Left => "left",
+                    oracle_layout_doc::anchored::AnchorAlign::Center => "center",
+                    oracle_layout_doc::anchored::AnchorAlign::Right => "right",
                 };
                 format!("<span class=\"anchored\" style=\"display:block;text-align:{align}\">{out}</span>")
             }
@@ -876,7 +876,7 @@ impl<'a, 'f> StoryWriter<'a, 'f> {
         }
         let mime = safe_mime(&a.mime);
         // Video and sound: an HTML5 player (with the poster, when there is one).
-        if let Some(kind) = oracle_guide_doc::media_kind(mime) {
+        if let Some(kind) = oracle_layout_doc::media_kind(mime) {
             let name = asset_path("media", a, mime);
             self.images.insert(name.clone(), (mime, a.data.as_slice()));
             let m = it.media.clone().unwrap_or_default();
@@ -1021,10 +1021,10 @@ impl<'a, 'f> StoryWriter<'a, 'f> {
 
 /// Run text with variables replaced by their values.
 fn run_text(doc: &Document, raw: &str) -> String {
-    if raw.chars().any(|c| oracle_guide_doc::vars::var_index(c).is_some()) {
+    if raw.chars().any(|c| oracle_layout_doc::vars::var_index(c).is_some()) {
         let sub: String = raw
             .chars()
-            .map(|c| match oracle_guide_doc::vars::var_index(c) {
+            .map(|c| match oracle_layout_doc::vars::var_index(c) {
                 Some(i) => doc.variable_value(i, None).unwrap_or_default(),
                 None => c.to_string(),
             })
@@ -1257,7 +1257,7 @@ pub fn reading_order(doc: &Document) -> Vec<Block> {
 /// Package path of an asset: `{dir}/{name}-{id}.{ext}`, the name from its original file name
 /// (lowercase ASCII, so the package stays readable) and the id keeping two assets of the same
 /// name apart.
-fn asset_path(dir: &str, a: &oracle_guide_doc::Asset, mime: &str) -> String {
+fn asset_path(dir: &str, a: &oracle_layout_doc::Asset, mime: &str) -> String {
     let stem = a.name.rsplit(['/', '\\']).next().unwrap_or("");
     let stem = stem.rsplit_once('.').map_or(stem, |(s, _)| s);
     let name: String = stem.chars().map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '-' }).collect();
@@ -1366,7 +1366,7 @@ pub fn export_html(doc: &Document, opts: &HtmlOptions) -> String {
     let lang = language_tag(language);
     let body = body_html(doc, false, &|_, mime, data| format!("data:{mime};base64,{}", base64(data))).html;
     format!(
-        "<!DOCTYPE html>\n<html lang=\"{lang}\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Oracle Brand Guide\">\n<title>{}</title>\n<style>\nbody {{ max-width: 40em; margin: 2em auto; padding: 0 1em; }}\nfigure {{ margin: 1em 0; }} figure img {{ max-width: 100%; height: auto; }}\n{}</style>\n</head>\n<body>\n{body}</body>\n</html>\n",
+        "<!DOCTYPE html>\n<html lang=\"{lang}\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Oracle Layout\">\n<title>{}</title>\n<style>\nbody {{ max-width: 40em; margin: 2em auto; padding: 0 1em; }}\nfigure {{ margin: 1em 0; }} figure img {{ max-width: 100%; height: auto; }}\n{}</style>\n</head>\n<body>\n{body}</body>\n</html>\n",
         xml_text(&title),
         stylesheet_with(doc, &opts.generic_families, &[])
     )
@@ -1471,9 +1471,9 @@ pub fn export_epub(doc: &Document, opts: &EpubOptions) -> Result<Vec<u8>, EpubEr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use oracle_guide_doc::build::NewDocument;
-    use oracle_guide_doc::geom::{Affine, Rect, shapes};
-    use oracle_guide_doc::{Asset, AssetId, Content, Graphic, Item, ItemId, ParaFormat, Shape, SpreadRef, Story, StoryId, Table};
+    use oracle_layout_doc::build::NewDocument;
+    use oracle_layout_doc::geom::{Affine, Rect, shapes};
+    use oracle_layout_doc::{Asset, AssetId, Content, Graphic, Item, ItemId, ParaFormat, Shape, SpreadRef, Story, StoryId, Table};
     use std::io::Read;
     use std::sync::Arc;
 
@@ -1535,17 +1535,17 @@ mod tests {
             });
             item
         };
-        let inline = oracle_guide_doc::AnchoredObject::new(graphic(&mut d, "inline"), oracle_guide_doc::AnchorPosition::Inline { y_offset: 0.0 });
-        let above = oracle_guide_doc::AnchoredObject::new(
+        let inline = oracle_layout_doc::AnchoredObject::new(graphic(&mut d, "inline"), oracle_layout_doc::AnchorPosition::Inline { y_offset: 0.0 });
+        let above = oracle_layout_doc::AnchoredObject::new(
             graphic(&mut d, "above"),
-            oracle_guide_doc::AnchorPosition::AboveLine { align: oracle_guide_doc::anchored::AnchorAlign::Center, space_before: 0.0, space_after: 0.0 },
+            oracle_layout_doc::AnchorPosition::AboveLine { align: oracle_layout_doc::anchored::AnchorAlign::Center, space_before: 0.0, space_after: 0.0 },
         );
         let st = d.story_mut(sid).unwrap();
         st.insert_object(1, inline);
         // Byte offsets: "A" (1), the mark (3), "B\nC" (3): the second object goes between C and D.
         st.insert_object(7, above);
         // An anchored image without alt text is decorative and reported, like a placed one.
-        let bare = oracle_guide_doc::AnchoredObject::new(graphic(&mut d, ""), oracle_guide_doc::AnchorPosition::Inline { y_offset: 0.0 });
+        let bare = oracle_layout_doc::AnchoredObject::new(graphic(&mut d, ""), oracle_layout_doc::AnchorPosition::Inline { y_offset: 0.0 });
         let end = d.story(sid).unwrap().text.len();
         d.story_mut(sid).unwrap().insert_object(end, bare);
         assert_eq!(images_without_alt(&d), vec!["dot.png".to_string()]);
@@ -1630,13 +1630,13 @@ mod tests {
         let mut d = Document::new(&NewDocument::default());
         let lid = d.default_layer();
         for (name, tag, list) in [
-            ("Bullet", "li", Some(oracle_guide_doc::ListType::Bullets)),
-            ("Number", "li", Some(oracle_guide_doc::ListType::Numbers)),
+            ("Bullet", "li", Some(oracle_layout_doc::ListType::Bullets)),
+            ("Number", "li", Some(oracle_layout_doc::ListType::Numbers)),
             ("Typed", "li", None),
             ("Code", "pre", None),
         ] {
-            let para = oracle_guide_doc::ParaAttrs { list_type: list, ..Default::default() };
-            d.styles_mut().paragraph.push(oracle_guide_doc::ParagraphStyle {
+            let para = oracle_layout_doc::ParaAttrs { list_type: list, ..Default::default() };
+            d.styles_mut().paragraph.push(oracle_layout_doc::ParagraphStyle {
                 name: name.into(),
                 based_on: None,
                 next_style: None,
@@ -1644,7 +1644,7 @@ mod tests {
                 chars: CharAttrs::default(),
                 shortcut: String::new(),
             });
-            d.styles_mut().export_tags.insert(format!("p:{name}"), oracle_guide_doc::ExportTag { tag: tag.into(), class: String::new() });
+            d.styles_mut().export_tags.insert(format!("p:{name}"), oracle_layout_doc::ExportTag { tag: tag.into(), class: String::new() });
         }
         let text = "Intro\nfirst\nsecond\none\ntwo\nx = 1\ny = 2\nEnd\n• typed";
         let (_, sid) = d.add_text_frame(SpreadRef::Doc(0), Rect::new(36.0, 36.0, 300.0, 300.0), lid, text, ParaFormat::default()).unwrap();
@@ -1679,7 +1679,7 @@ mod tests {
         let mut d = Document::new(&NewDocument { pages: 2, ..Default::default() });
         let lid = d.default_layer();
         for (name, tag) in [("Chapter", "h1"), ("Section", "h2")] {
-            d.styles_mut().paragraph.push(oracle_guide_doc::ParagraphStyle {
+            d.styles_mut().paragraph.push(oracle_layout_doc::ParagraphStyle {
                 name: name.into(),
                 based_on: None,
                 next_style: None,
@@ -1687,7 +1687,7 @@ mod tests {
                 chars: CharAttrs::default(),
                 shortcut: String::new(),
             });
-            d.styles_mut().export_tags.insert(format!("p:{name}"), oracle_guide_doc::ExportTag { tag: tag.into(), class: String::new() });
+            d.styles_mut().export_tags.insert(format!("p:{name}"), oracle_layout_doc::ExportTag { tag: tag.into(), class: String::new() });
         }
         let text = "One\nBody\nOne point one\nMore\nTwo\nText";
         let (_, sid) = d.add_text_frame(SpreadRef::Doc(0), Rect::new(36.0, 36.0, 300.0, 300.0), lid, text, ParaFormat::default()).unwrap();
@@ -1757,7 +1757,7 @@ mod tests {
     fn chapters_are_split_at_h1() {
         let mut d = Document::new(&NewDocument { pages: 3, ..Default::default() });
         let lid = d.default_layer();
-        d.styles_mut().paragraph.push(oracle_guide_doc::ParagraphStyle {
+        d.styles_mut().paragraph.push(oracle_layout_doc::ParagraphStyle {
             name: "Chapter".into(),
             based_on: None,
             next_style: None,
@@ -1765,7 +1765,7 @@ mod tests {
             chars: CharAttrs::default(),
             shortcut: String::new(),
         });
-        d.styles_mut().export_tags.insert("p:Chapter".into(), oracle_guide_doc::ExportTag { tag: "h1".into(), class: String::new() });
+        d.styles_mut().export_tags.insert("p:Chapter".into(), oracle_layout_doc::ExportTag { tag: "h1".into(), class: String::new() });
         // A title page without a heading, then a story that opens with a chapter and has a
         // second one in the middle.
         d.add_text_frame(SpreadRef::Doc(0), Rect::new(36.0, 36.0, 300.0, 100.0), lid, "Title page", ParaFormat::default()).unwrap();
@@ -1805,7 +1805,7 @@ mod tests {
     fn note_links_point_at_the_chapter_file_of_their_target() {
         let mut d = Document::new(&NewDocument::default());
         let lid = d.default_layer();
-        d.styles_mut().paragraph.push(oracle_guide_doc::ParagraphStyle {
+        d.styles_mut().paragraph.push(oracle_layout_doc::ParagraphStyle {
             name: "Chapter".into(),
             based_on: None,
             next_style: None,
@@ -1813,7 +1813,7 @@ mod tests {
             chars: CharAttrs::default(),
             shortcut: String::new(),
         });
-        d.styles_mut().export_tags.insert("p:Chapter".into(), oracle_guide_doc::ExportTag { tag: "h1".into(), class: String::new() });
+        d.styles_mut().export_tags.insert("p:Chapter".into(), oracle_layout_doc::ExportTag { tag: "h1".into(), class: String::new() });
         let (_, sid) = d
             .add_text_frame(SpreadRef::Doc(0), Rect::new(36.0, 36.0, 300.0, 400.0), lid, "One\nFirst text\nTwo\nSecond text", ParaFormat::default())
             .unwrap();
@@ -1855,7 +1855,7 @@ mod tests {
         let mut d = Document::new(&NewDocument::default());
         let lid = d.default_layer();
         for (name, size) in [("見出し", 30.0), ("本文", 10.0), ("Body Text", 12.0), ("Body-Text", 20.0)] {
-            d.styles_mut().paragraph.push(oracle_guide_doc::ParagraphStyle {
+            d.styles_mut().paragraph.push(oracle_layout_doc::ParagraphStyle {
                 name: name.into(),
                 based_on: None,
                 next_style: None,
@@ -2027,7 +2027,7 @@ mod tests {
         let (_, sid) = d.add_text_frame(SpreadRef::Doc(0), Rect::new(36.0, 36.0, 300.0, 100.0), lid, "A&B <C> \"D\"", ParaFormat::default()).unwrap();
         d.styles_mut()
             .export_tags
-            .insert(format!("p:{}", story::BASIC_PARAGRAPH), oracle_guide_doc::ExportTag { tag: "h2".into(), class: "Primary \"Copy\"".into() });
+            .insert(format!("p:{}", story::BASIC_PARAGRAPH), oracle_layout_doc::ExportTag { tag: "h2".into(), class: "Primary \"Copy\"".into() });
         if let Some(basic) = d.styles_mut().paragraph.iter_mut().find(|s| s.name == story::BASIC_PARAGRAPH) {
             basic.chars.font_family = Some("Quoted \"Serif\" <Alt>".into());
         }
@@ -2150,10 +2150,10 @@ mod tests {
     /// block first: `aside` and `table` can't sit inside `ul` or `pre`.
     #[test]
     fn notes_and_tables_close_an_open_list_or_pre_block() {
-        for (tag, list, open, close) in [("li", Some(oracle_guide_doc::ListType::Bullets), "<ul>", "</ul>"), ("pre", None, "<pre", "</pre>")] {
+        for (tag, list, open, close) in [("li", Some(oracle_layout_doc::ListType::Bullets), "<ul>", "</ul>"), ("pre", None, "<pre", "</pre>")] {
             let mut d = tables_and_notes();
-            let para = oracle_guide_doc::ParaAttrs { list_type: list, ..Default::default() };
-            d.styles_mut().paragraph.push(oracle_guide_doc::ParagraphStyle {
+            let para = oracle_layout_doc::ParaAttrs { list_type: list, ..Default::default() };
+            d.styles_mut().paragraph.push(oracle_layout_doc::ParagraphStyle {
                 name: "Grouped".into(),
                 based_on: None,
                 next_style: None,
@@ -2161,7 +2161,7 @@ mod tests {
                 chars: CharAttrs::default(),
                 shortcut: String::new(),
             });
-            d.styles_mut().export_tags.insert("p:Grouped".into(), oracle_guide_doc::ExportTag { tag: tag.into(), class: String::new() });
+            d.styles_mut().export_tags.insert("p:Grouped".into(), oracle_layout_doc::ExportTag { tag: tag.into(), class: String::new() });
             let sid = d.stories.keys().copied().find(|sid| d.story(*sid).is_some_and(|st| !st.notes.is_empty())).unwrap();
             for p in &mut d.story_mut(sid).unwrap().paras {
                 p.style = "Grouped".into();

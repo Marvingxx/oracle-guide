@@ -1,22 +1,22 @@
 [package]
-name = "oracle-guide-idml"
+name = "oracle-layout-idml"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Oracle Brand Guide IDML (InDesign Markup Language) import and export"
+description = "Oracle Layout IDML (InDesign Markup Language) import and export"
 
 [lints]
 workspace = true
 
 [dependencies]
-oracle-guide-geom = { workspace = true }
-oracle-guide-color = { workspace = true }
-oracle-guide-doc = { workspace = true }
-oracle-guide-images = { workspace = true }
+oracle-layout-geom = { workspace = true }
+oracle-layout-color = { workspace = true }
+oracle-layout-doc = { workspace = true }
+oracle-layout-images = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }
 quick-xml = { workspace = true }
 zip = { workspace = true }
 
 [dev-dependencies]
-oracle-guide-compose = { workspace = true }
+oracle-layout-compose = { workspace = true }

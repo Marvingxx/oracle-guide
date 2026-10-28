@@ -1,7 +1,7 @@
 //! The outline of a non-rectangular text frame (ovals, polygons, corner options, Pathfinder
 //! results, freeform closed paths): lines are set in the part of each line band the outline covers.
 
-use oracle_guide_geom::{Affine, BezPath, PathEl, Point};
+use oracle_layout_geom::{Affine, BezPath, PathEl, Point};
 
 /// Flattening tolerance (points) for curved frame outlines.
 const TOLERANCE: f64 = 0.1;
@@ -22,7 +22,7 @@ impl FrameOutline {
     /// The outline of `bp` (closed subpaths only), or None when it is its own axis-aligned
     /// rectangle (or has no area), so the frame keeps its rectangular text area.
     pub fn new(bp: &BezPath, inset: f64) -> Option<FrameOutline> {
-        let bb = oracle_guide_geom::Shape::bounding_box(bp);
+        let bb = oracle_layout_geom::Shape::bounding_box(bp);
         let extent = bb.width().max(bb.height());
         if !extent.is_finite() {
             return None;
@@ -174,7 +174,7 @@ fn flatten_closed(bp: &BezPath, tol: f64) -> (Vec<(Point, Point)>, bool) {
         sub.clear();
     };
     let mut over = false;
-    oracle_guide_geom::kurbo::flatten(bp.iter(), tol, |el| {
+    oracle_layout_geom::kurbo::flatten(bp.iter(), tol, |el| {
         if over {
             return;
         }

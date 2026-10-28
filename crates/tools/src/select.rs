@@ -17,8 +17,8 @@
 //! A selected placed graphic shows its own bounding box: its handles resize the graphic (Shift keeps
 //! its proportions, Alt from its centre) and leave the frame as it is.
 
-use oracle_guide_doc::{Content, Item, ItemId, SpreadRef};
-use oracle_guide_geom::{Affine, Point, Rect, Vec2};
+use oracle_layout_doc::{Content, Item, ItemId, SpreadRef};
+use oracle_layout_geom::{Affine, Point, Rect, Vec2};
 use serde_json::{Value, json};
 
 use crate::corners::{self, LiveFrame};
@@ -99,20 +99,20 @@ const BRACKET_PX: f64 = 9.0;
 
 /// A selected type-on-a-path item's path (inner space), its inner → canvas transform and its
 /// brackets' arc lengths (start, end).
-fn path_type_of(cx: &ToolContext, id: ItemId) -> Option<(oracle_guide_geom::warp::PathWarp, oracle_guide_geom::Affine, f64, f64)> {
+fn path_type_of(cx: &ToolContext, id: ItemId) -> Option<(oracle_layout_geom::warp::PathWarp, oracle_layout_geom::Affine, f64, f64)> {
     let it = cx.doc.item(id)?;
     let pt = it.text_frame()?.options.path.as_ref()?;
-    let warp = oracle_guide_geom::warp::PathWarp::new(&it.path.to_bezpath(), pt.flip);
+    let warp = oracle_layout_geom::warp::PathWarp::new(&it.path.to_bezpath(), pt.flip);
     let end = pt.end.unwrap_or(warp.length()).min(warp.length());
     Some((warp, cx.item_canvas_xf(id)? * it.xf, pt.start, end))
 }
 
 /// The bracket line at arc length `s`: across the path, `BRACKET_PX` either side (canvas).
-fn bracket_line(cx: &ToolContext, warp: &oracle_guide_geom::warp::PathWarp, xf: oracle_guide_geom::Affine, s: f64) -> Option<(Point, Point)> {
+fn bracket_line(cx: &ToolContext, warp: &oracle_layout_geom::warp::PathWarp, xf: oracle_layout_geom::Affine, s: f64) -> Option<(Point, Point)> {
     let (p, a) = warp.at(s)?;
     let c = xf * p;
-    let t = xf * (p + oracle_guide_geom::Vec2::new(a.cos(), a.sin())) - c;
-    let n = oracle_guide_geom::Vec2::new(-t.y, t.x);
+    let t = xf * (p + oracle_layout_geom::Vec2::new(a.cos(), a.sin())) - c;
+    let n = oracle_layout_geom::Vec2::new(-t.y, t.x);
     let n = n / n.hypot().max(1e-9) * cx.tol(BRACKET_PX);
     Some((c - n, c + n))
 }
@@ -144,7 +144,7 @@ pub fn anchor_at(cx: &ToolContext, p: Point) -> Option<(u64, usize, usize, Optio
 }
 
 /// [`anchor_at`] over the given items.
-pub fn anchor_at_in(cx: &ToolContext, ids: &[oracle_guide_doc::ItemId], p: Point) -> Option<(u64, usize, usize, Option<&'static str>)> {
+pub fn anchor_at_in(cx: &ToolContext, ids: &[oracle_layout_doc::ItemId], p: Point) -> Option<(u64, usize, usize, Option<&'static str>)> {
     let tol = cx.tol(5.0);
     for id in ids {
         let (Some(it), Some(xf)) = (cx.doc.item(*id), cx.item_canvas_xf(*id)) else { continue };
@@ -199,12 +199,12 @@ fn guides_crossing(cx: &ToolContext, r: Rect) -> Vec<Value> {
                 // vertical one the spread's height and a little), a page guide its page.
                 let span = match (g.spread, g.orientation) {
                     (false, _) => pg.bounds(),
-                    (true, oracle_guide_doc::Orientation::Horizontal) => pasteboard,
-                    (true, oracle_guide_doc::Orientation::Vertical) => sp.bounds().inflate(0.0, 36.0),
+                    (true, oracle_layout_doc::Orientation::Horizontal) => pasteboard,
+                    (true, oracle_layout_doc::Orientation::Vertical) => sp.bounds().inflate(0.0, 36.0),
                 };
                 let line = match g.orientation {
-                    oracle_guide_doc::Orientation::Horizontal => Rect::new(span.x0, g.position, span.x1, g.position),
-                    oracle_guide_doc::Orientation::Vertical => Rect::new(g.position, span.y0, g.position, span.y1),
+                    oracle_layout_doc::Orientation::Horizontal => Rect::new(span.x0, g.position, span.x1, g.position),
+                    oracle_layout_doc::Orientation::Vertical => Rect::new(g.position, span.y0, g.position, span.y1),
                 };
                 let b = slot.xf.transform_rect_bbox(line);
                 if b.x0 <= r.x1 && b.x1 >= r.x0 && b.y0 <= r.y1 && b.y1 >= r.y0 {

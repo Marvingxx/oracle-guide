@@ -5,12 +5,12 @@
 
 use std::sync::Arc;
 
-use oracle_guide_color::swatch::apply_tint;
-use oracle_guide_compose::Cache;
-use oracle_guide_doc::build::NewDocument;
-use oracle_guide_doc::{Asset, AssetId, Content, Document, Fill, Graphic, Item, ItemId, Shape, SpreadRef, Stroke};
-use oracle_guide_geom::{Affine, Rect, shapes};
-use oracle_guide_render::{RenderOptions, Renderer, color_of};
+use oracle_layout_color::swatch::apply_tint;
+use oracle_layout_compose::Cache;
+use oracle_layout_doc::build::NewDocument;
+use oracle_layout_doc::{Asset, AssetId, Content, Document, Fill, Graphic, Item, ItemId, Shape, SpreadRef, Stroke};
+use oracle_layout_geom::{Affine, Rect, shapes};
+use oracle_layout_render::{RenderOptions, Renderer, color_of};
 use image::{ExtendedColorType, ImageEncoder};
 
 const RED: &str = "C=0 M=100 Y=100 K=0";

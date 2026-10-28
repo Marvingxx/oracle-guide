@@ -1,6 +1,6 @@
 //! Linked-story threading and text-color transaction safety.
-use oracle_guide_doc::{ParaFormat, Story, StoryId, table::Table};
-use oracle_guide_engine::Session;
+use oracle_layout_doc::{ParaFormat, Story, StoryId, table::Table};
+use oracle_layout_engine::Session;
 use serde_json::{Value, json};
 use std::sync::Arc;
 
@@ -44,7 +44,7 @@ fn safety_linked_parent_follows_merge_and_updates_after_native_reopen() {
     assert_eq!(s.doc().unwrap().doc.story(linked).unwrap().text, "PARENT");
     let bytes = s.execute("file.serialize", &json!({})).unwrap();
     let mut reopened = Session::new();
-    reopened.execute("file.openBytes", &json!({"name":"links.oracle-guide","base64":bytes["base64"]})).unwrap();
+    reopened.execute("file.openBytes", &json!({"name":"links.oracle-layout","base64":bytes["base64"]})).unwrap();
     assert_eq!(link(&mut reopened, linked)["parent"], survivor.0);
     reopened.execute("story.updateLink", &json!({"story":linked.0})).unwrap();
     assert_eq!(reopened.doc().unwrap().doc.story(linked).unwrap().text, "PREFIX\nPARENT");
@@ -123,7 +123,7 @@ fn nested_story(depth: usize, name: &str) -> Story {
     let mut st = Story::with_text(StoryId(0), "leaf", ParaFormat::default());
     st.chars[0].format.over.fill = Some(name.into());
     for _ in 0..depth {
-        let mut outer = Story::with_text(StoryId(0), &oracle_guide_doc::TABLE_ANCHOR.to_string(), ParaFormat::default());
+        let mut outer = Story::with_text(StoryId(0), &oracle_layout_doc::TABLE_ANCHOR.to_string(), ParaFormat::default());
         let mut t = Table::new(1, 1, 1, 0, 0, 100.);
         t.cells[0].text = st;
         outer.tables.insert(1, Arc::new(t));
@@ -212,7 +212,7 @@ fn safety_empty_linked_parent_follows_survivor_only_on_explicit_update() {
             assert_eq!(link(&mut s, linked)["parent"], survivor.0);
             let bytes = s.execute("file.serialize", &json!({})).unwrap();
             let mut reopened = Session::new();
-            reopened.execute("file.openBytes", &json!({"name":"empty-parent.oracle-guide","base64":bytes["base64"]})).unwrap();
+            reopened.execute("file.openBytes", &json!({"name":"empty-parent.oracle-layout","base64":bytes["base64"]})).unwrap();
             assert_eq!(link(&mut reopened, linked)["outOfDate"], true);
             assert_eq!(reopened.doc().unwrap().doc.story(linked).unwrap().text, "");
             reopened.execute("story.updateLink", &json!({"story":linked.0})).unwrap();
@@ -279,18 +279,18 @@ fn safety_thread_allows_unrelated_empty_frame_beside_linked_descendant() {
         let undo_len = s.doc().unwrap().history.undo.len();
         assert_eq!(before.story(leaf).unwrap().rev, 1);
         let (from, to) = if empty_first { (empty_frame, leaf_frame) } else { (leaf_frame, empty_frame) };
-        let frames = vec![oracle_guide_doc::ItemId(from), oracle_guide_doc::ItemId(to)];
+        let frames = vec![oracle_layout_doc::ItemId(from), oracle_layout_doc::ItemId(to)];
         let mut expected = (*before).clone();
         expected.stories.remove(&empty_story);
         let st = expected.story_mut(leaf).unwrap();
         st.frames = frames;
         st.rev = 2;
-        expected.item_mut(oracle_guide_doc::ItemId(empty_frame)).unwrap().text_frame_mut().unwrap().story = leaf;
+        expected.item_mut(oracle_layout_doc::ItemId(empty_frame)).unwrap().text_frame_mut().unwrap().story = leaf;
 
         s.execute("text.thread", &json!({"from": from, "to": to})).unwrap();
 
         assert_eq!(*s.doc().unwrap().doc, expected);
-        assert_eq!(s.doc().unwrap().selection, oracle_guide_doc::Selection::items(vec![oracle_guide_doc::ItemId(to)]));
+        assert_eq!(s.doc().unwrap().selection, oracle_layout_doc::Selection::items(vec![oracle_layout_doc::ItemId(to)]));
         assert_eq!(s.doc().unwrap().history.undo.len(), undo_len + 1);
         assert_eq!(link(&mut s, middle)["outOfDate"], false);
         assert_eq!(link(&mut s, leaf)["outOfDate"], false);

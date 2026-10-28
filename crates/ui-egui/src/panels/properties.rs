@@ -2,9 +2,9 @@
 //! sections per selection state — `plan/indesign/11-observed-ui.md` §4.1) and small
 //! single-purpose panels (Stroke, Character, Paragraph, Text Wrap, Align, Links, Info).
 
-use oracle_guide_doc::{Align, Arrowhead, Cap, Join, StrokeAlign, StrokeType};
-use oracle_guide_geom::corners::CornerShape;
-use oracle_guide_geom::{Unit, units};
+use oracle_layout_doc::{Align, Arrowhead, Cap, Join, StrokeAlign, StrokeType};
+use oracle_layout_geom::corners::CornerShape;
+use oracle_layout_geom::{Unit, units};
 use egui::{Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 use serde_json::{Value, json};
 
@@ -392,7 +392,7 @@ fn document_sections(app: &mut DesignApp, ui: &mut Ui) {
     if let Some(p) = shown {
         let linked = temp_bool(ui, "margins_linked", true);
         let b = block(ui, 2.0 * FIELD_H + 5.0);
-        let mut set: Option<oracle_guide_doc::Margins> = None;
+        let mut set: Option<oracle_layout_doc::Margins> = None;
         let fields = [
             ("margin-top", "Top", p.margins.top, 0.0, 0.0),
             ("margin-bottom", "Bottom", p.margins.bottom, 0.0, 26.0),
@@ -411,7 +411,7 @@ fn document_sections(app: &mut DesignApp, ui: &mut Ui) {
             if let Some(nv) = nv {
                 let mut m = p.margins;
                 if linked {
-                    m = oracle_guide_doc::Margins { top: nv, bottom: nv, inside: nv, outside: nv };
+                    m = oracle_layout_doc::Margins { top: nv, bottom: nv, inside: nv, outside: nv };
                 } else {
                     match k {
                         0 => m.top = nv,
@@ -908,7 +908,7 @@ fn appearance_section(app: &mut DesignApp, ui: &mut Ui, i: &SelInfo) {
 fn swatch_menu(
     app: &mut DesignApp,
     resp: &egui::Response,
-    doc: &oracle_guide_doc::Document,
+    doc: &oracle_layout_doc::Document,
     cur: &str,
     stroke: bool,
     text_frame: bool,
@@ -1151,7 +1151,7 @@ fn text_style_section(app: &mut DesignApp, ui: &mut Ui) {
         let Some(st) = app.session.active() else { return };
         if tab == 0 {
             (
-                st.doc.styles.paragraph.iter().map(|p| p.name.clone()).filter(|n| n != oracle_guide_doc::NO_PARA_STYLE).collect(),
+                st.doc.styles.paragraph.iter().map(|p| p.name.clone()).filter(|n| n != oracle_layout_doc::NO_PARA_STYLE).collect(),
                 a["paragraphStyle"].as_str().unwrap_or("").to_string(),
             )
         } else {
@@ -1234,7 +1234,7 @@ fn text_appearance_section(app: &mut DesignApp, ui: &mut Ui) {
     let Some(doc) = app.session.active().map(|d| d.doc.clone()) else { return };
     let c = &a["chars"];
     for (k, (key, label)) in [("fill", "Fill"), ("stroke", "Stroke")].into_iter().enumerate() {
-        let sw = c[key].as_str().unwrap_or(oracle_guide_color::swatch::NONE).to_string();
+        let sw = c[key].as_str().unwrap_or(oracle_layout_color::swatch::NONE).to_string();
         let b = block(ui, FIELD_H);
         let (col, g) = widgets::swatch_colors(&doc, &sw, 1.0);
         let chip = sub(b, 4.0, 2.0, 17.0, 17.0);
@@ -1808,8 +1808,8 @@ pub fn paragraph_panel(app: &mut DesignApp, ui: &mut egui::Ui) {
         }
         // Drop cap: number of lines and characters.
         for (label, key, max, id) in [
-            ("Drop Lines", "dropCapLines", oracle_guide_compose::MAX_DROP_CAP_LINES, "ppdl"),
-            ("Drop Chars", "dropCapChars", oracle_guide_compose::MAX_DROP_CAP_CHARS, "ppdc"),
+            ("Drop Lines", "dropCapLines", oracle_layout_compose::MAX_DROP_CAP_LINES, "ppdl"),
+            ("Drop Chars", "dropCapChars", oracle_layout_compose::MAX_DROP_CAP_CHARS, "ppdc"),
         ] {
             caption(ui, crate::i18n::tr(&app.ui.language, label));
             if let Some(v) = number(ui, id, p[key].as_f64(), "", 64.0, 0) {
@@ -2024,7 +2024,7 @@ pub fn stroke_panel(app: &mut DesignApp, ui: &mut egui::Ui) {
 
 /// Stroke panel while text is selected: the text's outline colour, weight and whether it sits behind the fill.
 fn text_stroke_panel(app: &mut DesignApp, ui: &mut egui::Ui, c: &Value) {
-    let swatch = c["stroke"].as_str().unwrap_or(oracle_guide_color::swatch::NONE).to_string();
+    let swatch = c["stroke"].as_str().unwrap_or(oracle_layout_color::swatch::NONE).to_string();
     egui::Grid::new("text_stroke_panel").num_columns(2).spacing(vec2(8.0, 6.0)).show(ui, |ui| {
         caption(ui, crate::i18n::tr(&app.ui.language, "Weight:"));
         if let Some(v) = number(ui, "tsw_panel", c["strokeWeight"].as_f64(), " pt", 60.0, 3) {
@@ -2045,7 +2045,7 @@ fn text_stroke_panel(app: &mut DesignApp, ui: &mut egui::Ui, c: &Value) {
 
 /// A short line ending in arrowhead `a` (pointing left for Start, right for End).
 fn arrow_preview(ui: &mut egui::Ui, a: Arrowhead, start: bool, color: egui::Color32) {
-    use oracle_guide_geom::kurbo;
+    use oracle_layout_geom::kurbo;
     let (r, _) = ui.allocate_exact_size(vec2(56.0, 14.0), Sense::hover());
     let mut line = kurbo::BezPath::new();
     let (y, x0, x1) = (r.center().y as f64, r.left() as f64 + 6.0, r.right() as f64 - 6.0);
@@ -2056,8 +2056,8 @@ fn arrow_preview(ui: &mut egui::Ui, a: Arrowhead, start: bool, color: egui::Colo
         line.move_to((x0, y));
         line.line_to((x1, y));
     }
-    let st = oracle_guide_doc::Stroke { weight: 1.5, end: a, ..Default::default() };
-    let (line, heads) = oracle_guide_doc::arrow::apply(&line, &st, false).unwrap_or((line, vec![]));
+    let st = oracle_layout_doc::Stroke { weight: 1.5, end: a, ..Default::default() };
+    let (line, heads) = oracle_layout_doc::arrow::apply(&line, &st, false).unwrap_or((line, vec![]));
     let pts = |p: &kurbo::BezPath| {
         let mut v = Vec::new();
         kurbo::flatten(p.iter(), 0.1, |el| match el {
@@ -2489,7 +2489,7 @@ pub fn links_panel(app: &mut DesignApp, ui: &mut egui::Ui) {
             && ui.button(crate::rtl::widget(ui, crate::i18n::tr(&app.ui.language, "Edit Original"))).clicked()
         {
             let document = app.session.active().and_then(|d| d.path.clone());
-            let opened = oracle_guide_engine::io::document_path(&file, document.as_deref().map(std::path::Path::new))
+            let opened = oracle_layout_engine::io::document_path(&file, document.as_deref().map(std::path::Path::new))
                 .map_err(|e| e.to_string())
                 .and_then(|path| oracle_suite_link::edit_original(&path));
             match opened {
@@ -2569,7 +2569,7 @@ pub fn info_panel(app: &mut DesignApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     match sel_info(app) {
         Some(i) => {
-            let f = |v: f64| oracle_guide_geom::format_measure(v, u);
+            let f = |v: f64| oracle_layout_geom::format_measure(v, u);
             crate::rtl::label(ui, format!("X: {}   Y: {}", f(i.page_rect.x0), f(i.page_rect.y0)));
             crate::rtl::label(ui, format!("W: {}   H: {}", f(i.page_rect.width()), f(i.page_rect.height())));
             crate::rtl::label(
@@ -2603,7 +2603,7 @@ pub fn effects_panel(app: &mut DesignApp, ui: &mut egui::Ui) {
         crate::rtl::label(ui, crate::i18n::tr(&app.ui.language, "Select an object."));
         return;
     };
-    use oracle_guide_color::BlendMode as B;
+    use oracle_layout_color::BlendMode as B;
     const MODES: [B; 16] = [
         B::Normal,
         B::Multiply,
@@ -2719,7 +2719,7 @@ pub fn effects_panel(app: &mut DesignApp, ui: &mut egui::Ui) {
 
 pub fn preflight_panel(app: &mut DesignApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
-    let issues = oracle_guide_engine::cmd::preflight::check(&app.session, 150.0);
+    let issues = oracle_layout_engine::cmd::preflight::check(&app.session, 150.0);
     let errors = issues.iter().filter(|i| i.severity == "error").count();
     ui.horizontal(|ui| {
         let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), egui::Sense::hover());
@@ -2797,7 +2797,7 @@ fn variable_font_axes(app: &mut DesignApp, ui: &mut egui::Ui, family: &str, styl
     if axes.is_empty() {
         return;
     }
-    let base = oracle_guide_fonts::base_style(style).to_string();
+    let base = oracle_layout_fonts::base_style(style).to_string();
     let face = db.face(family, style);
     let cur = |tag: &str, default: f32| face.coords.iter().find(|(t, _)| t == tag.as_bytes()).map_or(default, |c| c.1);
     let mut values: Vec<(String, f32)> = axes.iter().map(|a| (a.0.clone(), cur(&a.0, a.3))).collect();
@@ -2930,10 +2930,10 @@ mod tests {
         text_attrs(app).unwrap()["chars"]["language"].clone()
     }
 
-    fn linked_graphics(paths: &[Option<&str>]) -> (DesignApp, Vec<oracle_guide_doc::ItemId>, Vec<oracle_guide_doc::AssetId>) {
-        use oracle_guide_doc::{Asset, AssetId, Content, Graphic, ItemId};
+    fn linked_graphics(paths: &[Option<&str>]) -> (DesignApp, Vec<oracle_layout_doc::ItemId>, Vec<oracle_layout_doc::AssetId>) {
+        use oracle_layout_doc::{Asset, AssetId, Content, Graphic, ItemId};
         use std::sync::Arc;
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"title": "Linked graphics"})).unwrap();
         let mut items = Vec::new();
         let mut assets = Vec::new();
@@ -2960,7 +2960,7 @@ mod tests {
             doc.item_mut(id).unwrap().content = Content::Graphic(Graphic {
                 asset: aid,
                 size: (72.0, 72.0),
-                xf: oracle_guide_geom::Affine::IDENTITY,
+                xf: oracle_layout_geom::Affine::IDENTITY,
                 clip: None,
                 auto_fit: Default::default(),
                 fit_align: 4,
@@ -2996,7 +2996,7 @@ mod tests {
     /// With the caret in text, the Stroke panel offers the text's stroke options, not an empty panel.
     #[test]
     fn stroke_panel_shows_the_text_stroke_options_while_text_is_selected() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         app.run("frame.create", json!({"rect": [72, 72, 400, 400], "content": "text", "caret": true})).unwrap();
         let mut ready = false;
@@ -3021,7 +3021,7 @@ mod tests {
     /// page alone; Back returns to the document.
     #[test]
     fn edit_page_shows_the_page_and_sets_its_size_alone() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"pages": 3, "facingPages": false})).unwrap();
         app.ui.dock_tab = "properties".into();
         let mut h = crate::test_window::open(app, vec2(1400.0, 900.0));
@@ -3090,7 +3090,7 @@ mod tests {
 
     #[test]
     fn properties_character_section_sets_the_language() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         app.run("frame.create", json!({"rect": [72, 72, 300, 200], "content": "text", "text": "bunun", "caret": true})).unwrap();
         app.run("edit.selectAll", json!({})).unwrap();
@@ -3137,7 +3137,7 @@ mod tests {
     }
 
     fn text_app() -> DesignApp {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         app.run("frame.create", json!({"rect": [72, 72, 300, 200], "content": "text", "text": "AVATAR", "caret": true})).unwrap();
         app.run("edit.selectAll", json!({})).unwrap();
@@ -3220,7 +3220,7 @@ mod tests {
         let candidates = [("/System/Library/Fonts/Supplemental/Skia.ttf", "Skia"), ("/System/Library/Fonts/NewYork.ttf", "New York")];
         candidates.into_iter().find_map(|(path, family)| {
             let bytes = std::fs::read(path).ok()?;
-            let db = oracle_guide_fonts::FontDb::global();
+            let db = oracle_layout_fonts::FontDb::global();
             db.add_font(bytes);
             let style = db.styles(family).first().cloned()?;
             (db.axes(family, &style).len() >= 2).then_some(family)
@@ -3308,18 +3308,18 @@ mod tests {
         h.key_press(egui::Key::Enter);
         h.run_steps(3);
         let st = h.state_mut().session.active().unwrap().doc.story(story).unwrap().format_after(0).over.kerning;
-        assert_eq!(st, Some(oracle_guide_doc::Kerning::Manual(-80.0)), "A of the A|V pair");
+        assert_eq!(st, Some(oracle_layout_doc::Kerning::Manual(-80.0)), "A of the A|V pair");
         assert_eq!(kerning(h.state_mut()), json!({"kind": "manual", "value": -80.0}));
     }
 
     #[test]
     fn clicking_a_swatch_chip_in_the_appearance_fill_menu_applies_it() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         // A graphic frame: the Appearance section shows a single Fill chip.
         let id = app.run("frame.create", json!({"rect": [72, 72, 300, 200]})).unwrap()["id"].as_u64().unwrap();
         app.run("selection.set", json!({"ids": [id]})).unwrap();
-        let before = app.session.active().unwrap().doc.item(oracle_guide_doc::ids::ItemId(id)).unwrap().fill.swatch.clone();
+        let before = app.session.active().unwrap().doc.item(oracle_layout_doc::ids::ItemId(id)).unwrap().fill.swatch.clone();
         assert_ne!(before, "[Paper]");
         let mut h = Harness::builder().with_size(vec2(320.0, 1400.0)).build_ui_state(
             |ui, app: &mut DesignApp| {
@@ -3347,7 +3347,7 @@ mod tests {
         h.drag_at(p);
         h.drop_at(p);
         h.run_steps(4);
-        let after = h.state().session.active().unwrap().doc.item(oracle_guide_doc::ids::ItemId(id)).unwrap().fill.swatch.clone();
+        let after = h.state().session.active().unwrap().doc.item(oracle_layout_doc::ids::ItemId(id)).unwrap().fill.swatch.clone();
         assert_eq!(after, name, "clicking the swatch chip applies it");
     }
 
@@ -3370,7 +3370,7 @@ mod tests {
 
     #[test]
     fn several_shapes_show_pathfinder_and_intersect_combines_them() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         let a = app.run("frame.create", json!({"rect": [100, 100, 300, 300], "shape": "ellipse"})).unwrap()["id"].clone();
         let b = app.run("frame.create", json!({"rect": [200, 100, 300, 200]})).unwrap()["id"].clone();
@@ -3398,7 +3398,7 @@ mod tests {
 
     #[test]
     fn the_fill_menu_sets_a_tint() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         let id = app.run("frame.create", json!({"rect": [72, 72, 300, 200]})).unwrap()["id"].as_u64().unwrap();
         app.run("object.fill", json!({"swatch": CYAN, "ids": [id]})).unwrap();
@@ -3419,13 +3419,13 @@ mod tests {
         h.event(egui::Event::Text("25".into()));
         h.key_press(egui::Key::Enter);
         h.run_steps(3);
-        let fill = h.state().session.active().unwrap().doc.item(oracle_guide_doc::ids::ItemId(id)).unwrap().fill.clone();
+        let fill = h.state().session.active().unwrap().doc.item(oracle_layout_doc::ids::ItemId(id)).unwrap().fill.clone();
         assert_eq!((fill.swatch.as_str(), fill.tint), (CYAN, 0.25), "the tint, on the same swatch");
     }
 
     #[test]
     fn a_tint_on_several_objects_keeps_each_ones_swatch() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         let a = app.run("frame.create", json!({"rect": [72, 72, 200, 200]})).unwrap()["id"].as_u64().unwrap();
         let b = app.run("frame.create", json!({"rect": [220, 72, 300, 200]})).unwrap()["id"].as_u64().unwrap();
@@ -3446,17 +3446,17 @@ mod tests {
         h.key_press(egui::Key::Enter);
         h.run_steps(3);
         let doc = &h.state().session.active().unwrap().doc;
-        let fill = |id: u64| doc.item(oracle_guide_doc::ids::ItemId(id)).unwrap().fill.clone();
+        let fill = |id: u64| doc.item(oracle_layout_doc::ids::ItemId(id)).unwrap().fill.clone();
         assert_eq!((fill(a).swatch.as_str(), fill(a).tint), (CYAN, 0.25));
         assert_eq!((fill(b).swatch.as_str(), fill(b).tint), ("[Black]", 0.25), "the second keeps its own swatch");
     }
 
     #[test]
     fn apply_to_text_colours_a_text_frames_text_not_the_frame() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         let r = app.run("frame.create", json!({"rect": [72, 72, 300, 200], "content": "text", "text": "Heading"})).unwrap();
-        let (id, story) = (r["id"].as_u64().unwrap(), oracle_guide_doc::StoryId(r["story"].as_u64().unwrap()));
+        let (id, story) = (r["id"].as_u64().unwrap(), oracle_layout_doc::StoryId(r["story"].as_u64().unwrap()));
         app.run("selection.set", json!({"ids": [id]})).unwrap();
         let mut h = panel(app);
         h.get_by_label("Fill swatch").click();
@@ -3467,17 +3467,17 @@ mod tests {
         h.run_steps(3);
         let doc = &h.state().session.active().unwrap().doc;
         assert_eq!(doc.story(story).unwrap().char_format_at(0).over.fill.as_deref(), Some(CYAN), "the text is cyan");
-        assert_eq!(doc.item(oracle_guide_doc::ids::ItemId(id)).unwrap().fill.swatch, "[None]", "the frame isn't");
+        assert_eq!(doc.item(oracle_layout_doc::ids::ItemId(id)).unwrap().fill.swatch, "[None]", "the frame isn't");
     }
 
     #[test]
     fn transform_flips_and_rotates_from_properties() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), crate::Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({})).unwrap();
         let id = app.run("frame.create", json!({"rect": [72, 72, 300, 200]})).unwrap()["id"].as_u64().unwrap();
         app.run("selection.set", json!({"ids": [id]})).unwrap();
         let mut h = panel(app);
-        let xf = |h: &Harness<'_, DesignApp>| h.state().session.active().unwrap().doc.item(oracle_guide_doc::ids::ItemId(id)).unwrap().xf;
+        let xf = |h: &Harness<'_, DesignApp>| h.state().session.active().unwrap().doc.item(oracle_layout_doc::ids::ItemId(id)).unwrap().xf;
         // Flip Horizontal mirrors the frame (a negative determinant); Flip Vertical as well brings it
         // back to a half turn, as in the tutorial's petal.
         h.get_by_label("Flip Horizontal").click();
@@ -3536,7 +3536,7 @@ mod effects_panel_tests {
 
     #[test]
     fn the_effects_panel_shows_the_level_and_isolate_blending_and_knockout_group_for_groups() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Default::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Default::default());
         app.run("file.new", json!({})).unwrap();
         let a = app.run("frame.create", json!({"rect": [72, 72, 144, 144]})).unwrap()["id"].as_u64().unwrap();
         let b = app.run("frame.create", json!({"rect": [100, 100, 200, 200]})).unwrap()["id"].as_u64().unwrap();
@@ -3550,7 +3550,7 @@ mod effects_panel_tests {
         for expected in ["Group:", "Color Dodge 100%", "Isolate Blending", "Knockout Group"] {
             assert!(texts.iter().any(|t| t == expected), "{expected} in {texts:?}");
         }
-        let item = |app: &DesignApp, id: u64| app.session.doc().unwrap().doc.item(oracle_guide_doc::ItemId(id)).cloned().unwrap();
+        let item = |app: &DesignApp, id: u64| app.session.doc().unwrap().doc.item(oracle_layout_doc::ItemId(id)).cloned().unwrap();
         click(&mut app, &ctx, "Isolate Blending");
         assert!(item(&app, g).isolate);
         click(&mut app, &ctx, "Knockout Group");
@@ -3565,7 +3565,7 @@ mod effects_panel_tests {
 
     #[test]
     fn pasted_into_frames_keep_object_level_and_disable_group_blending() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Default::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Default::default());
         app.run("file.new", json!({})).unwrap();
         let child = app.run("frame.create", json!({"rect": [80, 80, 120, 120]})).unwrap()["id"].clone();
         app.run("selection.set", json!({"ids": [child]})).unwrap();
@@ -3583,7 +3583,7 @@ mod effects_panel_tests {
         click(&mut app, &ctx, "Isolate Blending");
         click(&mut app, &ctx, "Knockout Group");
         let st = app.session.doc().unwrap();
-        let it = st.doc.item(oracle_guide_doc::ItemId(container)).unwrap();
+        let it = st.doc.item(oracle_layout_doc::ItemId(container)).unwrap();
         assert!(it.has_nested_items());
         assert!(!it.isolate && !it.knockout, "group-only options stay disabled for a frame holding content");
         assert_eq!(st.history.undo.len(), undo, "disabled controls do not create undo steps");
@@ -3609,7 +3609,7 @@ mod wrap_panel_tests {
 
     #[test]
     fn the_text_wrap_panel_shows_each_offset_and_invert() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Default::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Default::default());
         app.run("file.new", json!({})).unwrap();
         let id = app.run("frame.create", json!({"rect": [72, 72, 144, 144]})).unwrap()["id"].as_u64().unwrap();
         app.run("object.textWrap", json!({"mode": "boundingBox", "offset": [1, 2, 3, 4]})).unwrap();
@@ -3631,7 +3631,7 @@ mod wrap_panel_tests {
                 ],
             );
         }
-        assert!(app.session.doc().unwrap().doc.item(oracle_guide_doc::ItemId(id)).unwrap().wrap.invert);
+        assert!(app.session.doc().unwrap().doc.item(oracle_layout_doc::ItemId(id)).unwrap().wrap.invert);
     }
 }
 
@@ -3648,11 +3648,11 @@ const FLEX_JUSTIFY: [(&str, &str, &str); 6] = [
 ];
 
 /// The selected Flex Layout container (the first), with its objects' bounds.
-fn selected_container(app: &DesignApp) -> Option<(oracle_guide_doc::Item, Vec<oracle_guide_geom::Rect>)> {
+fn selected_container(app: &DesignApp) -> Option<(oracle_layout_doc::Item, Vec<oracle_layout_geom::Rect>)> {
     let st = app.session.active()?;
     let it = st.selection.items.iter().filter_map(|i| st.doc.item(*i)).find(|it| it.flex.is_some())?.clone();
     let kids = match &it.content {
-        oracle_guide_doc::Content::Group { items } => items.iter().map(|c| c.bounds()).collect(),
+        oracle_layout_doc::Content::Group { items } => items.iter().map(|c| c.bounds()).collect(),
         _ => Vec::new(),
     };
     Some((it, kids))
@@ -3660,8 +3660,8 @@ fn selected_container(app: &DesignApp) -> Option<(oracle_guide_doc::Item, Vec<or
 
 /// The alignment grid: 3 × 3 cells (one column or row of three when a space justification spreads
 /// the objects along the main axis); the chosen cell shows the direction's arrow.
-fn flex_grid(ui: &mut Ui, r: Rect, f: Option<&oracle_guide_doc::FlexLayout>) -> Option<u8> {
-    use oracle_guide_doc::{FlexAlign, FlexJustify};
+fn flex_grid(ui: &mut Ui, r: Rect, f: Option<&oracle_layout_doc::FlexLayout>) -> Option<u8> {
+    use oracle_layout_doc::{FlexAlign, FlexJustify};
     let t = Tokens::get(ui.ctx());
     let resp = ui.interact(r, ui.id().with("flex_grid"), Sense::click());
     ui.painter().rect_stroke(r, 2.0, Stroke::new(1.0, t.field_border), StrokeKind::Inside);
@@ -3702,9 +3702,9 @@ fn flex_grid(ui: &mut Ui, r: Rect, f: Option<&oracle_guide_doc::FlexLayout>) -> 
             if on && f.is_some() {
                 ui.painter().rect_filled(c.shrink(2.0), 2.0, t.well);
                 let icon = match f.map(|f| f.direction) {
-                    Some(oracle_guide_doc::FlexDirection::RowReverse) => "flex-left",
-                    Some(oracle_guide_doc::FlexDirection::Column) => "flex-down",
-                    Some(oracle_guide_doc::FlexDirection::ColumnReverse) => "flex-up",
+                    Some(oracle_layout_doc::FlexDirection::RowReverse) => "flex-left",
+                    Some(oracle_layout_doc::FlexDirection::Column) => "flex-down",
+                    Some(oracle_layout_doc::FlexDirection::ColumnReverse) => "flex-up",
                     _ => "flex-right",
                 };
                 icons::paint(ui.painter(), c.shrink(3.0), icon, t.text_strong);
@@ -3722,7 +3722,7 @@ fn flex_grid(ui: &mut Ui, r: Rect, f: Option<&oracle_guide_doc::FlexLayout>) -> 
 /// Flex Layout controls, as InDesign's panel: Create Flex Layout; alignment grid, width and height
 /// (Auto/Fixed); justification, direction and wrap; padding and spacing.
 fn flex_section(app: &mut DesignApp, ui: &mut Ui) {
-    use oracle_guide_doc::{FlexSize, flex};
+    use oracle_layout_doc::{FlexSize, flex};
     let t = Tokens::get(ui.ctx());
     let lang = app.ui.language.clone();
     let tr = |s: &str| crate::i18n::tr(&lang, s).to_string();
@@ -3817,10 +3817,10 @@ fn flex_section(app: &mut DesignApp, ui: &mut Ui) {
         place(ui, sub(b, 78.0, 0.0, 132.0, FIELD_H), |ui| {
             ui.spacing_mut().item_spacing.x = 2.0;
             for (d, icon, tip) in [
-                (oracle_guide_doc::FlexDirection::Row, "flex-right", "Row"),
-                (oracle_guide_doc::FlexDirection::RowReverse, "flex-left", "Reverse Row"),
-                (oracle_guide_doc::FlexDirection::Column, "flex-down", "Column"),
-                (oracle_guide_doc::FlexDirection::ColumnReverse, "flex-up", "Reverse Column"),
+                (oracle_layout_doc::FlexDirection::Row, "flex-right", "Row"),
+                (oracle_layout_doc::FlexDirection::RowReverse, "flex-left", "Reverse Row"),
+                (oracle_layout_doc::FlexDirection::Column, "flex-down", "Column"),
+                (oracle_layout_doc::FlexDirection::ColumnReverse, "flex-up", "Reverse Column"),
             ] {
                 if widgets::icon_toggle_sized(ui, icon, enabled && dir == d, &tr(tip), vec2(31.0, 21.0)).clicked() {
                     set = Some(json!({"direction": d}));

@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use oracle_guide_doc::{ItemId, Selection, SpreadId, TextSel};
+use oracle_layout_doc::{ItemId, Selection, SpreadId, TextSel};
 use serde_json::{Value, json};
 
 use crate::Session;

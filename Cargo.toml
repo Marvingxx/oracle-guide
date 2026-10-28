@@ -1,10 +1,10 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "apps/*", "xtask"]
-default-members = ["crates/*", "apps/oracle-guide", "apps/oracle-guide-cli", "xtask"]
+default-members = ["crates/*", "apps/oracle-layout", "apps/oracle-layout-cli", "xtask"]
 
 [workspace.package]
-version = "0.13.0"
+version = "0.14.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.95"
@@ -14,24 +14,24 @@ repository = "https://github.com/Marvingxx/oracle-guide"
 # Shared reader and writer; publish the immutable revision before this consumer.
 craft-pdf = { git = "https://github.com/Marvingxx/craft-libs", rev = "89dcbb3060377a26c99a6d80caa16084366704c4", version = "=0.1.0", default-features = false }
 # internal
-oracle-guide-geom = { path = "crates/geom" }
-oracle-guide-color = { path = "crates/color" }
-oracle-guide-doc = { path = "crates/doc" }
-oracle-guide-fonts = { path = "crates/fonts" }
-oracle-guide-compose = { path = "crates/compose" }
-oracle-guide-images = { path = "crates/images" }
-oracle-guide-render = { path = "crates/render" }
-oracle-guide-pdf = { path = "crates/pdf" }
-oracle-guide-idml = { path = "crates/idml" }
-oracle-guide-epub = { path = "crates/epub" }
-oracle-guide-pptx = { path = "crates/pptx" }
-oracle-guide-textimport = { path = "crates/textimport" }
-oracle-guide-format = { path = "crates/format" }
-oracle-guide-tools = { path = "crates/tools" }
-oracle-guide-engine = { path = "crates/engine" }
-oracle-guide-ui-egui = { path = "crates/ui-egui" }
-oracle-guide-mcp = { path = "crates/mcp" }
-oracle-guide-testkit = { path = "crates/testkit" }
+oracle-layout-geom = { path = "crates/geom" }
+oracle-layout-color = { path = "crates/color" }
+oracle-layout-doc = { path = "crates/doc" }
+oracle-layout-fonts = { path = "crates/fonts" }
+oracle-layout-compose = { path = "crates/compose" }
+oracle-layout-images = { path = "crates/images" }
+oracle-layout-render = { path = "crates/render" }
+oracle-layout-pdf = { path = "crates/pdf" }
+oracle-layout-idml = { path = "crates/idml" }
+oracle-layout-epub = { path = "crates/epub" }
+oracle-layout-pptx = { path = "crates/pptx" }
+oracle-layout-textimport = { path = "crates/textimport" }
+oracle-layout-format = { path = "crates/format" }
+oracle-layout-tools = { path = "crates/tools" }
+oracle-layout-engine = { path = "crates/engine" }
+oracle-layout-ui-egui = { path = "crates/ui-egui" }
+oracle-layout-mcp = { path = "crates/mcp" }
+oracle-layout-testkit = { path = "crates/testkit" }
 
 # foundation
 kurbo = { version = "0.13", features = ["serde"] }

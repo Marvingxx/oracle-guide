@@ -1,4 +1,4 @@
-//! Oracle Brand Guide's egui frontend: an InDesign-style UI over `oracle-guide-engine`.
+//! Oracle Layout's egui frontend: an InDesign-style UI over `oracle-layout-engine`.
 //!
 //! The UI is thin: every action goes through [`DesignApp::run`], which dispatches UI commands
 //! (view/window) here and everything else to the engine. Menus, shortcuts, the ⌘K palette and
@@ -43,8 +43,8 @@ pub mod widgets;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender};
 
-use oracle_guide_engine::{Session, SnapView, UiRequest, ViewInfo};
-use oracle_guide_geom::{Point, Unit};
+use oracle_layout_engine::{Session, SnapView, UiRequest, ViewInfo};
+use oracle_layout_geom::{Point, Unit};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -227,10 +227,10 @@ pub struct UiState {
     /// The Pages panel's Panel Options.
     pub pages_panel: panels::pages::PanelOptions,
     /// Edit › Color Settings (re-applied at start).
-    pub color_settings: Option<oracle_guide_color::cms::ColorSettings>,
+    pub color_settings: Option<oracle_layout_color::cms::ColorSettings>,
     /// View › Proof Colors and View › Proof Setup.
     pub proof_colors: bool,
-    pub proof_setup: oracle_guide_color::cms::ProofSetup,
+    pub proof_setup: oracle_layout_color::cms::ProofSetup,
     /// Edit › Spelling › Dynamic Spelling: misspelled words underlined on the canvas.
     pub dynamic_spelling: bool,
     /// Preferences › Story Editor Display: text size (points).
@@ -247,7 +247,7 @@ pub struct UiState {
     #[serde(skip)]
     pub ink_limit: Option<f32>,
     /// View › Display Performance.
-    pub display_quality: oracle_guide_render::DisplayQuality,
+    pub display_quality: oracle_layout_render::DisplayQuality,
     /// Preferences › Interface › UI scaling (1 = 100%).
     pub ui_scale: f32,
     /// Preferences › Appearance of Black: 100% K on screen as rich black (InDesign's default,
@@ -289,7 +289,7 @@ pub struct UiState {
     /// Window › Workspace › New Workspace: saved panel arrangements.
     pub custom_workspaces: Vec<SavedWorkspace>,
     /// File › New › Document › Recent: the settings of the last documents made, newest first.
-    pub recent_new_documents: Vec<oracle_guide_doc::build::NewDocument>,
+    pub recent_new_documents: Vec<oracle_layout_doc::build::NewDocument>,
     /// The font menus' sample text (a key of `panels::FONT_SAMPLES`) and size (0–2).
     pub font_sample: String,
     pub font_preview_size: u8,
@@ -329,7 +329,7 @@ pub struct UiState {
     /// Where the Contextual Task Bar was last shown, like [`Self::task_bar_pin`].
     #[serde(skip)]
     pub task_bar_at: Option<[f32; 2]>,
-    /// Help › About Oracle Brand Guide is open.
+    /// Help › About Oracle Layout is open.
     pub about: bool,
     /// The About window's tab: 0 About, 1 Contributors, 2 Models (`about::ABOUT_TABS`).
     #[serde(skip)]
@@ -396,7 +396,7 @@ impl Default for UiState {
             pdf_export: PdfExportSettings::default(),
             separation: None,
             ink_limit: None,
-            display_quality: oracle_guide_render::DisplayQuality::High,
+            display_quality: oracle_layout_render::DisplayQuality::High,
             ui_scale: 1.0,
             rich_black: true,
             overprint_preview: false,
@@ -501,8 +501,8 @@ pub struct Shown {
 
 impl CanvasCache {
     pub fn new() -> Self {
-        let mut renderer = oracle_guide_render::Renderer::new();
-        renderer.threads = oracle_guide_render::default_threads();
+        let mut renderer = oracle_layout_render::Renderer::new();
+        renderer.threads = oracle_layout_render::default_threads();
         CanvasCache {
             renderer,
             texture: None,
@@ -516,7 +516,7 @@ impl CanvasCache {
             shown_doc: None,
             pending_doc: None,
             display_key: None,
-            patcher: oracle_guide_render::Renderer::new(),
+            patcher: oracle_layout_render::Renderer::new(),
             patches: 0,
         }
     }
@@ -529,7 +529,7 @@ impl Default for CanvasCache {
 }
 
 pub struct CanvasCache {
-    pub renderer: oracle_guide_render::Renderer,
+    pub renderer: oracle_layout_render::Renderer,
     pub texture: Option<egui::TextureHandle>,
     pub shown: Option<Shown>,
     /// The request in flight on the worker.
@@ -540,13 +540,13 @@ pub struct CanvasCache {
     pub worker_started: bool,
     pub last_ms: f64,
     /// The document the texture shows (to repaint only what an edit changed).
-    pub shown_doc: Option<std::sync::Arc<oracle_guide_doc::Document>>,
+    pub shown_doc: Option<std::sync::Arc<oracle_layout_doc::Document>>,
     /// Document of the request in flight.
-    pub pending_doc: Option<std::sync::Arc<oracle_guide_doc::Document>>,
+    pub pending_doc: Option<std::sync::Arc<oracle_layout_doc::Document>>,
     /// Display options the texture and the request in flight were rendered with.
     pub display_key: Option<canvas::DisplayKey>,
     /// Renders damaged regions (its own context: region sizes vary).
-    pub patcher: oracle_guide_render::Renderer,
+    pub patcher: oracle_layout_render::Renderer,
     /// Partial repaints / full renders since start (perf readout).
     pub patches: u64,
 }
@@ -577,7 +577,7 @@ pub struct DesignApp {
     pub focus_pane: u8,
     pub other_pane: Option<(CanvasCache, Option<egui::Rect>)>,
     /// Power Zoom in progress: the zoom to return to and the canvas point it will centre on.
-    pub power_zoom: Option<(f64, oracle_guide_geom::Point)>,
+    pub power_zoom: Option<(f64, oracle_layout_geom::Point)>,
     /// The persisted colour settings have been applied this session.
     pub color_applied: bool,
     pub perf: Perf,
@@ -669,7 +669,7 @@ struct QuitState {
 impl DesignApp {
     pub fn new(session: Session, services: Services) -> Self {
         // The font menus and the first file opened need the installed fonts: catalog them now.
-        oracle_guide_fonts::FontDb::global().scan_in_background();
+        oracle_layout_fonts::FontDb::global().scan_in_background();
         DesignApp {
             pending_pdf: None,
             session,
@@ -712,7 +712,7 @@ impl DesignApp {
             #[cfg(not(target_arch = "wasm32"))]
             link_follow: Default::default(),
             #[cfg(not(target_arch = "wasm32"))]
-            oracle_library: oracle_library_ui::InAppLibrary::new("oracle-guide"),
+            oracle_library: oracle_library_ui::InAppLibrary::new("oracle-layout"),
             #[cfg(not(target_arch = "wasm32"))]
             inbox_last: f64::NEG_INFINITY,
             egui_ctx: None,
@@ -804,7 +804,7 @@ impl DesignApp {
         // system clipboard: with no insertion point it pastes as editable paths where text would go.
         let typing = self.session.active().is_some_and(|d| d.selection.text.is_some());
         let id = match params.as_object_mut() {
-            Some(o) if id == "edit.paste" && !typing && o.get("text").and_then(Value::as_str).is_some_and(oracle_guide_engine::cmd::is_svg_markup) => {
+            Some(o) if id == "edit.paste" && !typing && o.get("text").and_then(Value::as_str).is_some_and(oracle_layout_engine::cmd::is_svg_markup) => {
                 if let Some(svg) = o.remove("text") {
                     o.insert("svg".into(), svg);
                 }
@@ -995,7 +995,7 @@ impl DesignApp {
                 // Image Import Options: a multi-page PDF asks which page.
                 Some(path) if purpose == "place" && path.to_ascii_lowercase().ends_with(".pdf") => {
                     let pages =
-                        self.services.read.as_mut().and_then(|r| r(&path).ok()).and_then(|b| oracle_guide_render::pdf_page_count(&b)).unwrap_or(1);
+                        self.services.read.as_mut().and_then(|r| r(&path).ok()).and_then(|b| oracle_layout_render::pdf_page_count(&b)).unwrap_or(1);
                     if pages > 1 {
                         self.ui.dialog =
                             Some(dialogs::Dialog::new("pdfImport", json!({"path": path, "page": "1", "pages": pages, "target": target})));
@@ -1020,7 +1020,7 @@ impl DesignApp {
     /// `character` or empty for both. A synchronous picker opens the dialog that chooses among
     /// the file's styles; an asynchronous one (web) loads them all when the file arrives.
     pub fn pick_styles(&mut self, kind: &str) -> Result<Value, String> {
-        oracle_guide_engine::cmd::has_doc(&self.session)?;
+        oracle_layout_engine::cmd::has_doc(&self.session)?;
         if let Some(pick) = self.services.pick_open.as_mut() {
             let Some(path) = pick("styles") else { return Ok(Value::Null) };
             let found = self.run("style.load.list", json!({"path": path}))?;
@@ -1059,7 +1059,7 @@ impl DesignApp {
     pub(crate) fn confirm_pdf_import(&mut self, page: u64, crop: String) -> Result<Value, String> {
         let file = self.pending_pdf.take().ok_or("PDF import cancelled: no pending file")?;
         self.activate_import_target(&file.request)?;
-        let params = json!({"name": file.name, "base64": oracle_guide_engine::cmd::base64_encode(&file.bytes), "pdfPage": page, "pdfCrop": crop});
+        let params = json!({"name": file.name, "base64": oracle_layout_engine::cmd::base64_encode(&file.bytes), "pdfPage": page, "pdfCrop": crop});
         if file.request.purpose == "place" { self.place_file(params) } else { self.open_file("file.place", params) }
     }
 
@@ -1101,7 +1101,7 @@ impl DesignApp {
         let lower = file.name.to_ascii_lowercase();
         if let Some(kind) = file.request.purpose.strip_prefix("styles") {
             self.activate_import_target(&file.request)?;
-            let mut params = json!({"name": file.name, "base64": oracle_guide_engine::cmd::base64_encode(&file.bytes)});
+            let mut params = json!({"name": file.name, "base64": oracle_layout_engine::cmd::base64_encode(&file.bytes)});
             match kind {
                 ":paragraph" => params["character"] = json!([]),
                 ":character" => params["paragraph"] = json!([]),
@@ -1110,14 +1110,14 @@ impl DesignApp {
             return self.run("style.load", params);
         }
         let layout = opens_as_document(&file.name)
-            || (std::path::Path::new(&file.name).extension().is_none() && oracle_guide_engine::cmd::is_document(&file.bytes));
+            || (std::path::Path::new(&file.name).extension().is_none() && oracle_layout_engine::cmd::is_document(&file.bytes));
         let place =
             file.request.purpose == "place" || (matches!(file.request.purpose.as_str(), "drop" | "open") && !layout && !lower.ends_with(".ase"));
         if place || lower.ends_with(".ase") || file.request.purpose == "swatches" {
             self.activate_import_target(&file.request)?;
         }
         if place && lower.ends_with(".pdf") {
-            let pages = oracle_guide_render::pdf_page_count(&file.bytes).unwrap_or(1);
+            let pages = oracle_layout_render::pdf_page_count(&file.bytes).unwrap_or(1);
             if pages > 1 {
                 self.ui.dialog =
                     Some(dialogs::Dialog::new("pdfImport", json!({"async": true, "name": file.name.clone(), "page": "1", "pages": pages})));
@@ -1125,7 +1125,7 @@ impl DesignApp {
                 return Ok(Value::Null);
             }
         }
-        let b64 = oracle_guide_engine::cmd::base64_encode(&file.bytes);
+        let b64 = oracle_layout_engine::cmd::base64_encode(&file.bytes);
         if lower.ends_with(".ase") || file.request.purpose == "swatches" {
             self.run("swatch.load", json!({"base64": b64}))
         } else if file.request.purpose == "place" {
@@ -1152,7 +1152,7 @@ impl DesignApp {
         if !self.color_applied {
             self.color_applied = true;
             if let Some(cs) = self.ui.color_settings.clone() {
-                let _ = oracle_guide_color::cms::set_active(&cs.with_known_profiles());
+                let _ = oracle_layout_color::cms::set_active(&cs.with_known_profiles());
             }
         }
         let scale = self.ui.ui_scale.clamp(0.5, 3.0);
@@ -1220,7 +1220,10 @@ impl DesignApp {
         }
         self.flush_window_commands(ctx);
         #[cfg(not(target_arch = "wasm32"))]
-        self.oracle_library.ui(ctx, self.ui.language.starts_with("fr"));
+        if self.oracle_library.update_docked(ctx) {
+            let _ = crate::panel_docking::open_library(self);
+            ctx.request_repaint();
+        }
         #[cfg(not(target_arch = "wasm32"))]
         {
             let (dropped, pointer) = ctx.input(|i| (i.raw.dropped_files.clone(), i.pointer.hover_pos()));
@@ -1380,7 +1383,7 @@ impl DesignApp {
 
     /// A file dropped on the window: documents open, the swatches in a swatch exchange (.ase) file
     /// are loaded, and anything else is placed on the spread in view (a parent spread while parents
-    /// are being edited). A file without an extension opens when its content is a Oracle Brand Guide or
+    /// are being edited). A file without an extension opens when its content is a Oracle Layout or
     /// IDML document.
     pub fn open_dropped(&mut self, path: &str) -> Result<Value, String> {
         self.open_dropped_at(path, None)
@@ -1394,8 +1397,8 @@ impl DesignApp {
         }
         let document = opens_as_document(path)
             || (std::path::Path::new(path).extension().is_none()
-                && oracle_guide_engine::io::read_capped(path, oracle_guide_engine::cmd::DOCUMENT_SNIFF_BYTES)
-                    .is_ok_and(|b| oracle_guide_engine::cmd::is_document(&b)));
+                && oracle_layout_engine::io::read_capped(path, oracle_layout_engine::cmd::DOCUMENT_SNIFF_BYTES)
+                    .is_ok_and(|b| oracle_layout_engine::cmd::is_document(&b)));
         if document {
             return self.open_file("file.open", json!({"path": path}));
         }
@@ -1404,7 +1407,7 @@ impl DesignApp {
             o.insert("spread".into(), serde_json::to_value(sr).unwrap_or(Value::Null));
             o.insert("x".into(), json!(at.x));
             o.insert("y".into(), json!(at.y));
-            if let (oracle_guide_doc::SpreadRef::Doc(si), Some(st)) = (sr, self.session.active()) {
+            if let (oracle_layout_doc::SpreadRef::Doc(si), Some(st)) = (sr, self.session.active()) {
                 let pi = st.doc.spreads.get(si).and_then(|s| s.page_at_x(at.x)).unwrap_or(0);
                 o.insert("page".into(), json!(st.doc.first_page_of_spread(si) + pi + 1));
             }
@@ -1544,7 +1547,7 @@ impl DesignApp {
             panel_docking::cancel_gesture(self, &ctx);
         }
         canvas::begin_frame(&ctx);
-        let dbg = std::env::var_os("ORACLE_GUIDE_DEBUG_LAYOUT").is_some();
+        let dbg = std::env::var_os("ORACLE_LAYOUT_DEBUG_LAYOUT").is_some();
         if dbg {
             eprintln!("root start {:?}", ui.available_rect_before_wrap());
         }
@@ -1629,7 +1632,7 @@ impl DesignApp {
             let fill = t.pasteboard;
             let ctx = ui.ctx().clone();
             ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("oracle_guide_second_window"),
+                egui::ViewportId::from_hash_of("oracle_layout_second_window"),
                 egui::ViewportBuilder::default().with_title(title).with_inner_size([960.0, 720.0]),
                 |ui, _class| {
                     egui::CentralPanel::default().frame(egui::Frame::NONE.fill(fill)).show(ui, |ui| {
@@ -1755,11 +1758,11 @@ pub fn cjk_features(app: &DesignApp) -> bool {
     app.session.prefs.cjk_features.unwrap_or_else(|| i18n::is_cjk(&app.ui.language))
 }
 
-/// Files that open as documents (when dropped or picked) rather than being placed: Oracle Brand Guide,
+/// Files that open as documents (when dropped or picked) rather than being placed: Oracle Layout,
 /// IDML, and InDesign documents and templates (converted to IDML on open).
 pub fn opens_as_document(name: &str) -> bool {
     let n = name.to_ascii_lowercase();
-    [".oracle-guide", ".idml", ".indd", ".indt"].iter().any(|ext| n.ends_with(ext))
+    [".oracle-layout", ".idml", ".indd", ".indt"].iter().any(|ext| n.ends_with(ext))
 }
 
 pub fn now_ms() -> f64 {
@@ -1830,7 +1833,7 @@ mod tests {
     /// row hung below the panel and was cut off.
     #[test]
     fn control_bar_shows_its_second_row() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Services::default());
         app.run("file.newSample", json!({})).unwrap();
         app.ui.control_bar = true;
         let mut h = egui_kittest::Harness::builder().with_size(egui::vec2(1440.0, 900.0)).build_ui_state(
@@ -1887,7 +1890,7 @@ mod tests {
     /// they follow the active document's ruler units.
     #[test]
     fn tool_readouts_measure_in_the_documents_units() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Services::default());
         assert_eq!(app.view_info().unit, Unit::Picas, "no document: the UI's default");
         app.run("file.new", json!({})).unwrap();
         app.run("document.preferences", json!({"horizontalUnits": "inches", "verticalUnits": "millimeters"})).unwrap();
@@ -1896,7 +1899,7 @@ mod tests {
 
     /// An app with one document that has an unsaved edit.
     fn app_with_unsaved_document() -> DesignApp {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Services::default());
         app.run("file.new", json!({})).unwrap();
         assert!(!app.session.documents()[0].is_dirty(), "a new document has nothing to save");
         app.run("frame.create", json!({"rect": [36, 36, 136, 136]})).unwrap();
@@ -1934,7 +1937,7 @@ mod tests {
     #[test]
     fn closing_with_save_writes_the_file_then_closes() {
         let mut app = app_with_unsaved_document();
-        let path = std::env::temp_dir().join(format!("oracle-guide-close-test-{}.oracle-guide", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oracle-layout-close-test-{}.oracle-layout", std::process::id()));
         app.run("file.saveAs", json!({"path": path})).unwrap();
         let saved = std::fs::metadata(&path).unwrap().len();
         app.run("frame.create", json!({"rect": [200, 200, 300, 300]})).unwrap();
@@ -1959,7 +1962,7 @@ mod tests {
 
     #[test]
     fn closing_a_saved_document_does_not_ask() {
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Services::default());
         app.run("file.new", json!({})).unwrap();
         menus::activate(&mut app, "file.close", &Value::Null);
         assert!(app.session.documents().is_empty());
@@ -2080,7 +2083,7 @@ mod tests {
         let completed = quit_frame(&mut app, &ctx, true);
         assert!(app.session.documents().is_empty());
 
-        let mut clean = DesignApp::new(oracle_guide_engine::Session::new(), Services::default());
+        let mut clean = DesignApp::new(oracle_layout_engine::Session::new(), Services::default());
         clean.run("file.new", json!({})).unwrap();
         let clean_close = quit_frame(&mut clean, &ctx, true);
         let mut control = app_with_unsaved_document();
@@ -2126,7 +2129,7 @@ mod tests {
             assert!(std::sync::Arc::ptr_eq(&document.doc, &original));
             assert!(document.is_dirty());
             assert!(!document.history.undo.is_empty());
-            assert!(directory.path().join(format!("{}.oracle-guide", document.uid)).exists());
+            assert!(directory.path().join(format!("{}.oracle-layout", document.uid)).exists());
         }
         // A fresh Dock Quit must ask about the first document again after cancellation.
         assert!(quit_frame(&mut app, &ctx, true).contains(&egui::ViewportCommand::CancelClose));
@@ -2140,7 +2143,7 @@ mod tests {
         second_unsaved_document(&mut app);
         let uids: Vec<_> = app.session.documents().iter().map(|d| d.uid).collect();
         let directory = tempfile::tempdir().unwrap();
-        let path = directory.path().join("saved.oracle-guide");
+        let path = directory.path().join("saved.oracle-layout");
         let chosen = path.to_string_lossy().to_string();
         app.services.pick_save = Some(Box::new(move |_| Some(chosen.clone())));
         app.session.recovery_dir = Some(directory.path().join("recovery"));
@@ -2156,11 +2159,11 @@ mod tests {
         discard_quit_dialog(&mut app);
         assert!(quit_frame(&mut app, &ctx, false).contains(&egui::ViewportCommand::Close));
         assert_eq!(app.session.documents().len(), 2);
-        assert!(app.session.recovery_dir.as_ref().unwrap().join(format!("{}.oracle-guide", uids[1])).exists());
+        assert!(app.session.recovery_dir.as_ref().unwrap().join(format!("{}.oracle-layout", uids[1])).exists());
         assert!(quit_frame(&mut app, &ctx, true).is_empty());
         assert!(app.session.documents().is_empty());
         assert!(path.exists());
-        assert_eq!(oracle_guide_engine::Session::new().execute("file.open", &json!({"path": path})).unwrap()["index"], 0);
+        assert_eq!(oracle_layout_engine::Session::new().execute("file.open", &json!({"path": path})).unwrap()["index"], 0);
         assert_eq!(std::fs::read_dir(app.session.recovery_dir.as_ref().unwrap()).unwrap().count(), 0);
     }
 
@@ -2200,9 +2203,9 @@ mod tests {
         let mut app = app_with_unsaved_document();
         second_unsaved_document(&mut app);
         let path = std::env::temp_dir()
-            .join(format!("oracle-guide-quit-missing-{}-{}", std::process::id(), app.session.active().unwrap().uid))
+            .join(format!("oracle-layout-quit-missing-{}-{}", std::process::id(), app.session.active().unwrap().uid))
             .join("missing")
-            .join("document.oracle-guide");
+            .join("document.oracle-layout");
         assert!(!path.parent().unwrap().exists());
         let picked = path.to_string_lossy().to_string();
         app.services.pick_save = Some(Box::new(move |_| Some(picked.clone())));
@@ -2224,7 +2227,7 @@ mod tests {
         let mut app = app_with_unsaved_document();
         second_unsaved_document(&mut app);
         let first = app.session.documents()[0].uid;
-        let path = std::env::temp_dir().join(format!("oracle-guide-quit-save-{}-{first}.oracle-guide", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oracle-layout-quit-save-{}-{first}.oracle-layout", std::process::id()));
         let picked = path.to_string_lossy().to_string();
         app.services.pick_save = Some(Box::new(move |_| Some(picked.clone())));
         quit_frame(&mut app, &ctx, true);
@@ -2277,7 +2280,7 @@ mod tests {
         let mut app = app_with_unsaved_document();
         second_unsaved_document(&mut app);
         let first = app.session.documents()[0].uid;
-        let path = std::env::temp_dir().join(format!("oracle-guide-quit-uid-{}-{first}.oracle-guide", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oracle-layout-quit-uid-{}-{first}.oracle-layout", std::process::id()));
         let picked = path.to_string_lossy().to_string();
         app.services.pick_save = Some(Box::new(move |_| Some(picked.clone())));
         quit_frame(&mut app, &ctx, true);
@@ -2296,10 +2299,10 @@ mod tests {
         let ctx = egui::Context::default();
         let mut app = app_with_unsaved_document();
         let uid = app.session.active().unwrap().uid;
-        let dir = std::env::temp_dir().join(format!("oracle-guide-quit-recovery-{}-{uid}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("oracle-layout-quit-recovery-{}-{uid}", std::process::id()));
         app.session.recovery_dir = Some(dir.clone());
         app.run("file.recovery.save", json!({})).unwrap();
-        let entry = dir.join(format!("{uid}.oracle-guide"));
+        let entry = dir.join(format!("{uid}.oracle-layout"));
         quit_frame(&mut app, &ctx, true);
         discard_quit_dialog(&mut app);
         assert!(quit_frame(&mut app, &ctx, false).contains(&egui::ViewportCommand::Close));
@@ -2362,7 +2365,7 @@ mod tests {
     #[test]
     fn quitting_without_unsaved_changes_closes_at_once() {
         let ctx = egui::Context::default();
-        let mut app = DesignApp::new(oracle_guide_engine::Session::new(), Services::default());
+        let mut app = DesignApp::new(oracle_layout_engine::Session::new(), Services::default());
         app.run("file.new", json!({})).unwrap();
         // Quit (⌘Q) closes the window like its close button.
         app.run("app.quit", json!({})).unwrap();
@@ -2398,7 +2401,7 @@ mod tests {
             f.over.font_family = Some("Unavailable Test Family".into());
             f.over.font_style = Some("Regular".into());
         });
-        let path = std::env::temp_dir().join(format!("oracle-guide-font-open-{}.oracle-guide", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oracle-layout-font-open-{}.oracle-layout", std::process::id()));
         app.run("file.save", json!({"path":path})).unwrap();
         app.run("file.open", json!({"path":path})).unwrap();
         let dialog = app.ui.dialog.as_mut().unwrap();
@@ -2467,7 +2470,7 @@ mod tests {
 
     /// A temporary file named `name` whose bytes aren't a document or a graphic.
     fn unreadable_file(name: &str) -> std::path::PathBuf {
-        let path = std::env::temp_dir().join(format!("oracle-guide-ui-{}-{name}", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oracle-layout-ui-{}-{name}", std::process::id()));
         std::fs::write(&path, b"neither a document nor a graphic").unwrap();
         path
     }
@@ -2481,7 +2484,7 @@ mod tests {
 
     #[test]
     fn dropped_documents_open_and_the_rest_is_placed() {
-        for name in ["a.oracle-guide", "B.IDML", "c.indd", "D.INDT"] {
+        for name in ["a.oracle-layout", "B.IDML", "c.indd", "D.INDT"] {
             assert!(opens_as_document(name), "{name}");
         }
         for name in ["a.png", "b.pdf", "idml.txt", "c.idml.zip", "e.indd.zip"] {
@@ -2493,10 +2496,10 @@ mod tests {
     /// for by the operating system, they wait for the window and then open as documents.
     #[test]
     fn extensionless_documents_open_by_content() {
-        let path = std::env::temp_dir().join(format!("oracle-guide-ui-{}-Brochure", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oracle-layout-ui-{}-Brochure", std::process::id()));
         let mut app = DesignApp::new(Session::new(), Services::default());
         app.run("file.new", json!({})).unwrap();
-        let bytes = oracle_guide_engine::cmd::base64_decode(app.run("file.serialize", json!({})).unwrap()["base64"].as_str().unwrap());
+        let bytes = oracle_layout_engine::cmd::base64_decode(app.run("file.serialize", json!({})).unwrap()["base64"].as_str().unwrap());
         std::fs::write(&path, bytes).unwrap();
         let p = path.to_string_lossy().to_string();
         app.open_dropped(&p).unwrap();
@@ -2526,7 +2529,7 @@ mod tests {
     #[test]
     fn dropping_an_unreadable_file_alerts() {
         // A document opens, so it says it can't be opened.
-        let path = unreadable_file("broken.oracle-guide");
+        let path = unreadable_file("broken.oracle-layout");
         let mut app = DesignApp::new(Session::new(), Services::default());
         let r = app.open_dropped(&path.to_string_lossy());
         let _ = std::fs::remove_file(&path);
@@ -2565,9 +2568,9 @@ mod tests {
         source.execute("file.new", &json!({})).unwrap();
         source.execute("swatch.create", &json!({"name": "Dropped Teal", "color": "#108080"})).unwrap();
         let data = source.execute("swatch.save", &json!({"names": ["Dropped Teal"]})).unwrap();
-        let bytes = oracle_guide_engine::cmd::base64_decode(data["base64"].as_str().unwrap());
+        let bytes = oracle_layout_engine::cmd::base64_decode(data["base64"].as_str().unwrap());
         for name in ["palette.ase", "PALETTE.ASE"] {
-            let path = std::env::temp_dir().join(format!("oracle-guide-ui-{}-{name}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("oracle-layout-ui-{}-{name}", std::process::id()));
             std::fs::write(&path, &bytes).unwrap();
             let mut app = DesignApp::new(Session::new(), Services::default());
             app.run("file.new", json!({})).unwrap();
@@ -2588,8 +2591,8 @@ mod tests {
         app.canvas_rect = Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1400.0, 900.0)));
         app.run("layout.parents.edit", json!({"on": true})).unwrap();
         let _ = app.view_mut();
-        let path = std::env::temp_dir().join(format!("oracle-guide-ui-{}-drop.png", std::process::id()));
-        std::fs::write(&path, oracle_guide_render::Rendered { width: 10, height: 10, pixels: vec![200; 400] }.to_png()).unwrap();
+        let path = std::env::temp_dir().join(format!("oracle-layout-ui-{}-drop.png", std::process::id()));
+        std::fs::write(&path, oracle_layout_render::Rendered { width: 10, height: 10, pixels: vec![200; 400] }.to_png()).unwrap();
         let r = app.open_dropped(&path.to_string_lossy());
         let _ = std::fs::remove_file(&path);
         r.unwrap();
@@ -2600,7 +2603,7 @@ mod tests {
 
     #[test]
     fn file_open_failures_show_an_alert() {
-        let path = unreadable_file("open.oracle-guide");
+        let path = unreadable_file("open.oracle-layout");
         let picked = path.to_string_lossy().to_string();
         let services = Services { pick_open: Some(Box::new(move |_| Some(picked.clone()))), ..Default::default() };
         let mut app = DesignApp::new(Session::new(), services);
@@ -2617,11 +2620,11 @@ mod tests {
     #[test]
     fn other_command_errors_stay_in_the_status_line() {
         let mut app = DesignApp::new(Session::new(), Services::default());
-        assert!(app.run("file.open", json!({"path": "/nonexistent/x.oracle-guide"})).is_err());
+        assert!(app.run("file.open", json!({"path": "/nonexistent/x.oracle-layout"})).is_err());
         assert!(app.ui.dialog.is_none(), "a scripted file.open doesn't raise an alert");
         assert!(!app.ui.status.is_empty());
         // The control channel's app.open answers with the error; no alert waits for a click.
-        let (req, _rx) = control::ControlRequest::new("app.open", json!({"path": "/nonexistent/x.oracle-guide"}));
+        let (req, _rx) = control::ControlRequest::new("app.open", json!({"path": "/nonexistent/x.oracle-layout"}));
         let control::Outcome::Done(r) = control::handle(&mut app, &egui::Context::default(), &req) else { panic!("app.open answers") };
         assert_eq!(r["ok"], json!(false), "{r}");
         assert!(app.ui.dialog.is_none(), "a control-channel app.open doesn't raise an alert");
@@ -2641,18 +2644,18 @@ mod tests {
         };
         // Nothing is in view before the canvas is laid out: the first spread, as in a script.
         app.run("edit.paste", json!({})).unwrap();
-        assert_eq!(pasted_on(&app), oracle_guide_doc::SpreadRef::Doc(0));
+        assert_eq!(pasted_on(&app), oracle_layout_doc::SpreadRef::Doc(0));
         app.canvas_rect = Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1400.0, 900.0)));
         canvas::go_to_page(&mut app, 2);
         menus::activate(&mut app, "edit.pasteInPlace", &Value::Null);
-        assert_eq!(pasted_on(&app), oracle_guide_doc::SpreadRef::Doc(2));
+        assert_eq!(pasted_on(&app), oracle_layout_doc::SpreadRef::Doc(2));
         canvas::go_to_page(&mut app, 1);
         app.run("edit.paste", json!({})).unwrap();
-        assert_eq!(pasted_on(&app), oracle_guide_doc::SpreadRef::Doc(1));
+        assert_eq!(pasted_on(&app), oracle_layout_doc::SpreadRef::Doc(1));
         // A parent spread while parents are edited.
         app.run("layout.parents.edit", json!({"on": true})).unwrap();
         app.run("edit.paste", json!({})).unwrap();
-        assert_eq!(pasted_on(&app), oracle_guide_doc::SpreadRef::Parent(0));
+        assert_eq!(pasted_on(&app), oracle_layout_doc::SpreadRef::Parent(0));
         // With an insertion point Paste still goes into the text, where the object is anchored.
         let story = app.run("frame.create", json!({"rect": [36, 200, 300, 400], "content": "text", "text": "ab"})).unwrap()["story"].clone();
         app.run("text.select", json!({"story": story, "anchor": 2})).unwrap();
@@ -2673,7 +2676,7 @@ mod import_warning_tests {
         let spread = r#"<idPkg:Spread xmlns:idPkg="http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging"><Spread Self="s"><Page Self="p" GeometricBounds="0 0 100 100" ItemTransform="1 0 0 1 0 0"/><Rectangle Self="r" ItemTransform="1 0 0 1 0 0"/></Spread></idPkg:Spread>"#;
         let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
         let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
-        for (name, text) in [("mimetype", oracle_guide_idml::MIMETYPE), ("designmap.xml", &map), ("Spreads/one.xml", spread)] {
+        for (name, text) in [("mimetype", oracle_layout_idml::MIMETYPE), ("designmap.xml", &map), ("Spreads/one.xml", spread)] {
             zip.start_file(name, options).unwrap();
             zip.write_all(text.as_bytes()).unwrap();
         }
@@ -2711,14 +2714,14 @@ mod import_warning_tests {
     fn byte_open_reports_partial_import_warnings_without_losing_documents() {
         let mut app = app();
         let result =
-            app.open_file("file.openBytes", json!({"name": "partial.idml", "base64": oracle_guide_engine::cmd::base64_encode(&idml(true))})).unwrap();
+            app.open_file("file.openBytes", json!({"name": "partial.idml", "base64": oracle_layout_engine::cmd::base64_encode(&idml(true))})).unwrap();
         assert_eq!(result["warnings"].as_array().unwrap().len(), 2);
         assert_partial_import_warning(&mut app, "partial.idml");
     }
 
     #[test]
     fn native_open_reports_partial_import_warnings_without_losing_documents() {
-        let path = std::env::temp_dir().join(format!("oracle-guide-partial-import-{}", std::process::id())).join("partial.idml");
+        let path = std::env::temp_dir().join(format!("oracle-layout-partial-import-{}", std::process::id())).join("partial.idml");
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(&path, idml(true)).unwrap();
         let picked = path.to_string_lossy().to_string();
@@ -2748,8 +2751,8 @@ mod import_warning_tests {
         let sid = *d.stories.keys().next().unwrap();
         let story = d.story_mut(sid).unwrap();
         story.format_chars(0..6, |f| f.over.font_family = Some("Unavailable Test Family".into()));
-        story.paras[0].para.grep_styles = Some(vec![oracle_guide_doc::GrepStyle { style: "Keep".into(), pattern: "[a-".into() }]);
-        let path = std::env::temp_dir().join(format!("oracle-guide-font-warning-{}.oracle-guide", std::process::id()));
+        story.paras[0].para.grep_styles = Some(vec![oracle_layout_doc::GrepStyle { style: "Keep".into(), pattern: "[a-".into() }]);
+        let path = std::env::temp_dir().join(format!("oracle-layout-font-warning-{}.oracle-layout", std::process::id()));
         app.run("file.save", json!({"path": path})).unwrap();
         let result = app.open_file("file.open", json!({"path": path}));
         std::fs::remove_file(&path).unwrap();
@@ -2762,7 +2765,7 @@ mod import_warning_tests {
     fn complete_import_does_not_show_a_warning() {
         let mut app = app();
         let result = app
-            .open_file("file.openBytes", json!({"name": "complete.idml", "base64": oracle_guide_engine::cmd::base64_encode(&idml(false))}))
+            .open_file("file.openBytes", json!({"name": "complete.idml", "base64": oracle_layout_engine::cmd::base64_encode(&idml(false))}))
             .unwrap();
         assert_eq!(result["warnings"], json!([]));
         assert!(app.ui.dialog.is_none());
@@ -2945,9 +2948,9 @@ mod browser_import_tests {
         let mut source = Session::new();
         source.execute("file.new", &json!({"title": "source"})).unwrap();
         source.execute("frame.create", &json!({"rect": [10, 10, 50, 50], "content": "text", "text": "placed"})).unwrap();
-        let native = oracle_guide_engine::cmd::to_bytes(&source.doc().unwrap().doc).unwrap();
-        let idml = oracle_guide_idml::export_idml(&source.doc().unwrap().doc);
-        for (name, bytes) in [("source.oracle-guide", native), ("source.idml", idml)] {
+        let native = oracle_layout_engine::cmd::to_bytes(&source.doc().unwrap().doc).unwrap();
+        let idml = oracle_layout_idml::export_idml(&source.doc().unwrap().doc);
+        for (name, bytes) in [("source.oracle-layout", native), ("source.idml", idml)] {
             let mut app = app();
             let request = app.import_request("place");
             deliver(&mut app, request, name, bytes.clone());
@@ -2983,8 +2986,8 @@ mod browser_import_tests {
         assert!(app.session.documents()[1].doc.assets.is_empty());
         app.run("place.drop", json!({"x": 36, "y": 36})).unwrap();
         let exported = app.run("file.exportPdf", json!({})).unwrap();
-        let exported = oracle_guide_engine::cmd::base64_decode(exported["base64"].as_str().unwrap());
-        let pixels = oracle_guide_render::render_pdf_page(&exported, 0, 400).unwrap();
+        let exported = oracle_layout_engine::cmd::base64_decode(exported["base64"].as_str().unwrap());
+        let pixels = oracle_layout_render::render_pdf_page(&exported, 0, 400).unwrap();
         assert!(pixels.data().iter().filter(|p| p.g > 240 && p.r < 10 && p.b < 10).count() > 1000);
         assert_eq!(pixels.data().iter().filter(|p| p.r > 240 && p.g < 10 && p.b < 10).count(), 0);
     }
@@ -2999,8 +3002,8 @@ mod browser_import_tests {
         assert_eq!(app.session.tool_id(), "placeGun");
         assert!(app.session.loaded.is_some());
         assert_eq!(items(&app), 0);
-        let mods = oracle_guide_tools::Mods::default();
-        app.session.tool_key(oracle_guide_tools::ToolKey::Escape, mods, oracle_guide_engine::ViewInfo::at_zoom(1.0)).unwrap();
+        let mods = oracle_layout_tools::Mods::default();
+        app.session.tool_key(oracle_layout_tools::ToolKey::Escape, mods, oracle_layout_engine::ViewInfo::at_zoom(1.0)).unwrap();
         assert_eq!(app.session.tool_id(), "selection");
         assert!(app.session.loaded.is_none());
         // A click with the loaded cursor places the graphic at its natural size.
@@ -3008,7 +3011,7 @@ mod browser_import_tests {
         deliver(&mut app, request, "red.svg", image());
         app.run("place.drop", json!({"x": 100, "y": 100})).unwrap();
         let it = app.session.doc().unwrap().doc.spreads[0].items.last().unwrap();
-        assert_eq!(it.bounds(), oracle_guide_geom::Rect::new(100.0, 100.0, 107.5, 107.5), "10 CSS px = 7.5 pt");
+        assert_eq!(it.bounds(), oracle_layout_geom::Rect::new(100.0, 100.0, 107.5, 107.5), "10 CSS px = 7.5 pt");
         // An empty graphic frame selected: the graphic fills it.
         let f = app.run("frame.create", json!({"rect": [200, 200, 300, 300], "content": "graphic"})).unwrap()["id"].as_u64().unwrap();
         app.run("selection.set", json!({"ids": [f]})).unwrap();
@@ -3017,8 +3020,8 @@ mod browser_import_tests {
         assert_eq!(app.session.tool_id(), "selection");
         assert!(app.session.loaded.is_none());
         assert_eq!(items(&app), 2);
-        let frame = app.session.doc().unwrap().doc.item(oracle_guide_doc::ItemId(f)).unwrap();
-        assert!(matches!(frame.content, oracle_guide_doc::Content::Graphic(_)));
+        let frame = app.session.doc().unwrap().doc.item(oracle_layout_doc::ItemId(f)).unwrap();
+        assert!(matches!(frame.content, oracle_layout_doc::Content::Graphic(_)));
     }
 
     #[test]
@@ -3048,9 +3051,9 @@ mod browser_import_tests {
     #[test]
     fn drop_routing_and_nonlayout_open_remain_compatible() {
         let mut app = app();
-        let native = oracle_guide_engine::cmd::to_bytes(&app.session.doc().unwrap().doc).unwrap();
+        let native = oracle_layout_engine::cmd::to_bytes(&app.session.doc().unwrap().doc).unwrap();
         let request = app.import_request("drop");
-        deliver(&mut app, request, "document.oracle-guide", native);
+        deliver(&mut app, request, "document.oracle-layout", native);
         assert_eq!(app.session.documents().len(), 2);
         let request = app.import_request("drop");
         app.run("file.activate", json!({"index": 0})).unwrap();
@@ -3070,7 +3073,7 @@ mod browser_import_tests {
         source.execute("file.new", &json!({})).unwrap();
         source.execute("swatch.create", &json!({"name": "Import Teal", "color": "#108080"})).unwrap();
         let data = source.execute("swatch.save", &json!({"names": ["Import Teal"]})).unwrap();
-        let bytes = oracle_guide_engine::cmd::base64_decode(data["base64"].as_str().unwrap());
+        let bytes = oracle_layout_engine::cmd::base64_decode(data["base64"].as_str().unwrap());
         for (purpose, name) in [("swatches", "picker-file"), ("drop", "palette.ase")] {
             let mut app = app();
             let request = app.import_request(purpose);
@@ -3085,7 +3088,7 @@ mod browser_import_tests {
     #[test]
     fn native_pdf_dialog_keeps_path_and_uid_at_confirmation() {
         let mut app = app();
-        let path = std::env::temp_dir().join(format!("oracle-guide-native-import-{}-{}.pdf", std::process::id(), app.session.doc().unwrap().uid));
+        let path = std::env::temp_dir().join(format!("oracle-layout-native-import-{}-{}.pdf", std::process::id(), app.session.doc().unwrap().uid));
         std::fs::write(&path, pdf()).unwrap();
         let pick_path = path.to_string_lossy().to_string();
         app.services.pick_open = Some(Box::new(move |_| Some(pick_path.clone())));
@@ -3137,12 +3140,12 @@ mod load_styles_tests {
         s.execute("style.paragraph.create", &json!({"name": "Body", "chars": {"size": 10}})).unwrap();
         s.execute("style.paragraph.create", &json!({"name": "Head", "basedOn": "Body", "chars": {"size": 20}})).unwrap();
         s.execute("style.character.create", &json!({"name": "Lead", "chars": {"size": 9}})).unwrap();
-        oracle_guide_engine::cmd::base64_decode(s.execute("file.serialize", &json!({})).unwrap()["base64"].as_str().unwrap())
+        oracle_layout_engine::cmd::base64_decode(s.execute("file.serialize", &json!({})).unwrap()["base64"].as_str().unwrap())
     }
 
     /// An app with a document that has its own 8 pt Body, and a picker that answers with the client's file.
     fn app_and_file(test: &str) -> (DesignApp, std::path::PathBuf) {
-        let path = std::env::temp_dir().join(format!("oracle-guide-load-styles-{}-{test}.oracle-guide", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oracle-layout-load-styles-{}-{test}.oracle-layout", std::process::id()));
         std::fs::write(&path, client_bytes()).unwrap();
         let picked = path.to_string_lossy().to_string();
         let services = Services { pick_open: Some(Box::new(move |purpose| (purpose == "styles").then(|| picked.clone()))), ..Default::default() };
@@ -3251,7 +3254,7 @@ mod load_styles_tests {
         assert_eq!(request.purpose, "styles:character");
         // Another document is in front when the file arrives.
         app.run("file.new", json!({"title": "B"})).unwrap();
-        app.services.inbox.as_ref().unwrap().lock().unwrap().push(ImportedFile { request, name: "client.oracle-guide".into(), bytes: client_bytes() });
+        app.services.inbox.as_ref().unwrap().lock().unwrap().push(ImportedFile { request, name: "client.oracle-layout".into(), bytes: client_bytes() });
         app.drain_inbox();
         assert_eq!(app.session.active_index(), Some(0));
         assert_eq!(names(&app), (vec![], vec!["Lead".to_string()]));

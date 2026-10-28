@@ -2,7 +2,7 @@
 //! as an incremental update: each page with a transition is re-stated with a `/Trans` entry, with
 //! a new cross-reference section pointing back at the original.
 
-use oracle_guide_doc::{PageTransition, TransitionKind};
+use oracle_layout_doc::{PageTransition, TransitionKind};
 use std::collections::HashMap;
 
 /// The `/Trans` dictionary for a transition.

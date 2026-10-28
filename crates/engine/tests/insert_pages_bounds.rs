@@ -1,5 +1,5 @@
 //! `layout.pages.insert` clamps an out-of-range `after` to the end instead of overflowing.
-use oracle_guide_engine::Session;
+use oracle_layout_engine::Session;
 use serde_json::json;
 
 #[test]
